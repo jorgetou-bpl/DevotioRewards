@@ -32,7 +32,15 @@ const LoginPage = () => {
       }
       navigate('/');
     } catch (error) {
-      const message = error.response?.data?.detail || 'Authentication failed';
+      let message = 'Authentication failed';
+      const detail = error.response?.data?.detail;
+      if (typeof detail === 'string') {
+        message = detail;
+      } else if (Array.isArray(detail) && detail.length > 0) {
+        message = detail[0]?.msg || 'Validation error';
+      } else if (detail?.msg) {
+        message = detail.msg;
+      }
       toast.error(message);
     } finally {
       setLoading(false);

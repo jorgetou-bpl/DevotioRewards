@@ -104,7 +104,7 @@ const SettingsPage = () => {
 
         {/* Version Info */}
         <div className="text-center mt-8 text-zinc-400 text-sm">
-          <p>Scanner App v1.0.0</p>
+          <p>Devotio Rewards Scanner v1.0.0</p>
           <p className="mt-1">Powered by Devotio Rewards</p>
         </div>
       </main>

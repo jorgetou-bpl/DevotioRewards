@@ -33,7 +33,7 @@ JWT_ALGORITHM = 'HS256'
 JWT_EXPIRATION_HOURS = 24
 
 # Create the main app
-app = FastAPI(title="Scanner App API")
+app = FastAPI(title="Devotio Rewards Scanner API")
 
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
@@ -546,7 +546,7 @@ async def get_customer_cards(customer_id: str, current_user: dict = Depends(get_
 
 @api_router.get("/")
 async def root():
-    return {"message": "Scanner App API", "version": "1.0.0"}
+    return {"message": "Devotio Rewards Scanner API", "version": "1.0.0"}
 
 @api_router.get("/health")
 async def health_check():

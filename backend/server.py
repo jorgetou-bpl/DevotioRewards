@@ -472,6 +472,15 @@ def get_mock_response(endpoint: str, method: str) -> dict:
     
     return {"code": 200, "data": {}}
 
+# Mapping of customer IDs to card IDs for demo
+CUSTOMER_TO_CARD_MAP = {
+    "cust-maria-001": "DEMO-001",
+    "cust-carlos-002": "DEMO-002",
+    "cust-ana-003": "DEMO-003",
+    "cust-luis-004": "DEMO-004",
+    "cust-sofia-005": "DEMO-005"
+}
+
 # ============ AUTH ROUTES ============
 
 @api_router.post("/auth/register", response_model=TokenResponse)

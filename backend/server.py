@@ -718,6 +718,17 @@ async def get_customer(customer_id: str, current_user: dict = Depends(get_curren
 @api_router.get("/customers/{customer_id}/cards")
 async def get_customer_cards(customer_id: str, current_user: dict = Depends(get_current_user)):
     """Get all cards for a customer with masked PII"""
+    
+    # Check for demo customer mapping first
+    if customer_id in CUSTOMER_TO_CARD_MAP:
+        card_id = CUSTOMER_TO_CARD_MAP[customer_id]
+        # Get the demo card data
+        card_response = await call_boomerang_api('GET', f'/cards/{card_id}')
+        if card_response.get('code') == 200:
+            card_data = card_response.get('data', {})
+            masked_card = mask_pii(card_data)
+            return {"success": True, "cards": [masked_card]}
+    
     response = await call_boomerang_api('GET', f'/cards?customerId={customer_id}')
     
     cards = response.get('data', [])

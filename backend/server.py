@@ -210,22 +210,163 @@ async def call_boomerang_api(method: str, endpoint: str, data: dict = None) -> d
 
 def get_mock_response(endpoint: str, method: str) -> dict:
     """Return mock data for development/demo purposes"""
+    
+    # Demo customers database
+    DEMO_CUSTOMERS = {
+        "DEMO-001": {
+            "id": "DEMO-001",
+            "companyId": 12345,
+            "templateId": 67890,
+            "customerId": "cust-maria-001",
+            "type": "stamp_card",
+            "status": "active",
+            "customer": {
+                "id": "cust-maria-001",
+                "firstName": "Maria",
+                "surname": "González",
+                "email": "maria.gonzalez@email.com",
+                "phone": "+1 555-0101"
+            },
+            "balance": {
+                "currentNumberOfUses": 8,
+                "numberStampsTotal": 10,
+                "numberRewardsUnused": 1,
+                "balance": 0,
+                "bonusBalance": 0,
+                "stampsBeforeReward": 2
+            },
+            "countVisits": 15,
+            "totalRewardsRedeemed": 3,
+            "totalRewardsEarned": 4
+        },
+        "DEMO-002": {
+            "id": "DEMO-002",
+            "companyId": 12345,
+            "templateId": 67891,
+            "customerId": "cust-carlos-002",
+            "type": "points_card",
+            "status": "active",
+            "customer": {
+                "id": "cust-carlos-002",
+                "firstName": "Carlos",
+                "surname": "Rodriguez",
+                "email": "carlos.r@email.com",
+                "phone": "+1 555-0102"
+            },
+            "balance": {
+                "currentNumberOfUses": 0,
+                "numberStampsTotal": 0,
+                "numberRewardsUnused": 2,
+                "balance": 450.0,
+                "bonusBalance": 125,
+                "stampsBeforeReward": 0
+            },
+            "countVisits": 22,
+            "totalRewardsRedeemed": 5,
+            "totalRewardsEarned": 7
+        },
+        "DEMO-003": {
+            "id": "DEMO-003",
+            "companyId": 12345,
+            "templateId": 67890,
+            "customerId": "cust-ana-003",
+            "type": "stamp_card",
+            "status": "active",
+            "customer": {
+                "id": "cust-ana-003",
+                "firstName": "Ana",
+                "surname": "Martinez",
+                "email": "ana.martinez@email.com",
+                "phone": "+1 555-0103"
+            },
+            "balance": {
+                "currentNumberOfUses": 3,
+                "numberStampsTotal": 10,
+                "numberRewardsUnused": 0,
+                "balance": 0,
+                "bonusBalance": 0,
+                "stampsBeforeReward": 7
+            },
+            "countVisits": 5,
+            "totalRewardsRedeemed": 0,
+            "totalRewardsEarned": 0
+        },
+        "DEMO-004": {
+            "id": "DEMO-004",
+            "companyId": 12345,
+            "templateId": 67892,
+            "customerId": "cust-luis-004",
+            "type": "vip_card",
+            "status": "active",
+            "customer": {
+                "id": "cust-luis-004",
+                "firstName": "Luis",
+                "surname": "Fernandez",
+                "email": "luis.f@email.com",
+                "phone": "+1 555-0104"
+            },
+            "balance": {
+                "currentNumberOfUses": 10,
+                "numberStampsTotal": 10,
+                "numberRewardsUnused": 3,
+                "balance": 1250.0,
+                "bonusBalance": 500,
+                "stampsBeforeReward": 0
+            },
+            "countVisits": 48,
+            "totalRewardsRedeemed": 12,
+            "totalRewardsEarned": 15
+        },
+        "DEMO-005": {
+            "id": "DEMO-005",
+            "companyId": 12345,
+            "templateId": 67890,
+            "customerId": "cust-sofia-005",
+            "type": "stamp_card",
+            "status": "active",
+            "customer": {
+                "id": "cust-sofia-005",
+                "firstName": "Sofia",
+                "surname": "Lopez",
+                "email": "sofia.lopez@email.com",
+                "phone": "+1 555-0105"
+            },
+            "balance": {
+                "currentNumberOfUses": 9,
+                "numberStampsTotal": 10,
+                "numberRewardsUnused": 0,
+                "balance": 0,
+                "bonusBalance": 75,
+                "stampsBeforeReward": 1
+            },
+            "countVisits": 18,
+            "totalRewardsRedeemed": 1,
+            "totalRewardsEarned": 1
+        }
+    }
+    
     if '/cards/' in endpoint and method == 'GET':
         card_id = endpoint.split('/cards/')[-1].split('/')[0]
+        
+        # Check if it's a demo card
+        if card_id.upper() in DEMO_CUSTOMERS:
+            return {"code": 200, "data": DEMO_CUSTOMERS[card_id.upper()]}
+        
+        # Default demo card for any other ID
         return {
             "code": 200,
             "data": {
                 "id": card_id,
                 "companyId": 12345,
                 "templateId": 67890,
-                "customerId": "cust-abc-123",
+                "customerId": f"cust-{card_id[:8]}",
                 "type": "stamp_card",
                 "status": "active",
                 "customer": {
-                    "id": "cust-abc-123",
-                    "firstName": "John",
-                    "surname": "Doe",
-                    "email": "john.doe@example.com",
+                    "id": f"cust-{card_id[:8]}",
+                    "firstName": "Demo",
+                    "surname": "Customer",
+                    "email": "demo@example.com",
                     "phone": "+1234567890"
                 },
                 "balance": {

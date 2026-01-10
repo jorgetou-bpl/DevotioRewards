@@ -6,6 +6,7 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { toast } from 'sonner';
 import axios from 'axios';
+import { Html5Qrcode } from 'html5-qrcode';
 import { 
   Scan, 
   Search, 
@@ -29,51 +30,105 @@ const ScannerPage = () => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [cameraError, setCameraError] = useState(null);
   
-  const videoRef = useRef(null);
-  const streamRef = useRef(null);
+  const scannerRef = useRef(null);
+  const html5QrCodeRef = useRef(null);
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const { triggerVibration, triggerBeep, copyToClipboard, settings } = useSettings();
 
   useEffect(() => {
     return () => {
-      stopCamera();
+      stopScanner();
     };
   }, []);
 
-  const startCamera = async () => {
+  const startScanner = async () => {
     try {
       setCameraError(null);
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment' }
-      });
-      
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        streamRef.current = stream;
-        setScanning(true);
+      setScanning(true);
+
+      // Wait for the DOM element to be available
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      if (!scannerRef.current) {
+        throw new Error('Scanner element not found');
       }
+
+      const html5QrCode = new Html5Qrcode("barcode-scanner");
+      html5QrCodeRef.current = html5QrCode;
+
+      const config = {
+        fps: 10,
+        qrbox: { width: 300, height: 150 },
+        aspectRatio: 1.777,
+        formatsToSupport: [
+          // Barcode formats
+          0,  // QR_CODE (fallback)
+          1,  // AZTEC
+          2,  // CODABAR
+          3,  // CODE_39
+          4,  // CODE_93
+          5,  // CODE_128
+          6,  // DATA_MATRIX
+          7,  // MAXICODE
+          8,  // ITF
+          9,  // EAN_13
+          10, // EAN_8
+          11, // PDF_417
+          12, // RSS_14
+          13, // RSS_EXPANDED
+          14, // UPC_A
+          15, // UPC_E
+          16, // UPC_EAN_EXTENSION
+        ]
+      };
+
+      await html5QrCode.start(
+        { facingMode: "environment" },
+        config,
+        onScanSuccess,
+        onScanFailure
+      );
+
     } catch (error) {
-      console.error('Camera error:', error);
+      console.error('Scanner error:', error);
       setCameraError('Unable to access camera. Please check permissions.');
       toast.error('Camera access denied');
+      setScanning(false);
     }
   };
 
-  const stopCamera = () => {
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
-      streamRef.current = null;
+  const stopScanner = async () => {
+    if (html5QrCodeRef.current) {
+      try {
+        await html5QrCodeRef.current.stop();
+        html5QrCodeRef.current = null;
+      } catch (error) {
+        console.error('Error stopping scanner:', error);
+      }
     }
     setScanning(false);
   };
 
-  const handleScan = async (qrData) => {
+  const onScanSuccess = async (decodedText, decodedResult) => {
+    console.log('Barcode detected:', decodedText, decodedResult);
+    
+    // Stop scanner immediately to prevent multiple scans
+    await stopScanner();
+    
+    // Process the scanned barcode
+    handleScan(decodedText);
+  };
+
+  const onScanFailure = (error) => {
+    // Silently ignore - this fires constantly when no barcode is detected
+  };
+
+  const handleScan = async (barcodeData) => {
     setLoading(true);
-    stopCamera();
     
     try {
-      const response = await axios.post(`${API}/scan`, { qr_data: qrData });
+      const response = await axios.post(`${API}/scan`, { qr_data: barcodeData });
       
       triggerVibration();
       triggerBeep();
@@ -90,6 +145,8 @@ const ScannerPage = () => {
     } catch (error) {
       const message = error.response?.data?.detail || 'Failed to scan card';
       toast.error(message);
+      // Restart scanner on error so user can try again
+      startScanner();
     } finally {
       setLoading(false);
     }
@@ -141,24 +198,29 @@ const ScannerPage = () => {
             {user?.email || '***@***.***'}
           </p>
           <p className="text-zinc-400 text-sm mt-2">
-            Press the "Scan" button to scan the card
+            Press the "Scan" button to scan a barcode
           </p>
         </div>
 
         {/* Scanner Viewport */}
         <div className="w-full max-w-md">
-          <div className="scanner-viewport rounded-sm mb-6" data-testid="scanner-viewport">
+          <div className="scanner-viewport rounded-sm mb-6 relative" data-testid="scanner-viewport">
             {scanning ? (
               <>
-                <video
-                  ref={videoRef}
-                  autoPlay
-                  playsInline
-                  muted
-                  className="w-full h-full object-cover"
-                  data-testid="camera-video"
+                <div 
+                  id="barcode-scanner" 
+                  ref={scannerRef}
+                  className="w-full h-full"
+                  data-testid="barcode-scanner"
                 />
-                <div className="scanner-line" />
+                <button
+                  onClick={stopScanner}
+                  className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm p-2 rounded-sm border-2 border-black hover:bg-white transition-colors z-20"
+                  data-testid="stop-scan-button"
+                  aria-label="Stop scanning"
+                >
+                  <X className="h-5 w-5" />
+                </button>
               </>
             ) : (
               <div className="w-full h-full flex items-center justify-center">
@@ -170,40 +232,32 @@ const ScannerPage = () => {
                 ) : (
                   <div className="text-center text-zinc-400">
                     <Camera className="h-12 w-12 mx-auto mb-2" />
-                    <p className="text-sm">Camera preview</p>
+                    <p className="text-sm">Barcode scanner</p>
                   </div>
                 )}
               </div>
             )}
             
             {/* Scan button overlay */}
-            <div className="absolute inset-0 flex items-center justify-center">
-              {!scanning && !loading && (
+            {!scanning && !loading && (
+              <div className="absolute inset-0 flex items-center justify-center">
                 <Button
-                  onClick={startCamera}
+                  onClick={startScanner}
                   className="btn-primary px-12 py-4 text-xl"
                   data-testid="scan-button"
                 >
                   <Scan className="mr-2 h-6 w-6" />
                   Scan
                 </Button>
-              )}
-              {loading && (
+              </div>
+            )}
+            
+            {loading && (
+              <div className="absolute inset-0 flex items-center justify-center">
                 <div className="bg-white/90 backdrop-blur-sm p-4 rounded-sm border-2 border-black">
                   <Loader2 className="h-8 w-8 animate-spin" />
                 </div>
-              )}
-            </div>
-            
-            {scanning && (
-              <button
-                onClick={stopCamera}
-                className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm p-2 rounded-sm border-2 border-black hover:bg-white transition-colors"
-                data-testid="stop-scan-button"
-                aria-label="Stop scanning"
-              >
-                <X className="h-5 w-5" />
-              </button>
+              </div>
             )}
           </div>
 

@@ -109,39 +109,39 @@ code, .mono {
 .scanner-viewport {
     position: relative;
     width: 100%;
-    aspect-ratio: 1;
+    aspect-ratio: 4/3;
     background: #09090B;
     overflow: hidden;
 }
 
-.scanner-viewport::before {
-    content: '';
-    position: absolute;
-    inset: 20%;
-    border: 3px solid #00FF94;
-    border-radius: 8px;
-    z-index: 10;
-    animation: pulse 2s ease-in-out infinite;
+.scanner-viewport video {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
 }
 
-@keyframes pulse {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50% { opacity: 0.6; transform: scale(0.98); }
+#barcode-scanner {
+    width: 100%;
+    height: 100%;
 }
 
-.scanner-line {
-    position: absolute;
-    left: 20%;
-    right: 20%;
-    height: 2px;
-    background: linear-gradient(90deg, transparent, #00FF94, transparent);
-    animation: scan 2s ease-in-out infinite;
-    z-index: 11;
+#barcode-scanner video {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
 }
 
-@keyframes scan {
-    0%, 100% { top: 20%; }
-    50% { top: 80%; }
+/* Hide the default html5-qrcode UI elements we don't need */
+#barcode-scanner__scan_region {
+    background: transparent !important;
+}
+
+#barcode-scanner__dashboard {
+    display: none !important;
+}
+
+#barcode-scanner__header_message {
+    display: none !important;
 }
 
 /* Page transitions */

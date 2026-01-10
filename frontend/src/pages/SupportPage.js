@@ -18,21 +18,21 @@ const SupportPage = () => {
       icon: FileText,
       title: 'Documentation',
       description: 'Read the user guide and FAQs',
-      action: () => window.open('https://docs.boomerangme.cards/', '_blank'),
+      action: () => window.open('https://devotiorewards.com/', '_blank'),
       testId: 'support-docs'
     },
     {
       icon: Mail,
       title: 'Email Support',
-      description: 'Contact us at support@boomerangme.cards',
-      action: () => window.location.href = 'mailto:support@boomerangme.cards',
+      description: 'Contact us at support@devotiorewards.com',
+      action: () => window.location.href = 'mailto:support@devotiorewards.com',
       testId: 'support-email'
     },
     {
       icon: MessageCircle,
       title: 'Live Chat',
       description: 'Chat with our support team',
-      action: () => window.open('https://boomerangme.cards/', '_blank'),
+      action: () => window.open('https://devotiorewards.com/', '_blank'),
       testId: 'support-chat'
     }
   ];
@@ -64,7 +64,7 @@ const SupportPage = () => {
           <ArrowLeft className="h-5 w-5" />
           <span className="font-medium">Back</span>
         </button>
-        <h1 className="logo-text text-xl">Boomerang</h1>
+        <h1 className="logo-text text-xl">Devotio Rewards</h1>
         <div className="w-20" />
       </header>
 
@@ -125,7 +125,7 @@ const SupportPage = () => {
         {/* Version Info */}
         <div className="text-center mt-8 text-zinc-400 text-sm">
           <p>Scanner App v1.0.0</p>
-          <p className="mt-1">Powered by Boomerang API</p>
+          <p className="mt-1">Powered by Devotio Rewards</p>
         </div>
       </main>
     </div>

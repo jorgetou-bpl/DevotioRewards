@@ -91,7 +91,7 @@ const SearchPage = () => {
           <ArrowLeft className="h-5 w-5" />
           <span className="font-medium">Back</span>
         </button>
-        <h1 className="logo-text text-xl">Boomerang</h1>
+        <h1 className="logo-text text-xl">Devotio Rewards</h1>
         <div className="w-20" />
       </header>
 

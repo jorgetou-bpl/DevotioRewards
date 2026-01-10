@@ -61,7 +61,7 @@ const SettingsPage = () => {
           <ArrowLeft className="h-5 w-5" />
           <span className="font-medium">Back</span>
         </button>
-        <h1 className="logo-text text-xl">Boomerang</h1>
+        <h1 className="logo-text text-xl">Devotio Rewards</h1>
         <div className="w-20" />
       </header>
 
@@ -105,7 +105,7 @@ const SettingsPage = () => {
         {/* Version Info */}
         <div className="text-center mt-8 text-zinc-400 text-sm">
           <p>Scanner App v1.0.0</p>
-          <p className="mt-1">Powered by Boomerang API</p>
+          <p className="mt-1">Powered by Devotio Rewards</p>
         </div>
       </main>
     </div>

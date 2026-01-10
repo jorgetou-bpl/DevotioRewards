@@ -52,8 +52,8 @@ const LoginPage = () => {
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
-          <h1 className="logo-text text-4xl md:text-5xl tracking-tighter" data-testid="logo">
-            Boomerang
+          <h1 className="logo-text text-3xl md:text-4xl tracking-tighter" data-testid="logo">
+            Devotio Rewards
           </h1>
         </div>
 
@@ -63,7 +63,7 @@ const LoginPage = () => {
             Sign in
           </h2>
           <p className="text-center text-zinc-500 text-sm mb-8">
-            Welcome to the digital card scanner app
+            Welcome to the loyalty card scanner
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-6">

@@ -118,7 +118,7 @@ const ScannerPage = () => {
     <div className="min-h-screen bg-white flex flex-col" data-testid="scanner-page">
       {/* Header */}
       <header className="nav-header">
-        <h1 className="logo-text text-2xl" data-testid="header-logo">Boomerang</h1>
+        <h1 className="logo-text text-xl" data-testid="header-logo">Devotio Rewards</h1>
         <button 
           onClick={() => setMenuOpen(true)} 
           className="p-2 hover:bg-zinc-100 rounded-sm transition-colors"

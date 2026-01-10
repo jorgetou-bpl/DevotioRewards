@@ -1,0 +1,164 @@
+{
+  "total_tests": 26,
+  "passed_tests": 23,
+  "failed_tests": 3,
+  "success_rate": 88.46153846153845,
+  "test_results": [
+    {
+      "test": "Root endpoint",
+      "success": true,
+      "details": "Status: 200",
+      "timestamp": "2026-01-10T03:23:42.275425"
+    },
+    {
+      "test": "Health check",
+      "success": true,
+      "details": "Status: 200",
+      "timestamp": "2026-01-10T03:23:42.317238"
+    },
+    {
+      "test": "User registration",
+      "success": true,
+      "details": "Status: 200",
+      "timestamp": "2026-01-10T03:23:42.637600"
+    },
+    {
+      "test": "Token extraction",
+      "success": true,
+      "details": "Token length: 171",
+      "timestamp": "2026-01-10T03:23:42.638209"
+    },
+    {
+      "test": "User login",
+      "success": true,
+      "details": "Status: 200",
+      "timestamp": "2026-01-10T03:23:42.903533"
+    },
+    {
+      "test": "Get current user",
+      "success": true,
+      "details": "Status: 200",
+      "timestamp": "2026-01-10T03:23:42.943779"
+    },
+    {
+      "test": "Invalid login",
+      "success": true,
+      "details": "Status: 401",
+      "timestamp": "2026-01-10T03:23:43.020907"
+    },
+    {
+      "test": "Get settings",
+      "success": true,
+      "details": "Status: 200",
+      "timestamp": "2026-01-10T03:23:43.056001"
+    },
+    {
+      "test": "Update settings",
+      "success": true,
+      "details": "Status: 200",
+      "timestamp": "2026-01-10T03:23:43.098949"
+    },
+    {
+      "test": "Verify settings update",
+      "success": true,
+      "details": "Status: 200",
+      "timestamp": "2026-01-10T03:23:43.137129"
+    },
+    {
+      "test": "Settings values verification",
+      "success": true,
+      "details": "Settings updated correctly",
+      "timestamp": "2026-01-10T03:23:43.137725"
+    },
+    {
+      "test": "Scan card",
+      "success": true,
+      "details": "Status: 200",
+      "timestamp": "2026-01-10T03:23:43.195098"
+    },
+    {
+      "test": "PII masking verification",
+      "success": true,
+      "details": "Customer data: {'id': 'cust-abc-123', 'firstName': '***', 'surname': '***', 'email': '***@***.***', 'phone': '***-***-****'}",
+      "timestamp": "2026-01-10T03:23:43.195698"
+    },
+    {
+      "test": "Get card details",
+      "success": true,
+      "details": "Status: 200",
+      "timestamp": "2026-01-10T03:23:43.229791"
+    },
+    {
+      "test": "Invalid QR scan",
+      "success": true,
+      "details": "Status: 400",
+      "timestamp": "2026-01-10T03:23:43.266276"
+    },
+    {
+      "test": "Add stamp",
+      "success": true,
+      "details": "Status: 200",
+      "timestamp": "2026-01-10T03:23:43.302395"
+    },
+    {
+      "test": "Add points",
+      "success": true,
+      "details": "Status: 200",
+      "timestamp": "2026-01-10T03:23:43.341911"
+    },
+    {
+      "test": "Redeem reward",
+      "success": true,
+      "details": "Status: 200",
+      "timestamp": "2026-01-10T03:23:43.378223"
+    },
+    {
+      "test": "Search customers by phone",
+      "success": true,
+      "details": "Status: 200",
+      "timestamp": "2026-01-10T03:23:43.414201"
+    },
+    {
+      "test": "Customer search PII masking",
+      "success": true,
+      "details": "Customer: {'id': 'cust-001', 'firstName': '***', 'surname': '***', 'email': '***@***.***', 'phone': '***-***-****'}",
+      "timestamp": "2026-01-10T03:23:43.414932"
+    },
+    {
+      "test": "Get customer details",
+      "success": true,
+      "details": "Status: 200",
+      "timestamp": "2026-01-10T03:23:43.491247"
+    },
+    {
+      "test": "Get customer cards",
+      "success": true,
+      "details": "Status: 200",
+      "timestamp": "2026-01-10T03:23:43.527345"
+    },
+    {
+      "test": "Search customers by email",
+      "success": true,
+      "details": "Status: 200",
+      "timestamp": "2026-01-10T03:23:43.565608"
+    },
+    {
+      "test": "Unauthorized scan",
+      "success": false,
+      "details": "Status: 403, Expected: 401, Response: {\"detail\":\"Not authenticated\"}",
+      "timestamp": "2026-01-10T03:23:43.602768"
+    },
+    {
+      "test": "Unauthorized settings",
+      "success": false,
+      "details": "Status: 403, Expected: 401, Response: {\"detail\":\"Not authenticated\"}",
+      "timestamp": "2026-01-10T03:23:43.636764"
+    },
+    {
+      "test": "Unauthorized customers",
+      "success": false,
+      "details": "Status: 403, Expected: 401, Response: {\"detail\":\"Not authenticated\"}",
+      "timestamp": "2026-01-10T03:23:43.672124"
+    }
+  ]
+}

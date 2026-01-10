@@ -22,7 +22,7 @@ const SettingsPage = () => {
     {
       key: 'vibration',
       label: 'Vibration',
-      description: 'Vibrate when scanning a QR code',
+      description: 'Vibrate when scanning a barcode',
       icon: Vibrate,
       testId: 'setting-vibration'
     },
@@ -77,7 +77,7 @@ const SettingsPage = () => {
         ) : (
           <div className="card-brutalist">
             <p className="text-sm font-bold uppercase tracking-widest text-zinc-500 mb-4">
-              When scanning a QR code
+              When scanning a barcode
             </p>
 
             <div className="divide-y divide-zinc-200">

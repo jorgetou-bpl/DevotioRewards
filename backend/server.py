@@ -211,7 +211,7 @@ async def call_boomerang_api(method: str, endpoint: str, data: dict = None) -> d
 def get_mock_response(endpoint: str, method: str) -> dict:
     """Return mock data for development/demo purposes"""
     
-    # Demo customers database
+    # Demo customers database with different card types
     DEMO_CUSTOMERS = {
         "DEMO-001": {
             "id": "DEMO-001",
@@ -220,6 +220,9 @@ def get_mock_response(endpoint: str, method: str) -> dict:
             "customerId": "cust-maria-001",
             "type": "stamp_card",
             "status": "active",
+            "serialNumber": "802416-001-001",
+            "installDate": "15.01.2025",
+            "lastAccrual": "08.01.2026",
             "customer": {
                 "id": "cust-maria-001",
                 "firstName": "Maria",
@@ -244,8 +247,11 @@ def get_mock_response(endpoint: str, method: str) -> dict:
             "companyId": 12345,
             "templateId": 67891,
             "customerId": "cust-carlos-002",
-            "type": "points_card",
+            "type": "cashback_card",
             "status": "active",
+            "serialNumber": "802416-002-001",
+            "installDate": "20.02.2025",
+            "lastAccrual": "05.01.2026",
             "customer": {
                 "id": "cust-carlos-002",
                 "firstName": "Carlos",
@@ -256,8 +262,153 @@ def get_mock_response(endpoint: str, method: str) -> dict:
             "balance": {
                 "currentNumberOfUses": 0,
                 "numberStampsTotal": 0,
-                "numberRewardsUnused": 2,
+                "numberRewardsUnused": 0,
                 "balance": 450.0,
+                "bonusBalance": 125,
+                "cashbackPercent": 5,
+                "cashbackLevel": "Silver"
+            },
+            "countVisits": 22,
+            "totalRewardsRedeemed": 5,
+            "totalRewardsEarned": 7
+        },
+        "DEMO-003": {
+            "id": "DEMO-003",
+            "companyId": 12345,
+            "templateId": 67892,
+            "customerId": "cust-ana-003",
+            "type": "discount_card",
+            "status": "active",
+            "serialNumber": "802416-003-001",
+            "installDate": "10.03.2025",
+            "lastAccrual": "28.12.2025",
+            "customer": {
+                "id": "cust-ana-003",
+                "firstName": "Ana",
+                "surname": "Martinez",
+                "email": "ana.martinez@email.com",
+                "phone": "+1 555-0103"
+            },
+            "balance": {
+                "discountLevel": 1,
+                "discountStatus": "Bronze",
+                "toNextLevel": 4965,
+                "currentDiscount": 5,
+                "totalSavings": 35.50,
+                "transactionsAmount": 3500.0
+            },
+            "countVisits": 12,
+            "totalRewardsRedeemed": 0,
+            "totalRewardsEarned": 0
+        },
+        "DEMO-004": {
+            "id": "DEMO-004",
+            "companyId": 12345,
+            "templateId": 67893,
+            "customerId": "cust-luis-004",
+            "type": "gift_card",
+            "status": "active",
+            "serialNumber": "802416-004-001",
+            "installDate": "01.12.2025",
+            "lastAccrual": "25.12.2025",
+            "customer": {
+                "id": "cust-luis-004",
+                "firstName": "Luis",
+                "surname": "Fernandez",
+                "email": "luis.f@email.com",
+                "phone": "+1 555-0104"
+            },
+            "balance": {
+                "balance": 75.0,
+                "bonusBalance": 75,
+                "initialBalance": 100.0
+            },
+            "countVisits": 3,
+            "totalRewardsRedeemed": 0,
+            "totalRewardsEarned": 0
+        },
+        "DEMO-005": {
+            "id": "DEMO-005",
+            "companyId": 12345,
+            "templateId": 67894,
+            "customerId": "cust-sofia-005",
+            "type": "coupon",
+            "status": "active",
+            "serialNumber": "802416-005-001",
+            "installDate": "05.01.2026",
+            "expirationDate": "05.02.2026",
+            "customer": {
+                "id": "cust-sofia-005",
+                "firstName": "Sofia",
+                "surname": "Lopez",
+                "email": "sofia.lopez@email.com",
+                "phone": "+1 555-0105"
+            },
+            "balance": {
+                "couponStatus": "active",
+                "couponValue": "20% OFF"
+            },
+            "countVisits": 0,
+            "totalRewardsRedeemed": 0,
+            "totalRewardsEarned": 0
+        },
+        "DEMO-006": {
+            "id": "DEMO-006",
+            "companyId": 12345,
+            "templateId": 67895,
+            "customerId": "cust-miguel-006",
+            "type": "multipass",
+            "status": "active",
+            "serialNumber": "802416-006-001",
+            "installDate": "01.01.2026",
+            "expirationDate": "01.04.2026",
+            "customer": {
+                "id": "cust-miguel-006",
+                "firstName": "Miguel",
+                "surname": "Santos",
+                "email": "miguel.s@email.com",
+                "phone": "+1 555-0106"
+            },
+            "balance": {
+                "visitsTotal": 10,
+                "visitsUsed": 4,
+                "visitsAvailable": 6,
+                "bonusBalance": 40
+            },
+            "countVisits": 4,
+            "totalRewardsRedeemed": 0,
+            "totalRewardsEarned": 0
+        },
+        "DEMO-007": {
+            "id": "DEMO-007",
+            "companyId": 12345,
+            "templateId": 67890,
+            "customerId": "cust-elena-007",
+            "type": "stamp_card",
+            "status": "active",
+            "serialNumber": "802416-007-001",
+            "installDate": "20.11.2025",
+            "lastAccrual": "02.01.2026",
+            "customer": {
+                "id": "cust-elena-007",
+                "firstName": "Elena",
+                "surname": "Vargas",
+                "email": "elena.v@email.com",
+                "phone": "+1 555-0107"
+            },
+            "balance": {
+                "currentNumberOfUses": 3,
+                "numberStampsTotal": 10,
+                "numberRewardsUnused": 0,
+                "balance": 0,
+                "bonusBalance": 0,
+                "stampsBeforeReward": 7
+            },
+            "countVisits": 5,
+            "totalRewardsRedeemed": 0,
+            "totalRewardsEarned": 0
+        }
+    }
                 "bonusBalance": 125,
                 "stampsBeforeReward": 0
             },

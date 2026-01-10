@@ -1,0 +1,121 @@
+{
+  "identity": {
+    "name": "E1",
+    "role": "Anti-AI Creative Designer",
+    "principles": [
+      "Fusion over Imitation",
+      "Emotion First",
+      "Content is King",
+      "Zoom In",
+      "Negative Space",
+      "Contrast"
+    ]
+  },
+  "typography": {
+    "fonts": {
+      "heading": "Chivo",
+      "body": "IBM Plex Sans",
+      "mono": "JetBrains Mono"
+    },
+    "weights": {
+      "heading": "font-black",
+      "body": "font-normal",
+      "bold": "font-bold"
+    },
+    "sizes": {
+      "h1": "text-4xl md:text-5xl tracking-tighter leading-none",
+      "h2": "text-3xl md:text-4xl tracking-tight",
+      "h3": "text-2xl tracking-tight",
+      "body": "text-base leading-relaxed",
+      "small": "text-sm tracking-wide uppercase"
+    }
+  },
+  "colors": {
+    "palette_name": "Swiss & High-Contrast (Boomerang Mimic)",
+    "primary": "#09090B",
+    "secondary": "#FFFFFF",
+    "accent": "#00FF94",
+    "background": "#FFFFFF",
+    "surface": "#F4F4F5",
+    "text_primary": "#09090B",
+    "text_secondary": "#71717A",
+    "border": "#E4E4E7",
+    "success": "#00FF94",
+    "error": "#FF3333",
+    "warning": "#FFD700",
+    "info": "#0099FF"
+  },
+  "visual_enhancers": {
+    "radius": "rounded-sm",
+    "shadows": "shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]",
+    "borders": "border-2 border-black",
+    "glassmorphism": "backdrop-blur-md bg-white/80 border-b border-black/5",
+    "gradients": "None. Solid colors only."
+  },
+  "layout": {
+    "grid_system": "The Control Room (Dense, Data-Heavy)",
+    "spacing": "Generous (p-6, p-8, gap-6)",
+    "container": "max-w-md mx-auto (Mobile-First Focus)",
+    "alignment": "Left-aligned text, Centered Actions"
+  },
+  "components": {
+    "buttons": {
+      "primary": "bg-black text-white hover:bg-zinc-800 rounded-sm font-bold uppercase tracking-wider h-12 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.2)] active:translate-y-[2px] active:shadow-none transition-all",
+      "secondary": "bg-white text-black border-2 border-black hover:bg-zinc-50 rounded-sm font-bold uppercase tracking-wider h-12 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-y-[2px] active:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all",
+      "ghost": "bg-transparent text-black hover:bg-zinc-100 rounded-sm font-medium"
+    },
+    "cards": {
+      "style": "bg-white border-2 border-black rounded-sm p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,0.1)]",
+      "hover": "hover:-translate-y-1 hover:shadow-[12px_12px_0px_0px_rgba(0,0,0,0.1)] transition-transform"
+    },
+    "inputs": {
+      "style": "bg-white border-2 border-black rounded-sm h-12 px-4 focus:ring-2 focus:ring-black focus:ring-offset-2 font-mono text-sm"
+    }
+  },
+  "motion": {
+    "transitions": "transition-all duration-200 ease-out",
+    "hover_effects": "scale-[1.02]",
+    "page_transition": "initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}"
+  },
+  "accessibility": {
+    "contrast": "WCAG AA Compliant (4.5:1 minimum)",
+    "focus_states": "ring-2 ring-offset-2 ring-black",
+    "aria_labels": "Mandatory for all icon-only buttons"
+  },
+  "image_urls": {
+    "login_background": {
+      "url": "https://images.unsplash.com/photo-1765416589470-0ab68a9368e9?crop=entropy&cs=srgb&fm=jpg&q=85",
+      "description": "Architectural minimalism in B&W. Use as a subtle background for the login page with an overlay."
+    },
+    "dashboard_header": {
+      "url": "https://images.unsplash.com/photo-1760491900408-be347b788164?crop=entropy&cs=srgb&fm=jpg&q=85",
+      "description": "Modern interior abstract. Use for the Support page header or Settings background."
+    },
+    "empty_state": {
+      "url": "https://images.unsplash.com/photo-1766955181247-d3d5b09b9b8a?crop=entropy&cs=srgb&fm=jpg&q=85",
+      "description": "Diagonal lines light/shadow. Use for empty states or 'No Scans Yet' screens."
+    }
+  },
+  "instructions_to_main_agent": [
+    "Implement a 'Swiss Brutalist' aesthetic: Thick borders, bold typography, high contrast.",
+    "The Scanner UI must be the 'Hero'. Make the camera view full-width/height where possible, or a large central square.",
+    "Hide PII (Name, Email, Phone) in the frontend. Display '***' or 'Hidden'.",
+    "Use 'sonner' for all toast notifications (Scan Success, Error, etc.).",
+    "Ensure the 'Scan' button is a massive Floating Action Button (FAB) or fixed bottom bar trigger.",
+    "Use 'lucide-react' for icons. Keep them stroke-width-2 for boldness.",
+    "Do NOT use gradients. Use solid black, white, and the accent green.",
+    "For the 'Loyalty Balance', use a large monospace font counter.",
+    "Mock the Boomerang API calls if the real API is not accessible, but structure the code to easily swap in the real endpoint.",
+    "Add 'data-testid' to every interactive element."
+  ],
+  "universal_guidelines": [
+    "Avoid 'AI Slop' (generic rounded corners, soft shadows, blue primary). Go sharp and bold.",
+    "Dark colors look good when used independently without gradients.",
+    "Create depth through layered design elements (z-index).",
+    "Use glass-morphism effects with backdrop filters (12-24px blur) for overlays.",
+    "NEVER use AI assistant Emoji characters.",
+    "Every interaction needs micro-animations.",
+    "Use 2-3x more spacing than feels comfortable.",
+    "Subtle grain textures or noise overlays are encouraged."
+  ]
+}

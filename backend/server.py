@@ -383,14 +383,25 @@ def get_mock_response(endpoint: str, method: str) -> dict:
             }
         }
     elif 'add-stamp' in endpoint:
+        card_id = endpoint.split('/cards/')[-1].split('/')[0].upper()
+        current_stamps = 8
+        if card_id == "DEMO-002":
+            current_stamps = 1
+        elif card_id == "DEMO-003":
+            current_stamps = 4
+        elif card_id == "DEMO-004":
+            current_stamps = 10
+        elif card_id == "DEMO-005":
+            current_stamps = 10
+        
         return {
             "code": 200,
             "data": {
-                "id": "card-123",
+                "id": card_id,
                 "balance": {
-                    "currentNumberOfUses": 8,
+                    "currentNumberOfUses": min(current_stamps + 1, 10),
                     "numberStampsTotal": 10,
-                    "stampsBeforeReward": 2
+                    "stampsBeforeReward": max(10 - current_stamps - 1, 0)
                 }
             }
         }
@@ -400,7 +411,7 @@ def get_mock_response(endpoint: str, method: str) -> dict:
             "data": {
                 "id": "card-123",
                 "balance": {
-                    "bonusBalance": 35,
+                    "bonusBalance": 135,
                     "balance": 160.0
                 }
             }
@@ -416,23 +427,45 @@ def get_mock_response(endpoint: str, method: str) -> dict:
             }
         }
     elif '/customers' in endpoint:
+        # Return demo customers for search
         return {
             "code": 200,
-            "meta": {"totalItems": 2, "itemsPerPage": 30, "currentPage": 1},
+            "meta": {"totalItems": 5, "itemsPerPage": 30, "currentPage": 1},
             "data": [
                 {
-                    "id": "cust-001",
-                    "firstName": "Alice",
-                    "surname": "Smith",
-                    "email": "alice@example.com",
-                    "phone": "+1111111111"
+                    "id": "cust-maria-001",
+                    "firstName": "Maria",
+                    "surname": "González",
+                    "email": "maria.gonzalez@email.com",
+                    "phone": "+1 555-0101"
                 },
                 {
-                    "id": "cust-002",
-                    "firstName": "Bob",
-                    "surname": "Jones",
-                    "email": "bob@example.com",
-                    "phone": "+2222222222"
+                    "id": "cust-carlos-002",
+                    "firstName": "Carlos",
+                    "surname": "Rodriguez",
+                    "email": "carlos.r@email.com",
+                    "phone": "+1 555-0102"
+                },
+                {
+                    "id": "cust-ana-003",
+                    "firstName": "Ana",
+                    "surname": "Martinez",
+                    "email": "ana.martinez@email.com",
+                    "phone": "+1 555-0103"
+                },
+                {
+                    "id": "cust-luis-004",
+                    "firstName": "Luis",
+                    "surname": "Fernandez",
+                    "email": "luis.f@email.com",
+                    "phone": "+1 555-0104"
+                },
+                {
+                    "id": "cust-sofia-005",
+                    "firstName": "Sofia",
+                    "surname": "Lopez",
+                    "email": "sofia.lopez@email.com",
+                    "phone": "+1 555-0105"
                 }
             ]
         }

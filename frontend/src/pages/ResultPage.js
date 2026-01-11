@@ -20,7 +20,6 @@ import {
   Percent,
   Ticket,
   Wallet,
-  Calendar,
   X,
   ChevronDown,
   ChevronUp,
@@ -28,6 +27,16 @@ import {
 } from 'lucide-react';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
+
+// Currency formatter for Costa Rican Colón
+const formatCurrency = (amount) => {
+  return new Intl.NumberFormat('es-CR', {
+    style: 'currency',
+    currency: 'CRC',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0
+  }).format(amount);
+};
 
 // Card type configurations
 const CARD_TYPE_CONFIG = {
@@ -141,31 +150,63 @@ const StampGrid = ({ current, total }) => {
   );
 };
 
-// Confirmation Modal
-const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, details, loading }) => {
+// Confirmation Modal with detailed info
+const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, actionType, details, card, config, loading }) => {
   const [comment, setComment] = useState('');
+  const [purchaseAmount, setPurchaseAmount] = useState('');
   
   if (!isOpen) return null;
+
+  const needsPurchaseAmount = actionType === 'Redeem' || actionType === 'redeem' || 
+                              (config?.requiresPurchaseAmount && actionType.toLowerCase() === 'add');
   
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" data-testid="confirmation-modal">
       <div className="bg-white rounded-sm border-2 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] max-w-sm w-full p-6">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-heading text-xl">{title}</h3>
+        <div className="flex justify-between items-center mb-6">
+          <h3 className="text-heading text-xl">Confirm {title}</h3>
           <button onClick={onClose} className="p-1 hover:bg-zinc-100 rounded-sm">
             <X className="h-5 w-5" />
           </button>
         </div>
         
-        <div className="space-y-3 mb-6">
+        {/* Customer ID */}
+        <div className="bg-zinc-50 rounded-sm p-4 mb-4">
+          <p className="text-xs font-bold uppercase tracking-wider text-zinc-500 mb-1">Customer ID</p>
+          <p className="text-mono font-medium">{card?.customer?.id || card?.customerId || '-'}</p>
+        </div>
+
+        {/* Transaction Details */}
+        <div className="space-y-3 mb-4">
           {details.map((detail, idx) => (
-            <div key={idx} className="flex justify-between text-sm">
+            <div key={idx} className="flex justify-between text-sm border-b border-zinc-100 pb-2">
               <span className="text-zinc-500">{detail.label}</span>
               <span className="font-medium">{detail.value}</span>
             </div>
           ))}
         </div>
+
+        {/* Purchase Amount Input (for redemptions) */}
+        {needsPurchaseAmount && (
+          <div className="mb-4">
+            <label className="text-xs font-bold uppercase tracking-wider text-zinc-500 block mb-2">
+              Purchase Amount (CRC)
+            </label>
+            <div className="relative">
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 text-lg">₡</span>
+              <Input
+                type="number"
+                value={purchaseAmount}
+                onChange={(e) => setPurchaseAmount(e.target.value)}
+                placeholder="0"
+                className="input-brutalist pl-10 text-xl font-mono h-14"
+                data-testid="confirm-purchase-amount"
+              />
+            </div>
+          </div>
+        )}
         
+        {/* Comment */}
         <div className="mb-6">
           <label className="text-xs font-bold uppercase tracking-wider text-zinc-500 block mb-2">
             Comment (optional)
@@ -184,16 +225,16 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, details, loading
           <Button
             variant="outline"
             onClick={onClose}
-            className="flex-1 btn-secondary"
+            className="flex-1 h-12 border-2 border-black bg-white text-black hover:bg-zinc-100 font-bold uppercase tracking-wider"
             disabled={loading}
             data-testid="cancel-action"
           >
             Cancel
           </Button>
           <Button
-            onClick={() => onConfirm(comment)}
+            onClick={() => onConfirm(comment, purchaseAmount)}
             disabled={loading}
-            className="flex-1 btn-primary"
+            className="flex-1 h-12 bg-black text-white hover:bg-zinc-800 font-bold uppercase tracking-wider"
             data-testid="confirm-action"
           >
             {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Confirm'}
@@ -205,7 +246,7 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, details, loading
 };
 
 // Success Modal
-const SuccessModal = ({ isOpen, onClose, message }) => {
+const SuccessModal = ({ isOpen, onClose, message, details }) => {
   if (!isOpen) return null;
   
   return (
@@ -215,8 +256,24 @@ const SuccessModal = ({ isOpen, onClose, message }) => {
           <Check className="h-8 w-8 text-black" />
         </div>
         <h3 className="text-heading text-xl mb-2">Successful Transaction</h3>
-        <p className="text-zinc-500 mb-6">{message}</p>
-        <Button onClick={onClose} className="btn-primary w-full" data-testid="done-button">
+        <p className="text-zinc-500 mb-4">{message}</p>
+        
+        {details && details.length > 0 && (
+          <div className="bg-zinc-50 rounded-sm p-4 mb-4 text-left">
+            {details.map((detail, idx) => (
+              <div key={idx} className="flex justify-between text-sm py-1">
+                <span className="text-zinc-500">{detail.label}</span>
+                <span className="font-medium">{detail.value}</span>
+              </div>
+            ))}
+          </div>
+        )}
+        
+        <Button 
+          onClick={onClose} 
+          className="w-full h-12 bg-black text-white hover:bg-zinc-800 font-bold uppercase tracking-wider" 
+          data-testid="done-button"
+        >
           Done
         </Button>
       </div>
@@ -237,7 +294,7 @@ const ResultPage = () => {
   const [showCustomerInfo, setShowCustomerInfo] = useState(false);
   const [showCardInfo, setShowCardInfo] = useState(false);
   const [confirmModal, setConfirmModal] = useState({ open: false, action: null, details: [] });
-  const [successModal, setSuccessModal] = useState({ open: false, message: '' });
+  const [successModal, setSuccessModal] = useState({ open: false, message: '', details: [] });
 
   if (!card) {
     return (
@@ -246,7 +303,11 @@ const ResultPage = () => {
           <AlertCircle className="h-16 w-16 mx-auto mb-4 text-zinc-300" />
           <h2 className="text-heading text-2xl mb-2">No Card Data</h2>
           <p className="text-zinc-500 mb-6">Please scan a card first</p>
-          <Button onClick={() => navigate('/')} className="btn-primary" data-testid="back-to-scanner">
+          <Button 
+            onClick={() => navigate('/')} 
+            className="h-12 bg-black text-white hover:bg-zinc-800 font-bold uppercase tracking-wider px-8" 
+            data-testid="back-to-scanner"
+          >
             Back to Scanner
           </Button>
         </div>
@@ -262,26 +323,31 @@ const ResultPage = () => {
   const openConfirmation = (action) => {
     const details = [];
     
+    details.push({ label: 'Card ID', value: card.id });
+    details.push({ label: 'Card Type', value: config.name });
+    
     if (action === 'add' && config.requiresPurchaseAmount) {
-      details.push({ label: 'Purchase Amount', value: `$${purchaseAmount || '0'}` });
-    } else if (action === 'add' || action === 'redeem') {
+      details.push({ label: 'Purchase Amount', value: formatCurrency(parseFloat(purchaseAmount) || 0) });
+    } else if (action === 'add' || action === 'Add') {
       details.push({ label: 'Quantity', value: actionAmount });
+    } else if (action === 'Redeem' || action === 'redeem') {
+      details.push({ label: 'Amount to Redeem', value: actionAmount });
     }
     
-    if (action === 'use') {
+    if (action === 'use' || action === 'Use') {
       details.push({ label: 'Coupon Status', value: 'Active' });
     }
     
     setConfirmModal({ open: true, action, details });
   };
 
-  const handleAction = async (comment = '') => {
+  const handleAction = async (comment = '', confirmPurchaseAmount = '') => {
     const action = confirmModal.action;
     setLoading(true);
-    setConfirmModal({ open: false, action: null, details: [] });
     
     try {
-      const actionConfig = config.actions[action.toLowerCase()];
+      const actionKey = action.toLowerCase();
+      const actionConfig = config.actions[actionKey];
       if (!actionConfig) {
         throw new Error('Unknown action');
       }
@@ -290,7 +356,8 @@ const ResultPage = () => {
       const payload = {
         amount: actionAmount,
         comment: comment || undefined,
-        purchaseSum: config.requiresPurchaseAmount ? parseFloat(purchaseAmount) || 0 : undefined
+        purchaseSum: confirmPurchaseAmount ? parseFloat(confirmPurchaseAmount) : 
+                     (config.requiresPurchaseAmount ? parseFloat(purchaseAmount) || 0 : undefined)
       };
 
       const response = await axios.post(`${API}${endpoint}`, payload);
@@ -307,7 +374,22 @@ const ResultPage = () => {
         }));
       }
       
-      setSuccessModal({ open: true, message: response.data.message || 'Transaction completed successfully!' });
+      // Build success details
+      const successDetails = [
+        { label: 'Customer ID', value: card.customer?.id || card.customerId || '-' },
+        { label: 'Card ID', value: card.id }
+      ];
+      
+      if (confirmPurchaseAmount) {
+        successDetails.push({ label: 'Purchase Amount', value: formatCurrency(parseFloat(confirmPurchaseAmount)) });
+      }
+      
+      setConfirmModal({ open: false, action: null, details: [] });
+      setSuccessModal({ 
+        open: true, 
+        message: response.data.message || 'Transaction completed successfully!',
+        details: successDetails
+      });
       
       // Reset inputs
       setActionAmount(1);
@@ -315,6 +397,7 @@ const ResultPage = () => {
     } catch (error) {
       const message = error.response?.data?.detail || 'Action failed';
       toast.error(message);
+      setConfirmModal({ open: false, action: null, details: [] });
     } finally {
       setLoading(false);
     }
@@ -354,7 +437,7 @@ const ResultPage = () => {
               variant="outline"
               size="icon"
               onClick={() => setActionAmount(Math.max(1, actionAmount - 1))}
-              className="h-14 w-14 border-2 border-black rounded-sm"
+              className="h-14 w-14 border-2 border-black rounded-sm bg-white text-black hover:bg-zinc-100"
               data-testid="decrease-amount"
             >
               <Minus className="h-6 w-6" />
@@ -368,7 +451,7 @@ const ResultPage = () => {
               variant="outline"
               size="icon"
               onClick={() => setActionAmount(actionAmount + 1)}
-              className="h-14 w-14 border-2 border-black rounded-sm"
+              className="h-14 w-14 border-2 border-black rounded-sm bg-white text-black hover:bg-zinc-100"
               data-testid="increase-amount"
             >
               <Plus className="h-6 w-6" />
@@ -378,7 +461,7 @@ const ResultPage = () => {
           <Button
             onClick={() => openConfirmation('Add')}
             disabled={loading}
-            className="w-full btn-primary h-14 text-lg"
+            className="w-full h-14 text-lg bg-black text-white hover:bg-zinc-800 font-bold uppercase tracking-wider"
             data-testid="add-stamp-button"
           >
             {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : actionConfig.label}
@@ -413,15 +496,15 @@ const ResultPage = () => {
           {/* Purchase amount input */}
           <div className="card-brutalist">
             <label className="text-xs font-bold uppercase tracking-wider text-zinc-500 block mb-2">
-              {actionConfig.amountLabel || 'Enter purchase amount'}
+              {actionConfig.amountLabel || 'Enter purchase amount'} (CRC)
             </label>
             <div className="relative">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 text-xl">$</span>
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 text-xl">₡</span>
               <Input
                 type="number"
                 value={purchaseAmount}
                 onChange={(e) => setPurchaseAmount(e.target.value)}
-                placeholder="0.00"
+                placeholder="0"
                 className="input-brutalist pl-10 text-3xl font-mono h-16 text-center"
                 data-testid="purchase-amount-input"
               />
@@ -431,7 +514,7 @@ const ResultPage = () => {
           <Button
             onClick={() => openConfirmation('Add')}
             disabled={loading || !purchaseAmount}
-            className="w-full btn-primary h-14 text-lg"
+            className="w-full h-14 text-lg bg-black text-white hover:bg-zinc-800 font-bold uppercase tracking-wider disabled:bg-zinc-300 disabled:text-zinc-500"
             data-testid="add-points-button"
           >
             {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : actionConfig.label}
@@ -466,7 +549,7 @@ const ResultPage = () => {
               variant="outline"
               size="icon"
               onClick={() => setActionAmount(Math.max(1, actionAmount - 1))}
-              className="h-14 w-14 border-2 border-black rounded-sm"
+              className="h-14 w-14 border-2 border-black rounded-sm bg-white text-black hover:bg-zinc-100"
               data-testid="decrease-redeem"
             >
               <Minus className="h-6 w-6" />
@@ -480,7 +563,7 @@ const ResultPage = () => {
               variant="outline"
               size="icon"
               onClick={() => setActionAmount(Math.min(availableAmount, actionAmount + 1))}
-              className="h-14 w-14 border-2 border-black rounded-sm"
+              className="h-14 w-14 border-2 border-black rounded-sm bg-white text-black hover:bg-zinc-100"
               disabled={actionAmount >= availableAmount}
               data-testid="increase-redeem"
             >
@@ -491,7 +574,7 @@ const ResultPage = () => {
           <Button
             onClick={() => openConfirmation(activeTab)}
             disabled={loading || availableAmount === 0 || actionAmount > availableAmount}
-            className="w-full h-14 text-lg"
+            className="w-full h-14 text-lg font-bold uppercase tracking-wider disabled:opacity-50"
             style={{ backgroundColor: config.color, color: '#000' }}
             data-testid="redeem-button"
           >
@@ -516,7 +599,7 @@ const ResultPage = () => {
           <Button
             onClick={() => openConfirmation('Use')}
             disabled={loading}
-            className="w-full h-14 text-lg"
+            className="w-full h-14 text-lg font-bold uppercase tracking-wider"
             style={{ backgroundColor: config.color, color: '#fff' }}
             data-testid="use-coupon-button"
           >
@@ -534,7 +617,7 @@ const ResultPage = () => {
             variant="outline"
             size="icon"
             onClick={() => setActionAmount(Math.max(1, actionAmount - 1))}
-            className="h-14 w-14 border-2 border-black rounded-sm"
+            className="h-14 w-14 border-2 border-black rounded-sm bg-white text-black hover:bg-zinc-100"
           >
             <Minus className="h-6 w-6" />
           </Button>
@@ -543,7 +626,7 @@ const ResultPage = () => {
             variant="outline"
             size="icon"
             onClick={() => setActionAmount(actionAmount + 1)}
-            className="h-14 w-14 border-2 border-black rounded-sm"
+            className="h-14 w-14 border-2 border-black rounded-sm bg-white text-black hover:bg-zinc-100"
           >
             <Plus className="h-6 w-6" />
           </Button>
@@ -552,7 +635,7 @@ const ResultPage = () => {
         <Button
           onClick={() => openConfirmation(activeTab)}
           disabled={loading}
-          className="w-full btn-primary h-14 text-lg"
+          className="w-full h-14 text-lg bg-black text-white hover:bg-zinc-800 font-bold uppercase tracking-wider"
         >
           {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : actionConfig.label}
         </Button>
@@ -577,8 +660,26 @@ const ResultPage = () => {
       </header>
 
       <main className="max-w-md mx-auto p-6 pb-24">
+        {/* Customer ID - Visible on Top */}
+        <div className="bg-black text-white rounded-sm p-4 mb-4" data-testid="customer-id-banner">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-wider text-zinc-400">Customer ID</p>
+              <p className="text-mono text-lg font-medium">{card.customer?.id || card.customerId || '-'}</p>
+            </div>
+            <button
+              onClick={handleCopyId}
+              className="p-2 hover:bg-white/10 rounded-sm transition-colors"
+              data-testid="copy-customer-id"
+              aria-label="Copy ID"
+            >
+              <Copy className="h-5 w-5" />
+            </button>
+          </div>
+        </div>
+
         {/* Customer Name (masked) */}
-        <div className="text-center mb-6">
+        <div className="text-center mb-4">
           <p className="text-sm text-zinc-500">Customer:</p>
           <h2 className="text-heading text-2xl masked-data" data-testid="customer-display-name">
             {card.customer?.firstName || '***'} {card.customer?.surname || '***'}
@@ -654,10 +755,6 @@ const ResultPage = () => {
                 <span className="text-zinc-500">Email</span>
                 <span className="masked-data">{card.customer?.email || '***@***.***'}</span>
               </div>
-              <div className="flex justify-between p-4">
-                <span className="text-zinc-500">Customer ID</span>
-                <span className="text-mono text-sm">{card.customer?.id || card.customerId || '-'}</span>
-              </div>
             </div>
           )}
         </div>
@@ -700,7 +797,7 @@ const ResultPage = () => {
               {balance.balance !== undefined && balance.balance > 0 && (
                 <div className="flex justify-between p-4">
                   <span className="text-zinc-500">Total balance</span>
-                  <span className="font-medium">${balance.balance.toFixed(2)}</span>
+                  <span className="font-medium">{formatCurrency(balance.balance)}</span>
                 </div>
               )}
               {balance.discountLevel && (
@@ -718,7 +815,7 @@ const ResultPage = () => {
               {balance.totalSavings !== undefined && (
                 <div className="flex justify-between p-4">
                   <span className="text-zinc-500">Total savings</span>
-                  <span className="font-medium">${balance.totalSavings.toFixed(2)}</span>
+                  <span className="font-medium">{formatCurrency(balance.totalSavings)}</span>
                 </div>
               )}
               {card.countVisits !== undefined && (
@@ -735,12 +832,7 @@ const ResultPage = () => {
               )}
               <div className="flex justify-between p-4">
                 <span className="text-zinc-500">Card ID</span>
-                <div className="flex items-center gap-2">
-                  <span className="text-mono text-sm">{card.id}</span>
-                  <button onClick={handleCopyId} className="p-1 hover:bg-zinc-100 rounded">
-                    <Copy className="h-4 w-4 text-zinc-400" />
-                  </button>
-                </div>
+                <span className="text-mono text-sm">{card.id}</span>
               </div>
               {card.serialNumber && (
                 <div className="flex justify-between p-4">
@@ -774,7 +866,7 @@ const ResultPage = () => {
         <Button
           onClick={() => navigate('/')}
           variant="outline"
-          className="w-full btn-secondary"
+          className="w-full h-12 border-2 border-black bg-white text-black hover:bg-zinc-100 font-bold uppercase tracking-wider"
           data-testid="scan-another-button"
         >
           Scan Another Card
@@ -786,16 +878,20 @@ const ResultPage = () => {
         isOpen={confirmModal.open}
         onClose={() => setConfirmModal({ open: false, action: null, details: [] })}
         onConfirm={handleAction}
-        title={`Confirm ${confirmModal.action}`}
+        title={confirmModal.action}
+        actionType={confirmModal.action}
         details={confirmModal.details}
+        card={card}
+        config={config}
         loading={loading}
       />
 
       {/* Success Modal */}
       <SuccessModal
         isOpen={successModal.open}
-        onClose={() => setSuccessModal({ open: false, message: '' })}
+        onClose={() => setSuccessModal({ open: false, message: '', details: [] })}
         message={successModal.message}
+        details={successModal.details}
       />
     </div>
   );

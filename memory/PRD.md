@@ -1,88 +1,155 @@
-# Boomerang Scanner App - Product Requirements Document
+# Devotio Rewards Scanner App - PRD
 
 ## Original Problem Statement
-Build a custom scanner app that mimics the Boomerang scanner UI for a whitelabel SAAS. The app connects via API to Boomerang but hides PII (Personal Identifiable Information) when cards are scanned. Internal employees should not see customer personal info like names, emails, and phone numbers.
+Build a custom scanner app for "Devotio Rewards" SaaS whitelabel service connecting to the Boomerangme API. The app needs to:
+- Prevent display of PII (full name, email, phone) when scanning loyalty cards
+- Display non-sensitive data (customer ID, transaction status, loyalty points)
+- Process loyalty actions (add stamps/points, redeem rewards, apply discounts)
 
-## User Personas
-1. **Store Employee/Cashier**: Primary user who scans customer loyalty cards at POS
-2. **Store Manager**: Configures settings and oversees usage
-3. **End Client (Business Owner)**: Wants privacy-compliant loyalty program
+## Product Requirements
 
-## Core Requirements
-- ✅ Email/password authentication
-- ✅ QR Code scanner with camera access
-- ✅ Manual card ID entry
-- ✅ PII masking (name, email, phone hidden with ***)
-- ✅ Show allowed data: Card ID, Customer ID, Balance, Points, Stamps
-- ✅ Settings: Vibration, Beep, Show Result, Copy to Clipboard
-- ✅ Customer search by phone/email
-- ✅ Card actions: Add Stamp, Add Points, Redeem Reward
-- ❌ Kiosk mode (not needed per client)
+### Core Features
+1. **PII Masking** (UPDATED):
+   - ✅ Customer name and surname: **VISIBLE** (for identification)
+   - ✅ Email: **MASKED** (***@***.***) 
+   - ✅ Phone: **MASKED** (***-***-****)
 
-## What's Been Implemented (January 2026)
+2. **Data Display**:
+   - ✅ Card ID, Customer ID, loyalty status (stamps, points, rewards)
+   - ✅ Currency: Costa Rican Colón (₡)
 
-### Backend (FastAPI)
-- JWT authentication (register/login)
-- Boomerang API proxy endpoints
-- PII masking middleware
-- Mock responses for testing without real API key
-- Settings CRUD operations
-- Scan logging to MongoDB
+3. **Scanning**:
+   - ✅ Barcode scanning support (html5-qrcode library)
+   - ✅ QR code scanning support (same library supports both)
+   - ✅ Manual card ID entry
 
-### Frontend (React)
-- Login/Register page
-- Scanner page with camera preview
-- Result page with masked customer data
-- Settings page with toggle switches
-- Customer search page
-- Support/FAQ page
-- Navigation sidebar
+4. **Transaction Flow**:
+   - ✅ Add stamps/points, redeem rewards, apply discounts
+   - ✅ Confirmation modal with read-only purchase amount
+   - ✅ **Mandatory comment field** with asterisk indicator
+   - ✅ Transaction confirmation display
 
-### API Endpoints
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| /api/auth/register | POST | Create new user |
-| /api/auth/login | POST | Login with email/password |
-| /api/auth/me | GET | Get current user |
-| /api/settings | GET/PUT | Get/update user settings |
-| /api/scan | POST | Process scanned QR code |
-| /api/cards/{id} | GET | Get card details |
-| /api/cards/{id}/add-stamp | POST | Add stamps to card |
-| /api/cards/{id}/add-point | POST | Add points to card |
-| /api/cards/{id}/redeem-reward | POST | Redeem reward |
-| /api/customers | GET | Search customers |
+5. **Language**:
+   - ✅ **Spanish** as primary language throughout entire app
+   - English can be secondary (not implemented yet)
 
-## Prioritized Backlog
+6. **Branding**:
+   - ✅ Devotio Rewards logo displayed
+   - ✅ Pink/purple gradient colors (#F040A0 to #8A2BE2)
+   - ✅ Figtree typography
+   - ✅ App title: "Devotio Rewards - Escáner de Tarjetas"
 
-### P0 (Critical) - DONE
-- [x] Authentication flow
-- [x] PII masking
-- [x] Card scanning
-- [x] Loyalty actions
+### Card Types Supported
+- ✅ Stamp Card (Tarjeta de Sellos)
+- ✅ Cashback Card (Tarjeta Cashback)
+- ✅ Discount Card (Tarjeta de Descuento)
+- ✅ Gift Card (Tarjeta de Regalo)
+- ✅ Coupon (Cupón)
+- ✅ Multipass (Multipase)
+- ✅ Points Card (Tarjeta de Puntos)
+- ✅ VIP Card (Tarjeta VIP)
 
-### P1 (High Priority) - Pending
-- [ ] Real Boomerang API integration (needs client API key)
-- [ ] QR code detection from camera stream
-- [ ] Transaction history/logs viewer
+## What's Been Implemented (January 13, 2026)
 
-### P2 (Medium Priority)
-- [ ] Multi-language support
-- [ ] Dark mode theme
-- [ ] Push notifications for actions
+### Session 2 Changes
+1. **Language Localization to Spanish**
+   - All UI text translated to Spanish
+   - Labels, buttons, error messages, toasts in Spanish
+   - Settings, Support, Search pages fully translated
 
-### P3 (Low Priority)
-- [ ] Offline mode with sync
-- [ ] Analytics dashboard
-- [ ] Export scan logs
+2. **QR + Barcode Scanning**
+   - html5-qrcode library already supports both formats
+   - Format support includes: QR_CODE, CODE_128, EAN_13, EAN_8, UPC_A, etc.
+   - Scanner label updated to "Escáner de códigos de barras y QR"
 
-## Next Action Items
-1. **Client provides Boomerang API key** - Add to backend .env as `BOOMERANG_API_KEY`
-2. Add QR code detection library (html5-qrcode or zxing)
-3. Add transaction history page
-4. Consider adding barcode scanning support
+3. **Confirmation Modal Updates**
+   - Purchase amount displayed as read-only (from initial entry)
+   - Comment field marked as mandatory with asterisk (*)
+   - Validation prevents submission without comment
+   - Spanish error message: "El comentario es obligatorio"
 
-## Technical Notes
-- Backend runs on port 8001
-- Frontend runs on port 3000
-- MongoDB for user data and scan logs
-- Boomerang API base: https://api.digitalwallet.cards/api/v2
+4. **PII Masking Update**
+   - Customer firstName and surname now **VISIBLE**
+   - Email and phone remain **MASKED**
+   - Updated `mask_pii()` function in server.py
+
+5. **Branding & Design**
+   - Added Devotio Rewards logo (/fonts/logo.png)
+   - Implemented pink/purple gradient colors
+   - Added Figtree font family
+   - Updated CSS variables and styling
+
+6. **Currency**
+   - Costa Rican Colón (₡) displayed correctly
+   - Using `Intl.NumberFormat('es-CR', { currency: 'CRC' })`
+
+### Previous Session Work
+- Full-stack scaffolding (React + FastAPI + MongoDB)
+- Core app pages (Login, Scanner, Result, Settings, Search, Support)
+- Barcode scanner integration
+- PII masking backend logic
+- Comprehensive demo data (DEMO-001 through DEMO-007)
+- Dynamic transaction UI for different card types
+- JWT authentication
+
+## Code Architecture
+```
+/app
+├── backend/
+│   ├── .env
+│   └── server.py         # FastAPI, endpoints, PII masking, mock data
+├── frontend/
+│   ├── public/
+│   │   └── fonts/        # Figtree fonts, logo.png
+│   ├── src/
+│   │   ├── context/      # AuthContext, SettingsContext
+│   │   ├── pages/        # All pages in Spanish
+│   │   ├── components/   # Shadcn UI
+│   │   ├── index.css     # Custom CSS, brand colors
+│   │   └── App.js        # Router
+│   └── package.json
+└── memory/
+    └── PRD.md
+```
+
+## Key API Endpoints
+- `POST /api/auth/register` - User registration
+- `POST /api/auth/login` - User login
+- `GET /api/cards/{card_id}` - Get card details (PII masked)
+- `POST /api/cards/{card_id}/add-stamp` - Add stamps
+- `POST /api/cards/{card_id}/add-point` - Add points
+- `POST /api/cards/{card_id}/redeem-*` - Redeem actions
+- `GET /api/customers` - Search customers
+
+## Demo Credentials
+- **Email**: demo@devotio.com
+- **Password**: demo123
+- **Demo Cards**: DEMO-001 through DEMO-007
+
+## Current Status
+- ✅ App running on **MOCK data** for proposal demo
+- ✅ All UI in Spanish
+- ✅ Customer names visible, email/phone masked
+- ✅ Confirmation modal with mandatory comments
+- ✅ Devotio branding applied
+- ✅ QR + Barcode scanning ready
+
+## Upcoming Tasks (P1)
+- Connect to real Boomerang API (when API key provided)
+- Add API key to `/app/backend/.env` as `BOOMERANG_API_KEY`
+
+## Future Tasks (P2)
+- Multi-tenant architecture
+- Analytics dashboard
+- Webhook integration
+- App Store publishing
+
+## Tech Stack
+- **Frontend**: React, React Router, Tailwind CSS, Shadcn UI, axios, html5-qrcode
+- **Backend**: FastAPI, Pydantic, python-jose (JWT), bcrypt
+- **Database**: MongoDB
+- **Typography**: Figtree (custom), JetBrains Mono (monospace)
+
+## Test Reports
+- `/app/test_reports/iteration_1.json` - Initial testing
+- `/app/test_reports/iteration_2.json` - Spanish localization & features (100% pass)

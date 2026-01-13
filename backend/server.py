@@ -227,8 +227,15 @@ async def call_boomerang_api(method: str, endpoint: str, data: dict = None) -> d
         logger.warning("No Boomerang API key configured, returning mock data")
         return get_mock_response(endpoint, method, data)
     
-    headers = {'Authorization': f'Bearer {BOOMERANG_API_KEY}', 'Content-Type': 'application/json'}
+    # Boomerang API uses X-Api-Key header for authentication
+    headers = {
+        'X-Api-Key': BOOMERANG_API_KEY,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+    }
     url = f"{BOOMERANG_API_BASE}{endpoint}"
+    
+    logger.info(f"Calling Boomerang API: {method} {url}")
     
     async with httpx.AsyncClient() as client:
         try:
@@ -239,15 +246,28 @@ async def call_boomerang_api(method: str, endpoint: str, data: dict = None) -> d
             else:
                 raise ValueError(f"Unsupported method: {method}")
             
+            logger.info(f"Boomerang API response: {response.status_code}")
+            
             if response.status_code >= 400:
-                logger.error(f"Boomerang API error: {response.status_code} - {response.text}")
-                raise HTTPException(status_code=response.status_code, detail="Boomerang API error")
-            return response.json()
+                error_detail = response.text
+                logger.error(f"Boomerang API error: {response.status_code} - {error_detail}")
+                raise HTTPException(
+                    status_code=response.status_code, 
+                    detail=f"Error de API Boomerang: {error_detail[:200]}"
+                )
+            
+            result = response.json()
+            # API wraps response in {code, data} structure
+            if 'data' in result:
+                return result
+            return {"code": 200, "data": result}
+            
         except httpx.TimeoutException:
-            raise HTTPException(status_code=504, detail="Boomerang API timeout")
+            logger.error("Boomerang API timeout")
+            raise HTTPException(status_code=504, detail="Tiempo de espera agotado en API Boomerang")
         except httpx.RequestError as e:
             logger.error(f"Failed to connect to Boomerang API: {e}")
-            raise HTTPException(status_code=502, detail="Failed to connect to Boomerang API")
+            raise HTTPException(status_code=502, detail=f"Error de conexión con API Boomerang: {str(e)}")
 
 def get_mock_response(endpoint: str, method: str, data: dict = None) -> dict:
     """Return mock data for demo"""

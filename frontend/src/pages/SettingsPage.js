@@ -12,38 +12,38 @@ const SettingsPage = () => {
   const handleToggle = async (key, value) => {
     try {
       await updateSettings({ [key]: value });
-      toast.success('Settings updated');
+      toast.success('Configuración actualizada');
     } catch (error) {
-      toast.error('Failed to update settings');
+      toast.error('Error al actualizar configuración');
     }
   };
 
   const settingsItems = [
     {
       key: 'vibration',
-      label: 'Vibration',
-      description: 'Vibrate when scanning a barcode',
+      label: 'Vibración',
+      description: 'Vibrar al escanear un código',
       icon: Vibrate,
       testId: 'setting-vibration'
     },
     {
       key: 'beep',
-      label: 'Beep',
-      description: 'Play sound when scanning',
+      label: 'Sonido',
+      description: 'Reproducir sonido al escanear',
       icon: Volume2,
       testId: 'setting-beep'
     },
     {
       key: 'show_result',
-      label: 'Show result',
-      description: 'Display card details after scan',
+      label: 'Mostrar resultado',
+      description: 'Mostrar detalles de tarjeta después de escanear',
       icon: Eye,
       testId: 'setting-show-result'
     },
     {
       key: 'copy_to_clipboard',
-      label: 'Copy to clipboard',
-      description: 'Copy card ID after scanning',
+      label: 'Copiar al portapapeles',
+      description: 'Copiar ID de tarjeta después de escanear',
       icon: Clipboard,
       testId: 'setting-copy-clipboard'
     }
@@ -55,45 +55,49 @@ const SettingsPage = () => {
       <header className="nav-header">
         <button
           onClick={() => navigate('/')}
-          className="flex items-center gap-2 p-2 hover:bg-zinc-100 rounded-sm transition-colors"
+          className="flex items-center gap-2 p-2 hover:bg-zinc-100 rounded-lg transition-colors"
           data-testid="back-button"
         >
-          <ArrowLeft className="h-5 w-5" />
-          <span className="font-medium">Back</span>
+          <ArrowLeft className="h-5 w-5 text-[#2E0854]" />
+          <span className="font-medium text-[#2E0854]">Volver</span>
         </button>
-        <h1 className="logo-text text-xl">Devotio Rewards</h1>
+        <img 
+          src="/fonts/logo.png" 
+          alt="Devotio Rewards" 
+          className="h-10"
+        />
         <div className="w-20" />
       </header>
 
       <main className="max-w-md mx-auto p-6">
         <h2 className="text-heading text-3xl text-center mb-8" data-testid="settings-title">
-          Settings
+          Configuración
         </h2>
 
         {loading ? (
           <div className="flex justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin" />
+            <Loader2 className="h-8 w-8 animate-spin text-[#8A2BE2]" />
           </div>
         ) : (
           <div className="card-brutalist">
-            <p className="text-sm font-bold uppercase tracking-widest text-zinc-500 mb-4">
-              When scanning a barcode
+            <p className="text-sm font-semibold uppercase tracking-widest text-zinc-500 mb-4">
+              Al escanear un código
             </p>
 
             <div className="divide-y divide-zinc-200">
               {settingsItems.map((item) => (
                 <div key={item.key} className="settings-row" data-testid={item.testId}>
                   <div className="flex items-center gap-4">
-                    <item.icon className="h-5 w-5 text-zinc-600" strokeWidth={2} />
+                    <item.icon className="h-5 w-5 text-[#8A2BE2]" strokeWidth={2} />
                     <div>
-                      <p className="font-medium">{item.label}</p>
+                      <p className="font-medium text-[#2E0854]">{item.label}</p>
                       <p className="text-sm text-zinc-500">{item.description}</p>
                     </div>
                   </div>
                   <Switch
                     checked={settings[item.key] || false}
                     onCheckedChange={(checked) => handleToggle(item.key, checked)}
-                    className="data-[state=checked]:bg-[#00FF94]"
+                    className="data-[state=checked]:bg-gradient-to-r data-[state=checked]:from-[#F040A0] data-[state=checked]:to-[#8A2BE2]"
                     data-testid={`${item.testId}-switch`}
                   />
                 </div>

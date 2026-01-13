@@ -1,19 +1,40 @@
-@import url('https://fonts.googleapis.com/css2?family=Chivo:wght@400;700;900&family=IBM+Plex+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+/* Figtree Font */
+@font-face {
+    font-family: 'Figtree';
+    src: url('/fonts/Figtree-Regular.ttf') format('truetype');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Figtree';
+    src: url('/fonts/Figtree-SemiBold.ttf') format('truetype');
+    font-weight: 600;
+    font-style: normal;
+    font-display: swap;
+}
+
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-    --primary: #09090B;
+    /* Devotio Rewards Brand Colors */
+    --primary: #2E0854;
+    --primary-light: #301934;
     --secondary: #FFFFFF;
-    --accent: #00FF94;
+    --accent-pink: #F040A0;
+    --accent-purple: #8A2BE2;
+    --accent-gradient: linear-gradient(135deg, #F040A0 0%, #8A2BE2 100%);
     --background: #FFFFFF;
     --surface: #F4F4F5;
-    --text-primary: #09090B;
+    --text-primary: #2E0854;
     --text-secondary: #71717A;
     --border: #E4E4E7;
-    --success: #00FF94;
+    --success: #00C853;
     --error: #FF3333;
     --warning: #FFD700;
     --info: #0099FF;
@@ -21,7 +42,7 @@
 
 body {
     margin: 0;
-    font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-family: 'Figtree', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     background-color: var(--background);
@@ -29,9 +50,10 @@ body {
 }
 
 h1, h2, h3, h4, h5, h6 {
-    font-family: 'Chivo', sans-serif;
-    font-weight: 900;
+    font-family: 'Figtree', sans-serif;
+    font-weight: 600;
     letter-spacing: -0.02em;
+    color: var(--primary);
 }
 
 code, .mono {
@@ -41,25 +63,25 @@ code, .mono {
 @layer base {
     :root {
         --background: 0 0% 100%;
-        --foreground: 0 0% 3.9%;
+        --foreground: 270 80% 18%;
         --card: 0 0% 100%;
-        --card-foreground: 0 0% 3.9%;
+        --card-foreground: 270 80% 18%;
         --popover: 0 0% 100%;
-        --popover-foreground: 0 0% 3.9%;
-        --primary: 0 0% 4%;
+        --popover-foreground: 270 80% 18%;
+        --primary: 270 80% 18%;
         --primary-foreground: 0 0% 98%;
         --secondary: 0 0% 96.1%;
-        --secondary-foreground: 0 0% 9%;
+        --secondary-foreground: 270 80% 18%;
         --muted: 0 0% 96.1%;
         --muted-foreground: 0 0% 45.1%;
-        --accent: 152 100% 50%;
-        --accent-foreground: 0 0% 9%;
+        --accent: 320 88% 60%;
+        --accent-foreground: 0 0% 98%;
         --destructive: 0 84.2% 60.2%;
         --destructive-foreground: 0 0% 98%;
         --border: 0 0% 89.8%;
         --input: 0 0% 89.8%;
-        --ring: 0 0% 3.9%;
-        --radius: 0.125rem;
+        --ring: 270 80% 18%;
+        --radius: 0.5rem;
     }
 }
 
@@ -75,33 +97,253 @@ code, .mono {
 /* Custom utility classes */
 @layer utilities {
     .btn-primary {
-        @apply bg-black text-white hover:bg-zinc-800 rounded-sm font-bold uppercase tracking-wider h-12 
-               shadow-[4px_4px_0px_0px_rgba(0,0,0,0.2)] active:translate-y-[2px] active:shadow-none 
+        @apply text-white hover:opacity-90 rounded-lg font-semibold tracking-wide h-12 
+               shadow-lg active:translate-y-[1px] active:shadow-md 
                transition-all duration-200;
+        background: linear-gradient(135deg, #F040A0 0%, #8A2BE2 100%);
     }
 
     .btn-secondary {
-        @apply bg-white text-black border-2 border-black hover:bg-zinc-50 rounded-sm font-bold uppercase 
-               tracking-wider h-12 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-y-[2px] 
-               active:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all duration-200;
+        @apply bg-white border-2 hover:bg-gray-50 rounded-lg font-semibold 
+               tracking-wide h-12 shadow-md active:translate-y-[1px] 
+               active:shadow-sm transition-all duration-200;
+        border-color: #2E0854;
+        color: #2E0854;
     }
 
     .card-brutalist {
-        @apply bg-white border-2 border-black rounded-sm p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,0.1)];
+        @apply bg-white border rounded-xl p-6 shadow-lg;
+        border-color: #E4E4E7;
     }
 
     .input-brutalist {
-        @apply bg-white border-2 border-black rounded-sm h-12 px-4 focus:ring-2 focus:ring-black 
-               focus:ring-offset-2 font-mono text-sm w-full outline-none;
+        @apply bg-white border-2 rounded-lg h-12 px-4 focus:ring-2 focus:ring-offset-2 
+               font-mono text-sm w-full outline-none transition-all;
+        border-color: #E4E4E7;
+    }
+    
+    .input-brutalist:focus {
+        border-color: #8A2BE2;
+        --tw-ring-color: rgba(138, 43, 226, 0.2);
     }
 
     .text-heading {
-        font-family: 'Chivo', sans-serif;
-        font-weight: 900;
+        font-family: 'Figtree', sans-serif;
+        font-weight: 600;
+        color: #2E0854;
     }
 
     .text-mono {
         font-family: 'JetBrains Mono', monospace;
+    }
+    
+    .gradient-text {
+        background: linear-gradient(135deg, #F040A0 0%, #8A2BE2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+}
+
+/* Logo styling */
+.logo-text {
+    font-family: 'Figtree', sans-serif;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: #2E0854;
+}
+
+/* Navigation styles */
+.nav-header {
+    height: 60px;
+    border-bottom: 1px solid #E4E4E7;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 1rem;
+    background: white;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+}
+
+/* Sidebar menu */
+.sidebar-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(46, 8, 84, 0.5);
+    z-index: 100;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 200ms ease-out;
+}
+
+.sidebar-overlay.open {
+    opacity: 1;
+    visibility: visible;
+}
+
+.sidebar-panel {
+    position: fixed;
+    top: 0;
+    right: -300px;
+    width: 280px;
+    height: 100%;
+    background: white;
+    z-index: 101;
+    transition: right 200ms ease-out;
+    border-left: 1px solid #E4E4E7;
+    box-shadow: -4px 0 20px rgba(46, 8, 84, 0.1);
+}
+
+.sidebar-panel.open {
+    right: 0;
+}
+
+/* Form container */
+.auth-container {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    background: linear-gradient(135deg, #fdf4ff 0%, #FFFFFF 50%, #f3e8ff 100%);
+}
+
+/* Card balance display */
+.balance-display {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 3rem;
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: -0.02em;
+}
+
+/* Status badge */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.25rem 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-radius: 9999px;
+}
+
+.status-badge.success {
+    background: linear-gradient(135deg, #00C853 0%, #00E676 100%);
+    color: white;
+}
+
+.status-badge.error {
+    background: #FF3333;
+    color: white;
+}
+
+.status-badge.pending {
+    background: #FFD700;
+    color: #2E0854;
+}
+
+/* Action buttons grid */
+.action-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+}
+
+/* Settings row */
+.settings-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 0;
+    border-bottom: 1px solid #E4E4E7;
+}
+
+.settings-row:last-child {
+    border-bottom: none;
+}
+
+/* Search input with icon */
+.search-input-wrapper {
+    position: relative;
+}
+
+.search-input-wrapper svg {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #71717A;
+}
+
+.search-input-wrapper input {
+    padding-left: 3rem;
+}
+
+/* Customer card */
+.customer-card {
+    border: 1px solid #E4E4E7;
+    border-radius: 0.75rem;
+    padding: 1rem;
+    transition: all 200ms ease-out;
+    cursor: pointer;
+    background: white;
+}
+
+.customer-card:hover {
+    border-color: #8A2BE2;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(138, 43, 226, 0.15);
+}
+
+/* Masked data styling */
+.masked-data {
+    font-family: 'JetBrains Mono', monospace;
+    color: #71717A;
+    letter-spacing: 0.05em;
+}
+
+/* Loading spinner */
+.spinner {
+    width: 24px;
+    height: 24px;
+    border: 3px solid #E4E4E7;
+    border-top-color: #8A2BE2;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Empty state */
+.empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: #71717A;
+}
+
+/* Toast customization */
+[data-sonner-toast] {
+    font-family: 'Figtree', sans-serif !important;
+    border: 1px solid #E4E4E7 !important;
+    border-radius: 0.75rem !important;
+    box-shadow: 0 8px 20px rgba(46, 8, 84, 0.1) !important;
+}
+
+/* Mobile optimizations */
+@media (max-width: 640px) {
+    .balance-display {
+        font-size: 2.5rem;
+    }
+    
+    .action-grid {
+        grid-template-columns: 1fr;
     }
 }
 
@@ -110,8 +352,9 @@ code, .mono {
     position: relative;
     width: 100%;
     aspect-ratio: 4/3;
-    background: #09090B;
+    background: #2E0854;
     overflow: hidden;
+    border-radius: 0.75rem;
 }
 
 .scanner-viewport video {
@@ -167,13 +410,13 @@ code, .mono {
     transition: opacity 200ms ease-out, transform 200ms ease-out;
 }
 
-/* Grain texture overlay */
+/* Grain texture overlay - subtle */
 .grain-overlay {
     position: fixed;
     inset: 0;
     pointer-events: none;
     z-index: 9999;
-    opacity: 0.03;
+    opacity: 0.02;
     background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
 }
 
@@ -187,10 +430,27 @@ code, .mono {
 }
 
 ::-webkit-scrollbar-thumb {
-    background: #09090B;
-    border-radius: 0;
+    background: linear-gradient(135deg, #F040A0 0%, #8A2BE2 100%);
+    border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: #27272A;
+    background: #8A2BE2;
+}
+
+/* Brand gradient backgrounds */
+.bg-brand-gradient {
+    background: linear-gradient(135deg, #F040A0 0%, #8A2BE2 100%);
+}
+
+.border-brand {
+    border-color: #2E0854;
+}
+
+/* Customer ID banner with gradient */
+.customer-id-banner {
+    background: linear-gradient(135deg, #2E0854 0%, #4a1a6b 100%);
+    color: white;
+    border-radius: 0.75rem;
+    padding: 1rem;
 }

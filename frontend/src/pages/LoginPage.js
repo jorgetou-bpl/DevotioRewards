@@ -25,19 +25,19 @@ const LoginPage = () => {
     try {
       if (isLogin) {
         await login(email, password);
-        toast.success('Welcome back!');
+        toast.success('¡Bienvenido de nuevo!');
       } else {
         await register(email, password, name);
-        toast.success('Account created successfully!');
+        toast.success('¡Cuenta creada exitosamente!');
       }
       navigate('/');
     } catch (error) {
-      let message = 'Authentication failed';
+      let message = 'Error de autenticación';
       const detail = error.response?.data?.detail;
       if (typeof detail === 'string') {
         message = detail;
       } else if (Array.isArray(detail) && detail.length > 0) {
-        message = detail[0]?.msg || 'Validation error';
+        message = detail[0]?.msg || 'Error de validación';
       } else if (detail?.msg) {
         message = detail.msg;
       }
@@ -52,32 +52,35 @@ const LoginPage = () => {
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
-          <h1 className="logo-text text-3xl md:text-4xl tracking-tighter" data-testid="logo">
-            Devotio Rewards
-          </h1>
+          <img 
+            src="/fonts/logo.png" 
+            alt="Devotio Rewards" 
+            className="h-24 mx-auto mb-4"
+            data-testid="logo-image"
+          />
         </div>
 
         {/* Form Card */}
         <div className="card-brutalist">
           <h2 className="text-2xl text-heading text-center mb-2" data-testid="form-title">
-            Sign in
+            {isLogin ? 'Iniciar Sesión' : 'Crear Cuenta'}
           </h2>
           <p className="text-center text-zinc-500 text-sm mb-8">
-            Welcome to the loyalty card scanner
+            Bienvenido al escáner de tarjetas de fidelidad
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-6">
             {!isLogin && (
               <div className="space-y-2">
                 <Label htmlFor="name" className="text-sm font-medium uppercase tracking-wider">
-                  Name
+                  Nombre
                 </Label>
                 <Input
                   id="name"
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="Your name"
+                  placeholder="Tu nombre"
                   className="input-brutalist"
                   required={!isLogin}
                   data-testid="name-input"
@@ -87,7 +90,7 @@ const LoginPage = () => {
 
             <div className="space-y-2">
               <Label htmlFor="email" className="text-sm font-medium uppercase tracking-wider">
-                Email
+                Correo Electrónico
               </Label>
               <div className="relative">
                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
@@ -96,7 +99,7 @@ const LoginPage = () => {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="your@email.com"
+                  placeholder="tu@correo.com"
                   className="input-brutalist pl-12"
                   required
                   data-testid="email-input"
@@ -106,7 +109,7 @@ const LoginPage = () => {
 
             <div className="space-y-2">
               <Label htmlFor="password" className="text-sm font-medium uppercase tracking-wider">
-                Password
+                Contraseña
               </Label>
               <div className="relative">
                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
@@ -140,9 +143,9 @@ const LoginPage = () => {
               {loading ? (
                 <Loader2 className="h-5 w-5 animate-spin" />
               ) : isLogin ? (
-                'Sign in'
+                'Iniciar Sesión'
               ) : (
-                'Create account'
+                'Crear Cuenta'
               )}
             </Button>
           </form>
@@ -151,10 +154,10 @@ const LoginPage = () => {
             <button
               type="button"
               onClick={() => setIsLogin(!isLogin)}
-              className="text-sm text-zinc-500 hover:text-black transition-colors underline"
+              className="text-sm text-zinc-500 hover:text-[#8A2BE2] transition-colors underline"
               data-testid="toggle-mode"
             >
-              {isLogin ? "Don't have an account? Sign up" : 'Already have an account? Sign in'}
+              {isLogin ? '¿No tienes cuenta? Regístrate' : '¿Ya tienes cuenta? Inicia sesión'}
             </button>
           </div>
 
@@ -162,10 +165,10 @@ const LoginPage = () => {
             <div className="mt-4 text-center">
               <button
                 type="button"
-                className="text-sm font-bold text-black hover:underline"
+                className="text-sm font-semibold text-[#8A2BE2] hover:underline"
                 data-testid="forgot-password"
               >
-                Forgot password?
+                ¿Olvidaste tu contraseña?
               </button>
             </div>
           )}
@@ -173,9 +176,9 @@ const LoginPage = () => {
 
         {/* Footer */}
         <p className="text-center text-xs text-zinc-400 mt-8">
-          This site is protected by reCAPTCHA and the Google{' '}
-          <a href="#" className="underline">Privacy Policy</a> and{' '}
-          <a href="#" className="underline">Terms of Service</a> apply.
+          Este sitio está protegido por reCAPTCHA y aplican la{' '}
+          <a href="#" className="underline">Política de Privacidad</a> y los{' '}
+          <a href="#" className="underline">Términos de Servicio</a> de Google.
         </p>
       </div>
     </div>

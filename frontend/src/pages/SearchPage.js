@@ -40,10 +40,10 @@ const SearchPage = () => {
       setResults(response.data.customers || []);
       
       if (response.data.customers?.length === 0) {
-        toast.info('No customers found');
+        toast.info('No se encontraron clientes');
       }
     } catch (error) {
-      const message = error.response?.data?.detail || 'Search failed';
+      const message = error.response?.data?.detail || 'Error en la búsqueda';
       toast.error(message);
       setResults([]);
     } finally {
@@ -59,7 +59,7 @@ const SearchPage = () => {
       const cards = response.data.cards || [];
       
       if (cards.length === 0) {
-        toast.info('No cards found for this customer');
+        toast.info('No se encontraron tarjetas para este cliente');
         return;
       }
 
@@ -69,10 +69,10 @@ const SearchPage = () => {
       } else {
         // Show card selection (for now, just pick first one)
         navigate('/result', { state: { card: cards[0] } });
-        toast.info(`Customer has ${cards.length} cards. Showing first card.`);
+        toast.info(`El cliente tiene ${cards.length} tarjetas. Mostrando la primera.`);
       }
     } catch (error) {
-      const message = error.response?.data?.detail || 'Failed to load customer cards';
+      const message = error.response?.data?.detail || 'Error al cargar tarjetas del cliente';
       toast.error(message);
     } finally {
       setLoading(false);
@@ -85,22 +85,26 @@ const SearchPage = () => {
       <header className="nav-header">
         <button
           onClick={() => navigate('/')}
-          className="flex items-center gap-2 p-2 hover:bg-zinc-100 rounded-sm transition-colors"
+          className="flex items-center gap-2 p-2 hover:bg-zinc-100 rounded-lg transition-colors"
           data-testid="back-button"
         >
-          <ArrowLeft className="h-5 w-5" />
-          <span className="font-medium">Back</span>
+          <ArrowLeft className="h-5 w-5 text-[#2E0854]" />
+          <span className="font-medium text-[#2E0854]">Volver</span>
         </button>
-        <h1 className="logo-text text-xl">Devotio Rewards</h1>
+        <img 
+          src="/fonts/logo.png" 
+          alt="Devotio Rewards" 
+          className="h-10"
+        />
         <div className="w-20" />
       </header>
 
       <main className="max-w-md mx-auto p-6">
         <h2 className="text-heading text-3xl text-center mb-2" data-testid="search-title">
-          Search Customers
+          Buscar Clientes
         </h2>
         <p className="text-center text-zinc-500 text-sm mb-8">
-          Find customers by phone or email
+          Busca clientes por teléfono o correo electrónico
         </p>
 
         {/* Search Type Toggle */}
@@ -111,7 +115,7 @@ const SearchPage = () => {
             onClick={() => setSearchType('phone')}
             data-testid="search-by-phone"
           >
-            Phone
+            Teléfono
           </Button>
           <Button
             variant={searchType === 'email' ? 'default' : 'outline'}
@@ -119,7 +123,7 @@ const SearchPage = () => {
             onClick={() => setSearchType('email')}
             data-testid="search-by-email"
           >
-            Email
+            Correo
           </Button>
         </div>
 
@@ -131,7 +135,7 @@ const SearchPage = () => {
               type={searchType === 'email' ? 'email' : 'tel'}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder={searchType === 'phone' ? '+1 234 567 8900' : 'customer@email.com'}
+              placeholder={searchType === 'phone' ? '+506 1234 5678' : 'cliente@correo.com'}
               className="input-brutalist pl-12"
               data-testid="search-input"
             />
@@ -147,7 +151,7 @@ const SearchPage = () => {
             ) : (
               <>
                 <Search className="mr-2 h-5 w-5" />
-                Search
+                Buscar
               </>
             )}
           </Button>
@@ -156,16 +160,16 @@ const SearchPage = () => {
         {/* Results */}
         {searched && !loading && (
           <div className="space-y-4">
-            <p className="text-sm font-bold uppercase tracking-widest text-zinc-500">
-              Results ({results.length})
+            <p className="text-sm font-semibold uppercase tracking-widest text-zinc-500">
+              Resultados ({results.length})
             </p>
 
             {results.length === 0 ? (
               <div className="empty-state card-brutalist">
                 <AlertCircle className="h-12 w-12 mx-auto mb-4 text-zinc-300" />
-                <p className="font-medium">No customers found</p>
+                <p className="font-medium">No se encontraron clientes</p>
                 <p className="text-sm text-zinc-400 mt-1">
-                  Try a different {searchType}
+                  Intenta con un {searchType === 'phone' ? 'teléfono' : 'correo'} diferente
                 </p>
               </div>
             ) : (
@@ -179,12 +183,12 @@ const SearchPage = () => {
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-zinc-100 rounded-sm flex items-center justify-center">
-                          <User className="h-6 w-6 text-zinc-400" />
+                        <div className="w-12 h-12 bg-gradient-to-br from-[#F040A0] to-[#8A2BE2] rounded-lg flex items-center justify-center">
+                          <User className="h-6 w-6 text-white" />
                         </div>
                         <div>
-                          <p className="font-medium masked-data" data-testid="customer-name-masked">
-                            {customer.firstName || '***'} {customer.surname || '***'}
+                          <p className="font-medium text-[#2E0854]" data-testid="customer-name">
+                            {customer.firstName || 'N/A'} {customer.surname || ''}
                           </p>
                           <p className="text-sm masked-data" data-testid="customer-contact-masked">
                             {searchType === 'phone' 
@@ -209,7 +213,7 @@ const SearchPage = () => {
         {/* Loading State */}
         {loading && searched && (
           <div className="flex justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin" />
+            <Loader2 className="h-8 w-8 animate-spin text-[#8A2BE2]" />
           </div>
         )}
       </main>

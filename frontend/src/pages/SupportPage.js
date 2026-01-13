@@ -16,22 +16,22 @@ const SupportPage = () => {
   const supportItems = [
     {
       icon: FileText,
-      title: 'Documentation',
-      description: 'Read the user guide and FAQs',
+      title: 'Documentación',
+      description: 'Lee la guía de usuario y preguntas frecuentes',
       action: () => window.open('https://devotiorewards.com/', '_blank'),
       testId: 'support-docs'
     },
     {
       icon: Mail,
-      title: 'Email Support',
-      description: 'Contact us at support@devotiorewards.com',
-      action: () => window.location.href = 'mailto:support@devotiorewards.com',
+      title: 'Soporte por Correo',
+      description: 'Contáctanos en contacto@devotiorewards.com',
+      action: () => window.location.href = 'mailto:contacto@devotiorewards.com',
       testId: 'support-email'
     },
     {
       icon: MessageCircle,
-      title: 'Live Chat',
-      description: 'Chat with our support team',
+      title: 'Chat en Vivo',
+      description: 'Chatea con nuestro equipo de soporte',
       action: () => window.open('https://devotiorewards.com/', '_blank'),
       testId: 'support-chat'
     }
@@ -39,16 +39,16 @@ const SupportPage = () => {
 
   const faqItems = [
     {
-      question: 'Why is customer information hidden?',
-      answer: 'This scanner app is designed to protect customer privacy. Personal information like names, emails, and phone numbers are masked to comply with data protection policies.'
+      question: '¿Por qué la información del cliente está oculta?',
+      answer: 'Esta aplicación de escáner está diseñada para proteger la privacidad del cliente. Información personal como correos y teléfonos están enmascarados para cumplir con políticas de protección de datos. El nombre del cliente sí es visible para facilitar la identificación.'
     },
     {
-      question: 'How do I scan a card?',
-      answer: 'Tap the "Scan" button on the home screen and point your camera at the QR code on the customer\'s digital wallet pass.'
+      question: '¿Cómo escaneo una tarjeta?',
+      answer: 'Presiona el botón "Escanear" en la pantalla principal y apunta tu cámara al código de barras o código QR del pase de billetera digital del cliente.'
     },
     {
-      question: 'What actions can I perform?',
-      answer: 'You can add stamps, add points, or redeem rewards depending on the type of loyalty card the customer has.'
+      question: '¿Qué acciones puedo realizar?',
+      answer: 'Puedes agregar sellos, agregar puntos o canjear recompensas dependiendo del tipo de tarjeta de fidelidad que tenga el cliente.'
     }
   ];
 
@@ -58,22 +58,26 @@ const SupportPage = () => {
       <header className="nav-header">
         <button
           onClick={() => navigate('/')}
-          className="flex items-center gap-2 p-2 hover:bg-zinc-100 rounded-sm transition-colors"
+          className="flex items-center gap-2 p-2 hover:bg-zinc-100 rounded-lg transition-colors"
           data-testid="back-button"
         >
-          <ArrowLeft className="h-5 w-5" />
-          <span className="font-medium">Back</span>
+          <ArrowLeft className="h-5 w-5 text-[#2E0854]" />
+          <span className="font-medium text-[#2E0854]">Volver</span>
         </button>
-        <h1 className="logo-text text-xl">Devotio Rewards</h1>
+        <img 
+          src="/fonts/logo.png" 
+          alt="Devotio Rewards" 
+          className="h-10"
+        />
         <div className="w-20" />
       </header>
 
       <main className="max-w-md mx-auto p-6">
         <h2 className="text-heading text-3xl text-center mb-2" data-testid="support-title">
-          Support
+          Soporte
         </h2>
         <p className="text-center text-zinc-500 text-sm mb-8">
-          How can we help you today?
+          ¿Cómo podemos ayudarte hoy?
         </p>
 
         {/* Support Options */}
@@ -82,15 +86,15 @@ const SupportPage = () => {
             <button
               key={item.testId}
               onClick={item.action}
-              className="card-brutalist w-full text-left hover:-translate-y-1 hover:shadow-[12px_12px_0px_0px_rgba(0,0,0,0.1)] transition-all"
+              className="card-brutalist w-full text-left hover:-translate-y-1 hover:shadow-xl transition-all"
               data-testid={item.testId}
             >
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-zinc-100 rounded-sm flex items-center justify-center">
-                  <item.icon className="h-6 w-6" />
+                <div className="w-12 h-12 bg-gradient-to-br from-[#F040A0] to-[#8A2BE2] rounded-lg flex items-center justify-center">
+                  <item.icon className="h-6 w-6 text-white" />
                 </div>
                 <div className="flex-1">
-                  <p className="font-medium">{item.title}</p>
+                  <p className="font-medium text-[#2E0854]">{item.title}</p>
                   <p className="text-sm text-zinc-500">{item.description}</p>
                 </div>
                 <ExternalLink className="h-5 w-5 text-zinc-400" />
@@ -102,16 +106,16 @@ const SupportPage = () => {
         {/* FAQ Section */}
         <div className="card-brutalist">
           <div className="flex items-center gap-2 mb-4">
-            <HelpCircle className="h-5 w-5" />
-            <h3 className="font-bold uppercase tracking-wider text-sm">
-              Frequently Asked Questions
+            <HelpCircle className="h-5 w-5 text-[#8A2BE2]" />
+            <h3 className="font-semibold uppercase tracking-wider text-sm text-[#2E0854]">
+              Preguntas Frecuentes
             </h3>
           </div>
 
           <div className="space-y-4">
             {faqItems.map((faq, index) => (
               <div key={index} className="border-b border-zinc-200 pb-4 last:border-0 last:pb-0">
-                <p className="font-medium mb-2" data-testid={`faq-question-${index}`}>
+                <p className="font-medium mb-2 text-[#2E0854]" data-testid={`faq-question-${index}`}>
                   {faq.question}
                 </p>
                 <p className="text-sm text-zinc-500" data-testid={`faq-answer-${index}`}>

@@ -51,7 +51,7 @@ const ScannerPage = () => {
       await new Promise(resolve => setTimeout(resolve, 100));
 
       if (!scannerRef.current) {
-        throw new Error('Scanner element not found');
+        throw new Error('Elemento del escáner no encontrado');
       }
 
       const html5QrCode = new Html5Qrcode("barcode-scanner");
@@ -62,8 +62,9 @@ const ScannerPage = () => {
         qrbox: { width: 300, height: 150 },
         aspectRatio: 1.777,
         formatsToSupport: [
+          // QR Code
+          0,  // QR_CODE
           // Barcode formats
-          0,  // QR_CODE (fallback)
           1,  // AZTEC
           2,  // CODABAR
           3,  // CODE_39
@@ -91,9 +92,9 @@ const ScannerPage = () => {
       );
 
     } catch (error) {
-      console.error('Scanner error:', error);
-      setCameraError('Unable to access camera. Please check permissions.');
-      toast.error('Camera access denied');
+      console.error('Error del escáner:', error);
+      setCameraError('No se puede acceder a la cámara. Por favor verifica los permisos.');
+      toast.error('Acceso a la cámara denegado');
       setScanning(false);
     }
   };
@@ -104,31 +105,31 @@ const ScannerPage = () => {
         await html5QrCodeRef.current.stop();
         html5QrCodeRef.current = null;
       } catch (error) {
-        console.error('Error stopping scanner:', error);
+        console.error('Error al detener el escáner:', error);
       }
     }
     setScanning(false);
   };
 
   const onScanSuccess = async (decodedText, decodedResult) => {
-    console.log('Barcode detected:', decodedText, decodedResult);
+    console.log('Código detectado:', decodedText, decodedResult);
     
     // Stop scanner immediately to prevent multiple scans
     await stopScanner();
     
-    // Process the scanned barcode
+    // Process the scanned code
     handleScan(decodedText);
   };
 
   const onScanFailure = (error) => {
-    // Silently ignore - this fires constantly when no barcode is detected
+    // Silently ignore - this fires constantly when no code is detected
   };
 
-  const handleScan = async (barcodeData) => {
+  const handleScan = async (codeData) => {
     setLoading(true);
     
     try {
-      const response = await axios.post(`${API}/scan`, { qr_data: barcodeData });
+      const response = await axios.post(`${API}/scan`, { qr_data: codeData });
       
       triggerVibration();
       triggerBeep();
@@ -137,13 +138,13 @@ const ScannerPage = () => {
         await copyToClipboard(response.data.card.id);
       }
       
-      toast.success('Card scanned successfully!');
+      toast.success('¡Tarjeta escaneada exitosamente!');
       
       if (settings.show_result) {
         navigate('/result', { state: { card: response.data.card } });
       }
     } catch (error) {
-      const message = error.response?.data?.detail || 'Failed to scan card';
+      const message = error.response?.data?.detail || 'Error al escanear tarjeta';
       toast.error(message);
       // Restart scanner on error so user can try again
       startScanner();
@@ -165,24 +166,29 @@ const ScannerPage = () => {
   };
 
   const menuItems = [
-    { icon: Home, label: 'Home', action: () => navigate('/'), testId: 'menu-home' },
-    { icon: Settings, label: 'Settings', action: () => navigate('/settings'), testId: 'menu-settings' },
-    { icon: HelpCircle, label: 'Support', action: () => navigate('/support'), testId: 'menu-support' },
-    { icon: LogOut, label: 'Logout', action: handleLogout, testId: 'menu-logout' }
+    { icon: Home, label: 'Inicio', action: () => navigate('/'), testId: 'menu-home' },
+    { icon: Settings, label: 'Configuración', action: () => navigate('/settings'), testId: 'menu-settings' },
+    { icon: HelpCircle, label: 'Soporte', action: () => navigate('/support'), testId: 'menu-support' },
+    { icon: LogOut, label: 'Cerrar Sesión', action: handleLogout, testId: 'menu-logout' }
   ];
 
   return (
     <div className="min-h-screen bg-white flex flex-col" data-testid="scanner-page">
       {/* Header */}
       <header className="nav-header">
-        <h1 className="logo-text text-xl" data-testid="header-logo">Devotio Rewards</h1>
+        <img 
+          src="/fonts/logo.png" 
+          alt="Devotio Rewards" 
+          className="h-10"
+          data-testid="header-logo"
+        />
         <button 
           onClick={() => setMenuOpen(true)} 
-          className="p-2 hover:bg-zinc-100 rounded-sm transition-colors"
+          className="p-2 hover:bg-zinc-100 rounded-lg transition-colors"
           data-testid="menu-button"
-          aria-label="Open menu"
+          aria-label="Abrir menú"
         >
-          <Menu className="h-6 w-6" strokeWidth={2} />
+          <Menu className="h-6 w-6 text-[#2E0854]" strokeWidth={2} />
         </button>
       </header>
 
@@ -190,21 +196,21 @@ const ScannerPage = () => {
       <main className="flex-1 flex flex-col items-center justify-center p-6">
         {/* User Info */}
         <div className="text-center mb-8">
-          <p className="text-zinc-500 text-sm">You are logged in as:</p>
+          <p className="text-zinc-500 text-sm">Has iniciado sesión como:</p>
           <h2 className="text-heading text-2xl mt-1" data-testid="user-name">
-            {user?.name || 'User'}
+            {user?.name || 'Usuario'}
           </h2>
           <p className="text-zinc-500 text-sm masked-data" data-testid="user-email">
             {user?.email || '***@***.***'}
           </p>
           <p className="text-zinc-400 text-sm mt-2">
-            Press the "Scan" button to scan a barcode
+            Presiona el botón "Escanear" para escanear un código de barras o QR
           </p>
         </div>
 
         {/* Scanner Viewport */}
         <div className="w-full max-w-md">
-          <div className="scanner-viewport rounded-sm mb-6 relative" data-testid="scanner-viewport">
+          <div className="scanner-viewport mb-6 relative" data-testid="scanner-viewport">
             {scanning ? (
               <>
                 <div 
@@ -215,11 +221,11 @@ const ScannerPage = () => {
                 />
                 <button
                   onClick={stopScanner}
-                  className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm p-2 rounded-sm border-2 border-black hover:bg-white transition-colors z-20"
+                  className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm p-2 rounded-lg shadow-lg hover:bg-white transition-colors z-20"
                   data-testid="stop-scan-button"
-                  aria-label="Stop scanning"
+                  aria-label="Detener escaneo"
                 >
-                  <X className="h-5 w-5" />
+                  <X className="h-5 w-5 text-[#2E0854]" />
                 </button>
               </>
             ) : (
@@ -232,7 +238,7 @@ const ScannerPage = () => {
                 ) : (
                   <div className="text-center text-zinc-400">
                     <Camera className="h-12 w-12 mx-auto mb-2" />
-                    <p className="text-sm">Barcode scanner</p>
+                    <p className="text-sm">Escáner de códigos de barras y QR</p>
                   </div>
                 )}
               </div>
@@ -247,15 +253,15 @@ const ScannerPage = () => {
                   data-testid="scan-button"
                 >
                   <Scan className="mr-2 h-6 w-6" />
-                  Scan
+                  Escanear
                 </Button>
               </div>
             )}
             
             {loading && (
               <div className="absolute inset-0 flex items-center justify-center">
-                <div className="bg-white/90 backdrop-blur-sm p-4 rounded-sm border-2 border-black">
-                  <Loader2 className="h-8 w-8 animate-spin" />
+                <div className="bg-white/90 backdrop-blur-sm p-4 rounded-lg shadow-lg">
+                  <Loader2 className="h-8 w-8 animate-spin text-[#8A2BE2]" />
                 </div>
               </div>
             )}
@@ -271,7 +277,7 @@ const ScannerPage = () => {
               data-testid="search-customers-button"
             >
               <Search className="mr-2 h-5 w-5" />
-              Search customers
+              Buscar clientes
             </Button>
 
             <div className="relative">
@@ -279,7 +285,7 @@ const ScannerPage = () => {
                 type="text"
                 value={manualInput}
                 onChange={(e) => setManualInput(e.target.value)}
-                placeholder="Enter card ID manually"
+                placeholder="Ingresar ID de tarjeta manualmente"
                 className="input-brutalist"
                 data-testid="manual-input"
               />
@@ -287,10 +293,10 @@ const ScannerPage = () => {
                 <Button
                   type="submit"
                   size="sm"
-                  className="absolute right-1 top-1/2 -translate-y-1/2 bg-black text-white px-4 h-10"
+                  className="absolute right-1 top-1/2 -translate-y-1/2 bg-[#8A2BE2] text-white px-4 h-10 rounded-lg hover:bg-[#7B27CC]"
                   data-testid="manual-submit"
                 >
-                  Go
+                  Ir
                 </Button>
               )}
             </div>
@@ -309,14 +315,14 @@ const ScannerPage = () => {
       <aside className={`sidebar-panel ${menuOpen ? 'open' : ''}`} data-testid="sidebar-panel">
         <div className="p-6">
           <div className="flex items-center justify-between mb-8">
-            <span className="text-sm font-bold uppercase tracking-widest text-zinc-500">Menu</span>
+            <span className="text-sm font-semibold uppercase tracking-widest text-zinc-500">Menú</span>
             <button 
               onClick={() => setMenuOpen(false)}
-              className="p-2 hover:bg-zinc-100 rounded-sm transition-colors"
+              className="p-2 hover:bg-zinc-100 rounded-lg transition-colors"
               data-testid="close-menu-button"
-              aria-label="Close menu"
+              aria-label="Cerrar menú"
             >
-              <X className="h-5 w-5" />
+              <X className="h-5 w-5 text-[#2E0854]" />
             </button>
           </div>
           
@@ -328,11 +334,11 @@ const ScannerPage = () => {
                   setMenuOpen(false);
                   item.action();
                 }}
-                className="w-full flex items-center gap-4 p-4 text-left hover:bg-zinc-100 rounded-sm transition-colors border-b border-zinc-100"
+                className="w-full flex items-center gap-4 p-4 text-left hover:bg-zinc-100 rounded-lg transition-colors border-b border-zinc-100"
                 data-testid={item.testId}
               >
-                <item.icon className="h-5 w-5" strokeWidth={2} />
-                <span className="font-medium">{item.label}</span>
+                <item.icon className="h-5 w-5 text-[#8A2BE2]" strokeWidth={2} />
+                <span className="font-medium text-[#2E0854]">{item.label}</span>
               </button>
             ))}
           </nav>

@@ -38,88 +38,88 @@ const formatCurrency = (amount) => {
   }).format(amount);
 };
 
-// Card type configurations
+// Card type configurations - Spanish
 const CARD_TYPE_CONFIG = {
   stamp_card: {
-    name: 'Stamp Card',
+    name: 'Tarjeta de Sellos',
     icon: Stamp,
-    color: '#00FF94',
-    tabs: ['Add', 'Redeem'],
+    color: '#8A2BE2',
+    tabs: ['Agregar', 'Canjear'],
     actions: {
-      add: { label: 'Add Stamps', endpoint: 'add-stamp' },
-      redeem: { label: 'Redeem Reward', endpoint: 'redeem-reward' }
+      agregar: { label: 'Agregar Sellos', endpoint: 'add-stamp' },
+      canjear: { label: 'Canjear Recompensa', endpoint: 'redeem-reward' }
     }
   },
   cashback_card: {
-    name: 'Cashback Card',
+    name: 'Tarjeta Cashback',
     icon: Wallet,
-    color: '#0099FF',
-    tabs: ['Add', 'Redeem'],
+    color: '#F040A0',
+    tabs: ['Agregar', 'Canjear'],
     requiresPurchaseAmount: true,
     actions: {
-      add: { label: 'Add Points', endpoint: 'add-point', amountLabel: 'Enter purchase amount' },
-      redeem: { label: 'Redeem Points', endpoint: 'redeem-points' }
+      agregar: { label: 'Agregar Puntos', endpoint: 'add-point', amountLabel: 'Ingrese monto de compra' },
+      canjear: { label: 'Canjear Puntos', endpoint: 'redeem-points' }
     }
   },
   discount_card: {
-    name: 'Discount Card',
+    name: 'Tarjeta de Descuento',
     icon: Percent,
-    color: '#FF6B35',
-    tabs: ['Add'],
+    color: '#F040A0',
+    tabs: ['Agregar'],
     requiresPurchaseAmount: true,
     actions: {
-      add: { label: 'Add Points', endpoint: 'add-point', amountLabel: 'Fill in the purchase amount' }
+      agregar: { label: 'Agregar Puntos', endpoint: 'add-point', amountLabel: 'Ingrese monto de compra' }
     }
   },
   gift_card: {
-    name: 'Gift Card',
+    name: 'Tarjeta de Regalo',
     icon: Gift,
-    color: '#9333EA',
-    tabs: ['Add', 'Redeem'],
+    color: '#8A2BE2',
+    tabs: ['Agregar', 'Canjear'],
     actions: {
-      add: { label: 'Add Points', endpoint: 'add-point' },
-      redeem: { label: 'Redeem Points', endpoint: 'redeem-points' }
+      agregar: { label: 'Agregar Puntos', endpoint: 'add-point' },
+      canjear: { label: 'Canjear Puntos', endpoint: 'redeem-points' }
     }
   },
   coupon: {
-    name: 'Coupon',
+    name: 'Cupón',
     icon: Ticket,
-    color: '#EC4899',
-    tabs: ['Use'],
+    color: '#F040A0',
+    tabs: ['Usar'],
     singleUse: true,
     actions: {
-      use: { label: 'Use Coupon', endpoint: 'use-coupon' }
+      usar: { label: 'Usar Cupón', endpoint: 'use-coupon' }
     }
   },
   multipass: {
-    name: 'Multipass',
+    name: 'Multipase',
     icon: CreditCard,
-    color: '#14B8A6',
-    tabs: ['Add', 'Redeem', 'Points'],
+    color: '#8A2BE2',
+    tabs: ['Agregar', 'Canjear', 'Puntos'],
     actions: {
-      add: { label: 'Add Visits', endpoint: 'add-visit' },
-      redeem: { label: 'Redeem Visits', endpoint: 'redeem-visit' },
-      points: { label: 'Redeem Points', endpoint: 'redeem-points' }
+      agregar: { label: 'Agregar Visitas', endpoint: 'add-visit' },
+      canjear: { label: 'Canjear Visitas', endpoint: 'redeem-visit' },
+      puntos: { label: 'Canjear Puntos', endpoint: 'redeem-points' }
     }
   },
   points_card: {
-    name: 'Points Card',
+    name: 'Tarjeta de Puntos',
     icon: Star,
-    color: '#F59E0B',
-    tabs: ['Add', 'Redeem'],
+    color: '#F040A0',
+    tabs: ['Agregar', 'Canjear'],
     actions: {
-      add: { label: 'Add Points', endpoint: 'add-point' },
-      redeem: { label: 'Redeem Reward', endpoint: 'redeem-reward' }
+      agregar: { label: 'Agregar Puntos', endpoint: 'add-point' },
+      canjear: { label: 'Canjear Recompensa', endpoint: 'redeem-reward' }
     }
   },
   vip_card: {
-    name: 'VIP Card',
+    name: 'Tarjeta VIP',
     icon: Star,
-    color: '#FFD700',
-    tabs: ['Add', 'Redeem'],
+    color: '#8A2BE2',
+    tabs: ['Agregar', 'Canjear'],
     actions: {
-      add: { label: 'Add Points', endpoint: 'add-point' },
-      redeem: { label: 'Redeem Reward', endpoint: 'redeem-reward' }
+      agregar: { label: 'Agregar Puntos', endpoint: 'add-point' },
+      canjear: { label: 'Canjear Recompensa', endpoint: 'redeem-reward' }
     }
   }
 };
@@ -133,7 +133,7 @@ const StampGrid = ({ current, total }) => {
         key={i}
         className={`w-10 h-10 rounded-full border-2 flex items-center justify-center transition-all ${
           i < current
-            ? 'bg-black border-black'
+            ? 'bg-gradient-to-br from-[#F040A0] to-[#8A2BE2] border-transparent'
             : 'bg-white border-zinc-300'
         }`}
       >
@@ -151,32 +151,40 @@ const StampGrid = ({ current, total }) => {
 };
 
 // Confirmation Modal with detailed info
-const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, actionType, details, card, config, loading }) => {
+const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, actionType, details, card, config, loading, purchaseAmountFromParent }) => {
   const [comment, setComment] = useState('');
-  const [purchaseAmount, setPurchaseAmount] = useState('');
+  const [commentError, setCommentError] = useState(false);
   
   if (!isOpen) return null;
 
-  const needsPurchaseAmount = actionType === 'Redeem' || actionType === 'redeem' || 
-                              (config?.requiresPurchaseAmount && actionType.toLowerCase() === 'add');
+  const handleConfirm = () => {
+    // Validate comment is required
+    if (!comment.trim()) {
+      setCommentError(true);
+      toast.error('El comentario es obligatorio');
+      return;
+    }
+    setCommentError(false);
+    onConfirm(comment, purchaseAmountFromParent);
+  };
   
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" data-testid="confirmation-modal">
-      <div className="bg-white rounded-sm border-2 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] max-w-sm w-full p-6">
+      <div className="bg-white rounded-xl shadow-2xl max-w-sm w-full p-6">
         <div className="flex justify-between items-center mb-6">
-          <h3 className="text-heading text-xl">Confirm {title}</h3>
-          <button onClick={onClose} className="p-1 hover:bg-zinc-100 rounded-sm">
+          <h3 className="text-heading text-xl">Confirmar {title}</h3>
+          <button onClick={onClose} className="p-1 hover:bg-zinc-100 rounded-lg">
             <X className="h-5 w-5" />
           </button>
         </div>
         
         {/* Customer ID */}
-        <div className="bg-zinc-50 rounded-sm p-4 mb-4">
-          <p className="text-xs font-bold uppercase tracking-wider text-zinc-500 mb-1">Customer ID</p>
+        <div className="bg-gradient-to-r from-[#2E0854] to-[#4a1a6b] text-white rounded-lg p-4 mb-4">
+          <p className="text-xs font-semibold uppercase tracking-wider text-white/70 mb-1">ID de Cliente</p>
           <p className="text-mono font-medium">{card?.customer?.id || card?.customerId || '-'}</p>
         </div>
 
-        {/* Transaction Details */}
+        {/* Transaction Details - Read Only */}
         <div className="space-y-3 mb-4">
           {details.map((detail, idx) => (
             <div key={idx} className="flex justify-between text-sm border-b border-zinc-100 pb-2">
@@ -185,59 +193,45 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, actionType, deta
             </div>
           ))}
         </div>
-
-        {/* Purchase Amount Input (for redemptions) */}
-        {needsPurchaseAmount && (
-          <div className="mb-4">
-            <label className="text-xs font-bold uppercase tracking-wider text-zinc-500 block mb-2">
-              Purchase Amount (CRC)
-            </label>
-            <div className="relative">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 text-lg">₡</span>
-              <Input
-                type="number"
-                value={purchaseAmount}
-                onChange={(e) => setPurchaseAmount(e.target.value)}
-                placeholder="0"
-                className="input-brutalist pl-10 text-xl font-mono h-14"
-                data-testid="confirm-purchase-amount"
-              />
-            </div>
-          </div>
-        )}
         
-        {/* Comment */}
+        {/* Comment - MANDATORY */}
         <div className="mb-6">
-          <label className="text-xs font-bold uppercase tracking-wider text-zinc-500 block mb-2">
-            Comment (optional)
+          <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500 block mb-2">
+            Comentario <span className="text-red-500">*</span>
           </label>
           <Input
             value={comment}
-            onChange={(e) => setComment(e.target.value)}
-            placeholder="Internal note..."
-            className="input-brutalist text-sm"
+            onChange={(e) => {
+              setComment(e.target.value);
+              if (e.target.value.trim()) setCommentError(false);
+            }}
+            placeholder="Nota interna obligatoria..."
+            className={`input-brutalist text-sm ${commentError ? 'border-red-500 focus:ring-red-500' : ''}`}
             data-testid="confirmation-comment"
           />
-          <p className="text-xs text-zinc-400 mt-1">This won't be visible to the customer</p>
+          <p className="text-xs text-zinc-400 mt-1">Este comentario no será visible para el cliente</p>
+          {commentError && (
+            <p className="text-xs text-red-500 mt-1">* Campo obligatorio</p>
+          )}
         </div>
         
         <div className="flex gap-3">
           <Button
             variant="outline"
             onClick={onClose}
-            className="flex-1 h-12 border-2 border-black bg-white text-black hover:bg-zinc-100 font-bold uppercase tracking-wider"
+            className="flex-1 h-12 btn-secondary"
             disabled={loading}
             data-testid="cancel-action"
           >
-            Cancel
+            Cancelar
           </Button>
           <Button
-            onClick={() => onConfirm(comment, purchaseAmount)}
+            onClick={handleConfirm}
             disabled={loading}
-            className="flex-1 h-12 bg-black text-white hover:bg-zinc-800 font-bold uppercase tracking-wider"
+            className="flex-1 h-12 btn-primary"
             data-testid="confirm-action"
           >
-            {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Confirm'}
+            {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Confirmar'}
           </Button>
         </div>
       </div>
@@ -251,15 +245,15 @@ const SuccessModal = ({ isOpen, onClose, message, details }) => {
   
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" data-testid="success-modal">
-      <div className="bg-white rounded-sm border-2 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] max-w-sm w-full p-6 text-center">
-        <div className="w-16 h-16 bg-[#00FF94] rounded-full flex items-center justify-center mx-auto mb-4">
-          <Check className="h-8 w-8 text-black" />
+      <div className="bg-white rounded-xl shadow-2xl max-w-sm w-full p-6 text-center">
+        <div className="w-16 h-16 bg-gradient-to-br from-[#00C853] to-[#00E676] rounded-full flex items-center justify-center mx-auto mb-4">
+          <Check className="h-8 w-8 text-white" />
         </div>
-        <h3 className="text-heading text-xl mb-2">Successful Transaction</h3>
+        <h3 className="text-heading text-xl mb-2">Transacción Exitosa</h3>
         <p className="text-zinc-500 mb-4">{message}</p>
         
         {details && details.length > 0 && (
-          <div className="bg-zinc-50 rounded-sm p-4 mb-4 text-left">
+          <div className="bg-zinc-50 rounded-lg p-4 mb-4 text-left">
             {details.map((detail, idx) => (
               <div key={idx} className="flex justify-between text-sm py-1">
                 <span className="text-zinc-500">{detail.label}</span>
@@ -271,10 +265,10 @@ const SuccessModal = ({ isOpen, onClose, message, details }) => {
         
         <Button 
           onClick={onClose} 
-          className="w-full h-12 bg-black text-white hover:bg-zinc-800 font-bold uppercase tracking-wider" 
+          className="w-full h-12 btn-primary" 
           data-testid="done-button"
         >
-          Done
+          Listo
         </Button>
       </div>
     </div>
@@ -288,12 +282,12 @@ const ResultPage = () => {
   
   const [card, setCard] = useState(location.state?.card || null);
   const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState('Add');
+  const [activeTab, setActiveTab] = useState('Agregar');
   const [actionAmount, setActionAmount] = useState(1);
   const [purchaseAmount, setPurchaseAmount] = useState('');
   const [showCustomerInfo, setShowCustomerInfo] = useState(false);
   const [showCardInfo, setShowCardInfo] = useState(false);
-  const [confirmModal, setConfirmModal] = useState({ open: false, action: null, details: [] });
+  const [confirmModal, setConfirmModal] = useState({ open: false, action: null, details: [], purchaseAmount: '' });
   const [successModal, setSuccessModal] = useState({ open: false, message: '', details: [] });
 
   if (!card) {
@@ -301,14 +295,14 @@ const ResultPage = () => {
       <div className="min-h-screen bg-white flex items-center justify-center p-6">
         <div className="text-center">
           <AlertCircle className="h-16 w-16 mx-auto mb-4 text-zinc-300" />
-          <h2 className="text-heading text-2xl mb-2">No Card Data</h2>
-          <p className="text-zinc-500 mb-6">Please scan a card first</p>
+          <h2 className="text-heading text-2xl mb-2">Sin Datos de Tarjeta</h2>
+          <p className="text-zinc-500 mb-6">Por favor escanea una tarjeta primero</p>
           <Button 
             onClick={() => navigate('/')} 
-            className="h-12 bg-black text-white hover:bg-zinc-800 font-bold uppercase tracking-wider px-8" 
+            className="h-12 btn-primary px-8" 
             data-testid="back-to-scanner"
           >
-            Back to Scanner
+            Volver al Escáner
           </Button>
         </div>
       </div>
@@ -322,23 +316,29 @@ const ResultPage = () => {
 
   const openConfirmation = (action) => {
     const details = [];
+    const actionLower = action.toLowerCase();
     
-    details.push({ label: 'Card ID', value: card.id });
-    details.push({ label: 'Card Type', value: config.name });
+    details.push({ label: 'ID de Tarjeta', value: card.id });
+    details.push({ label: 'Tipo de Tarjeta', value: config.name });
     
-    if (action === 'add' && config.requiresPurchaseAmount) {
-      details.push({ label: 'Purchase Amount', value: formatCurrency(parseFloat(purchaseAmount) || 0) });
-    } else if (action === 'add' || action === 'Add') {
-      details.push({ label: 'Quantity', value: actionAmount });
-    } else if (action === 'Redeem' || action === 'redeem') {
-      details.push({ label: 'Amount to Redeem', value: actionAmount });
+    if (actionLower === 'agregar' && config.requiresPurchaseAmount) {
+      details.push({ label: 'Monto de Compra', value: formatCurrency(parseFloat(purchaseAmount) || 0) });
+    } else if (actionLower === 'agregar') {
+      details.push({ label: 'Cantidad', value: actionAmount });
+    } else if (actionLower === 'canjear') {
+      details.push({ label: 'Cantidad a Canjear', value: actionAmount });
     }
     
-    if (action === 'use' || action === 'Use') {
-      details.push({ label: 'Coupon Status', value: 'Active' });
+    if (actionLower === 'usar') {
+      details.push({ label: 'Estado del Cupón', value: 'Activo' });
     }
     
-    setConfirmModal({ open: true, action, details });
+    setConfirmModal({ 
+      open: true, 
+      action, 
+      details,
+      purchaseAmount: config.requiresPurchaseAmount ? purchaseAmount : ''
+    });
   };
 
   const handleAction = async (comment = '', confirmPurchaseAmount = '') => {
@@ -349,7 +349,7 @@ const ResultPage = () => {
       const actionKey = action.toLowerCase();
       const actionConfig = config.actions[actionKey];
       if (!actionConfig) {
-        throw new Error('Unknown action');
+        throw new Error('Acción desconocida');
       }
 
       const endpoint = `/cards/${card.id}/${actionConfig.endpoint}`;
@@ -376,18 +376,18 @@ const ResultPage = () => {
       
       // Build success details
       const successDetails = [
-        { label: 'Customer ID', value: card.customer?.id || card.customerId || '-' },
-        { label: 'Card ID', value: card.id }
+        { label: 'ID de Cliente', value: card.customer?.id || card.customerId || '-' },
+        { label: 'ID de Tarjeta', value: card.id }
       ];
       
       if (confirmPurchaseAmount) {
-        successDetails.push({ label: 'Purchase Amount', value: formatCurrency(parseFloat(confirmPurchaseAmount)) });
+        successDetails.push({ label: 'Monto de Compra', value: formatCurrency(parseFloat(confirmPurchaseAmount)) });
       }
       
-      setConfirmModal({ open: false, action: null, details: [] });
+      setConfirmModal({ open: false, action: null, details: [], purchaseAmount: '' });
       setSuccessModal({ 
         open: true, 
-        message: response.data.message || 'Transaction completed successfully!',
+        message: response.data.message || '¡Transacción completada exitosamente!',
         details: successDetails
       });
       
@@ -395,9 +395,9 @@ const ResultPage = () => {
       setActionAmount(1);
       setPurchaseAmount('');
     } catch (error) {
-      const message = error.response?.data?.detail || 'Action failed';
+      const message = error.response?.data?.detail || 'La acción falló';
       toast.error(message);
-      setConfirmModal({ open: false, action: null, details: [] });
+      setConfirmModal({ open: false, action: null, details: [], purchaseAmount: '' });
     } finally {
       setLoading(false);
     }
@@ -406,7 +406,7 @@ const ResultPage = () => {
   const handleCopyId = async () => {
     const success = await copyToClipboard(card.id);
     if (success) {
-      toast.success('Card ID copied!');
+      toast.success('¡ID de tarjeta copiado!');
     }
   };
 
@@ -417,7 +417,7 @@ const ResultPage = () => {
     if (!actionConfig) return null;
 
     // For stamp cards, show stamp grid
-    if (cardType === 'stamp_card' && activeTab === 'Add') {
+    if (cardType === 'stamp_card' && activeTab === 'Agregar') {
       return (
         <div className="space-y-6">
           <StampGrid 
@@ -427,7 +427,7 @@ const ResultPage = () => {
           
           <div className="text-center">
             <p className="text-sm text-zinc-500">
-              {balance.stampsBeforeReward || 0} stamps until next reward
+              {balance.stampsBeforeReward || 0} sellos hasta la próxima recompensa
             </p>
           </div>
           
@@ -437,13 +437,14 @@ const ResultPage = () => {
               variant="outline"
               size="icon"
               onClick={() => setActionAmount(Math.max(1, actionAmount - 1))}
-              className="h-14 w-14 border-2 border-black rounded-sm bg-white text-black hover:bg-zinc-100"
+              className="h-14 w-14 border-2 rounded-lg bg-white hover:bg-zinc-50"
+              style={{ borderColor: '#2E0854', color: '#2E0854' }}
               data-testid="decrease-amount"
             >
               <Minus className="h-6 w-6" />
             </Button>
             <div className="text-center">
-              <span className="text-5xl font-mono font-bold" data-testid="action-amount">
+              <span className="text-5xl font-mono font-bold text-[#2E0854]" data-testid="action-amount">
                 {actionAmount}
               </span>
             </div>
@@ -451,7 +452,8 @@ const ResultPage = () => {
               variant="outline"
               size="icon"
               onClick={() => setActionAmount(actionAmount + 1)}
-              className="h-14 w-14 border-2 border-black rounded-sm bg-white text-black hover:bg-zinc-100"
+              className="h-14 w-14 border-2 rounded-lg bg-white hover:bg-zinc-50"
+              style={{ borderColor: '#2E0854', color: '#2E0854' }}
               data-testid="increase-amount"
             >
               <Plus className="h-6 w-6" />
@@ -459,9 +461,9 @@ const ResultPage = () => {
           </div>
           
           <Button
-            onClick={() => openConfirmation('Add')}
+            onClick={() => openConfirmation('Agregar')}
             disabled={loading}
-            className="w-full h-14 text-lg bg-black text-white hover:bg-zinc-800 font-bold uppercase tracking-wider"
+            className="w-full h-14 text-lg btn-primary"
             data-testid="add-stamp-button"
           >
             {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : actionConfig.label}
@@ -471,32 +473,32 @@ const ResultPage = () => {
     }
 
     // For discount/cashback cards with purchase amount
-    if (config.requiresPurchaseAmount && activeTab === 'Add') {
+    if (config.requiresPurchaseAmount && activeTab === 'Agregar') {
       return (
         <div className="space-y-6">
           {/* Discount/Cashback level display */}
           {balance.discountLevel && (
             <div className="text-center">
-              <span className="text-6xl font-mono font-bold" style={{ color: config.color }}>
-                {balance.discountLevel}
+              <span className="text-6xl font-mono font-bold gradient-text">
+                {balance.discountLevel}%
               </span>
-              <p className="text-sm text-zinc-500 mt-1">Discount level</p>
+              <p className="text-sm text-zinc-500 mt-1">Nivel de descuento</p>
             </div>
           )}
           
           {balance.cashbackPercent && (
             <div className="text-center">
-              <span className="text-6xl font-mono font-bold" style={{ color: config.color }}>
+              <span className="text-6xl font-mono font-bold gradient-text">
                 {balance.cashbackPercent}%
               </span>
-              <p className="text-sm text-zinc-500 mt-1">Cashback rate</p>
+              <p className="text-sm text-zinc-500 mt-1">Tasa de cashback</p>
             </div>
           )}
           
           {/* Purchase amount input */}
           <div className="card-brutalist">
-            <label className="text-xs font-bold uppercase tracking-wider text-zinc-500 block mb-2">
-              {actionConfig.amountLabel || 'Enter purchase amount'} (CRC)
+            <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500 block mb-2">
+              {actionConfig.amountLabel || 'Ingrese monto de compra'} (CRC)
             </label>
             <div className="relative">
               <span className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 text-xl">₡</span>
@@ -512,9 +514,9 @@ const ResultPage = () => {
           </div>
           
           <Button
-            onClick={() => openConfirmation('Add')}
+            onClick={() => openConfirmation('Agregar')}
             disabled={loading || !purchaseAmount}
-            className="w-full h-14 text-lg bg-black text-white hover:bg-zinc-800 font-bold uppercase tracking-wider disabled:bg-zinc-300 disabled:text-zinc-500"
+            className="w-full h-14 text-lg btn-primary disabled:opacity-50"
             data-testid="add-points-button"
           >
             {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : actionConfig.label}
@@ -524,22 +526,22 @@ const ResultPage = () => {
     }
 
     // For redeem/points tabs
-    if (activeTab === 'Redeem' || activeTab === 'Points') {
-      const availableAmount = activeTab === 'Redeem' 
+    if (activeTab === 'Canjear' || activeTab === 'Puntos') {
+      const availableAmount = activeTab === 'Canjear' 
         ? (balance.numberRewardsUnused || balance.bonusBalance || balance.visitsAvailable || 0)
         : (balance.bonusBalance || 0);
       
       return (
         <div className="space-y-6">
           {/* Available balance display */}
-          <div className="text-center p-6 bg-zinc-50 rounded-sm">
-            <span className="text-5xl font-mono font-bold" style={{ color: config.color }}>
+          <div className="text-center p-6 bg-zinc-50 rounded-xl">
+            <span className="text-5xl font-mono font-bold gradient-text">
               {availableAmount}
             </span>
             <p className="text-sm text-zinc-500 mt-2">
-              {activeTab === 'Points' ? 'Points available' : 
-               balance.numberRewardsUnused ? 'Rewards available' : 
-               balance.visitsAvailable ? 'Visits available' : 'Points available'}
+              {activeTab === 'Puntos' ? 'Puntos disponibles' : 
+               balance.numberRewardsUnused ? 'Recompensas disponibles' : 
+               balance.visitsAvailable ? 'Visitas disponibles' : 'Puntos disponibles'}
             </p>
           </div>
           
@@ -549,13 +551,14 @@ const ResultPage = () => {
               variant="outline"
               size="icon"
               onClick={() => setActionAmount(Math.max(1, actionAmount - 1))}
-              className="h-14 w-14 border-2 border-black rounded-sm bg-white text-black hover:bg-zinc-100"
+              className="h-14 w-14 border-2 rounded-lg bg-white hover:bg-zinc-50"
+              style={{ borderColor: '#2E0854', color: '#2E0854' }}
               data-testid="decrease-redeem"
             >
               <Minus className="h-6 w-6" />
             </Button>
             <div className="text-center">
-              <span className="text-5xl font-mono font-bold" data-testid="redeem-amount">
+              <span className="text-5xl font-mono font-bold text-[#2E0854]" data-testid="redeem-amount">
                 {actionAmount}
               </span>
             </div>
@@ -563,7 +566,8 @@ const ResultPage = () => {
               variant="outline"
               size="icon"
               onClick={() => setActionAmount(Math.min(availableAmount, actionAmount + 1))}
-              className="h-14 w-14 border-2 border-black rounded-sm bg-white text-black hover:bg-zinc-100"
+              className="h-14 w-14 border-2 rounded-lg bg-white hover:bg-zinc-50"
+              style={{ borderColor: '#2E0854', color: '#2E0854' }}
               disabled={actionAmount >= availableAmount}
               data-testid="increase-redeem"
             >
@@ -574,8 +578,7 @@ const ResultPage = () => {
           <Button
             onClick={() => openConfirmation(activeTab)}
             disabled={loading || availableAmount === 0 || actionAmount > availableAmount}
-            className="w-full h-14 text-lg font-bold uppercase tracking-wider disabled:opacity-50"
-            style={{ backgroundColor: config.color, color: '#000' }}
+            className="w-full h-14 text-lg btn-primary disabled:opacity-50"
             data-testid="redeem-button"
           >
             {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : actionConfig.label}
@@ -585,22 +588,21 @@ const ResultPage = () => {
     }
 
     // For coupon use
-    if (activeTab === 'Use') {
+    if (activeTab === 'Usar') {
       return (
         <div className="space-y-6">
-          <div className="text-center p-6 bg-zinc-50 rounded-sm">
+          <div className="text-center p-6 bg-zinc-50 rounded-xl">
             <div className="status-badge success mx-auto mb-4">
               <Check className="h-4 w-4" />
-              <span>Active</span>
+              <span>Activo</span>
             </div>
-            <p className="text-sm text-zinc-500">This coupon is ready to use</p>
+            <p className="text-sm text-zinc-500">Este cupón está listo para usar</p>
           </div>
           
           <Button
-            onClick={() => openConfirmation('Use')}
+            onClick={() => openConfirmation('Usar')}
             disabled={loading}
-            className="w-full h-14 text-lg font-bold uppercase tracking-wider"
-            style={{ backgroundColor: config.color, color: '#fff' }}
+            className="w-full h-14 text-lg btn-primary"
             data-testid="use-coupon-button"
           >
             {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : actionConfig.label}
@@ -617,16 +619,18 @@ const ResultPage = () => {
             variant="outline"
             size="icon"
             onClick={() => setActionAmount(Math.max(1, actionAmount - 1))}
-            className="h-14 w-14 border-2 border-black rounded-sm bg-white text-black hover:bg-zinc-100"
+            className="h-14 w-14 border-2 rounded-lg bg-white hover:bg-zinc-50"
+            style={{ borderColor: '#2E0854', color: '#2E0854' }}
           >
             <Minus className="h-6 w-6" />
           </Button>
-          <span className="text-5xl font-mono font-bold">{actionAmount}</span>
+          <span className="text-5xl font-mono font-bold text-[#2E0854]">{actionAmount}</span>
           <Button
             variant="outline"
             size="icon"
             onClick={() => setActionAmount(actionAmount + 1)}
-            className="h-14 w-14 border-2 border-black rounded-sm bg-white text-black hover:bg-zinc-100"
+            className="h-14 w-14 border-2 rounded-lg bg-white hover:bg-zinc-50"
+            style={{ borderColor: '#2E0854', color: '#2E0854' }}
           >
             <Plus className="h-6 w-6" />
           </Button>
@@ -635,7 +639,7 @@ const ResultPage = () => {
         <Button
           onClick={() => openConfirmation(activeTab)}
           disabled={loading}
-          className="w-full h-14 text-lg bg-black text-white hover:bg-zinc-800 font-bold uppercase tracking-wider"
+          className="w-full h-14 text-lg btn-primary"
         >
           {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : actionConfig.label}
         </Button>
@@ -649,56 +653,60 @@ const ResultPage = () => {
       <header className="nav-header">
         <button
           onClick={() => navigate('/')}
-          className="flex items-center gap-2 p-2 hover:bg-zinc-100 rounded-sm transition-colors"
+          className="flex items-center gap-2 p-2 hover:bg-zinc-100 rounded-lg transition-colors"
           data-testid="back-button"
         >
-          <ArrowLeft className="h-5 w-5" />
-          <span className="font-medium">Back</span>
+          <ArrowLeft className="h-5 w-5 text-[#2E0854]" />
+          <span className="font-medium text-[#2E0854]">Volver</span>
         </button>
-        <h1 className="logo-text text-xl">Devotio Rewards</h1>
+        <img 
+          src="/fonts/logo.png" 
+          alt="Devotio Rewards" 
+          className="h-10"
+        />
         <div className="w-20" />
       </header>
 
       <main className="max-w-md mx-auto p-6 pb-24">
         {/* Customer ID - Visible on Top */}
-        <div className="bg-black text-white rounded-sm p-4 mb-4" data-testid="customer-id-banner">
+        <div className="customer-id-banner mb-4" data-testid="customer-id-banner">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-bold uppercase tracking-wider text-zinc-400">Customer ID</p>
+              <p className="text-xs font-semibold uppercase tracking-wider text-white/70">ID de Cliente</p>
               <p className="text-mono text-lg font-medium">{card.customer?.id || card.customerId || '-'}</p>
             </div>
             <button
               onClick={handleCopyId}
-              className="p-2 hover:bg-white/10 rounded-sm transition-colors"
+              className="p-2 hover:bg-white/10 rounded-lg transition-colors"
               data-testid="copy-customer-id"
-              aria-label="Copy ID"
+              aria-label="Copiar ID"
             >
               <Copy className="h-5 w-5" />
             </button>
           </div>
         </div>
 
-        {/* Customer Name (masked) */}
+        {/* Customer Name (VISIBLE - not masked) */}
         <div className="text-center mb-4">
-          <p className="text-sm text-zinc-500">Customer:</p>
-          <h2 className="text-heading text-2xl masked-data" data-testid="customer-display-name">
-            {card.customer?.firstName || '***'} {card.customer?.surname || '***'}
+          <p className="text-sm text-zinc-500">Cliente:</p>
+          <h2 className="text-heading text-2xl" data-testid="customer-display-name">
+            {card.customer?.firstName || 'N/A'} {card.customer?.surname || ''}
           </h2>
         </div>
 
         {/* Card Type Badge */}
         <div className="flex justify-center mb-6">
           <div 
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-sm"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full"
             style={{ backgroundColor: `${config.color}20`, color: config.color }}
           >
             <CardIcon className="h-5 w-5" />
-            <span className="font-bold text-sm uppercase tracking-wider">{config.name}</span>
+            <span className="font-semibold text-sm uppercase tracking-wider">{config.name}</span>
           </div>
         </div>
 
         {/* Tabs */}
-        <div className="flex border-2 border-black rounded-sm mb-6 overflow-hidden">
+        <div className="flex border rounded-xl mb-6 overflow-hidden" style={{ borderColor: '#2E0854' }}>
           {config.tabs.map((tab) => (
             <button
               key={tab}
@@ -706,10 +714,10 @@ const ResultPage = () => {
                 setActiveTab(tab);
                 setActionAmount(1);
               }}
-              className={`flex-1 py-3 text-sm font-bold uppercase tracking-wider transition-colors ${
+              className={`flex-1 py-3 text-sm font-semibold uppercase tracking-wider transition-colors ${
                 activeTab === tab
-                  ? 'bg-black text-white'
-                  : 'bg-white text-black hover:bg-zinc-100'
+                  ? 'bg-gradient-to-r from-[#F040A0] to-[#8A2BE2] text-white'
+                  : 'bg-white text-[#2E0854] hover:bg-zinc-50'
               }`}
               data-testid={`tab-${tab.toLowerCase()}`}
             >
@@ -723,36 +731,36 @@ const ResultPage = () => {
           {renderActionTab()}
         </div>
 
-        {/* Customer Information (Collapsible, Masked) */}
-        <div className="border-2 border-zinc-200 rounded-sm mb-4">
+        {/* Customer Information (Collapsible - Email/Phone Masked, Name Visible) */}
+        <div className="border border-zinc-200 rounded-xl mb-4">
           <button
             onClick={() => setShowCustomerInfo(!showCustomerInfo)}
-            className="w-full flex items-center justify-between p-4 hover:bg-zinc-50 transition-colors"
+            className="w-full flex items-center justify-between p-4 hover:bg-zinc-50 transition-colors rounded-xl"
             data-testid="toggle-customer-info"
           >
             <div className="flex items-center gap-2">
-              <User className="h-5 w-5 text-zinc-500" />
-              <span className="font-bold text-sm uppercase tracking-wider">Customer information</span>
+              <User className="h-5 w-5 text-[#8A2BE2]" />
+              <span className="font-semibold text-sm uppercase tracking-wider text-[#2E0854]">Información del cliente</span>
             </div>
-            {showCustomerInfo ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
+            {showCustomerInfo ? <ChevronUp className="h-5 w-5 text-zinc-400" /> : <ChevronDown className="h-5 w-5 text-zinc-400" />}
           </button>
           
           {showCustomerInfo && (
             <div className="border-t border-zinc-200 divide-y divide-zinc-100">
               <div className="flex justify-between p-4">
-                <span className="text-zinc-500">First name</span>
-                <span className="masked-data">{card.customer?.firstName || '***'}</span>
+                <span className="text-zinc-500">Nombre</span>
+                <span className="font-medium">{card.customer?.firstName || 'N/A'}</span>
               </div>
               <div className="flex justify-between p-4">
-                <span className="text-zinc-500">Last name</span>
-                <span className="masked-data">{card.customer?.surname || '***'}</span>
+                <span className="text-zinc-500">Apellido</span>
+                <span className="font-medium">{card.customer?.surname || 'N/A'}</span>
               </div>
               <div className="flex justify-between p-4">
-                <span className="text-zinc-500">Phone</span>
+                <span className="text-zinc-500">Teléfono</span>
                 <span className="masked-data">{card.customer?.phone || '***-***-****'}</span>
               </div>
               <div className="flex justify-between p-4">
-                <span className="text-zinc-500">Email</span>
+                <span className="text-zinc-500">Correo</span>
                 <span className="masked-data">{card.customer?.email || '***@***.***'}</span>
               </div>
             </div>
@@ -760,17 +768,17 @@ const ResultPage = () => {
         </div>
 
         {/* Card Information (Collapsible) */}
-        <div className="border-2 border-zinc-200 rounded-sm mb-6">
+        <div className="border border-zinc-200 rounded-xl mb-6">
           <button
             onClick={() => setShowCardInfo(!showCardInfo)}
-            className="w-full flex items-center justify-between p-4 hover:bg-zinc-50 transition-colors"
+            className="w-full flex items-center justify-between p-4 hover:bg-zinc-50 transition-colors rounded-xl"
             data-testid="toggle-card-info"
           >
             <div className="flex items-center gap-2">
-              <CreditCard className="h-5 w-5 text-zinc-500" />
-              <span className="font-bold text-sm uppercase tracking-wider">Card information</span>
+              <CreditCard className="h-5 w-5 text-[#8A2BE2]" />
+              <span className="font-semibold text-sm uppercase tracking-wider text-[#2E0854]">Información de tarjeta</span>
             </div>
-            {showCardInfo ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
+            {showCardInfo ? <ChevronUp className="h-5 w-5 text-zinc-400" /> : <ChevronDown className="h-5 w-5 text-zinc-400" />}
           </button>
           
           {showCardInfo && (
@@ -778,83 +786,83 @@ const ResultPage = () => {
               {/* Dynamic fields based on card type */}
               {balance.currentNumberOfUses !== undefined && (
                 <div className="flex justify-between p-4">
-                  <span className="text-zinc-500">Active stamps</span>
+                  <span className="text-zinc-500">Sellos activos</span>
                   <span className="font-medium">{balance.currentNumberOfUses}/{balance.numberStampsTotal || 10}</span>
                 </div>
               )}
               {balance.numberRewardsUnused !== undefined && (
                 <div className="flex justify-between p-4">
-                  <span className="text-zinc-500">Available rewards</span>
+                  <span className="text-zinc-500">Recompensas disponibles</span>
                   <span className="font-medium">{balance.numberRewardsUnused}</span>
                 </div>
               )}
               {balance.bonusBalance !== undefined && (
                 <div className="flex justify-between p-4">
-                  <span className="text-zinc-500">Points balance</span>
+                  <span className="text-zinc-500">Balance de puntos</span>
                   <span className="font-medium">{balance.bonusBalance}</span>
                 </div>
               )}
               {balance.balance !== undefined && balance.balance > 0 && (
                 <div className="flex justify-between p-4">
-                  <span className="text-zinc-500">Total balance</span>
+                  <span className="text-zinc-500">Balance total</span>
                   <span className="font-medium">{formatCurrency(balance.balance)}</span>
                 </div>
               )}
               {balance.discountLevel && (
                 <div className="flex justify-between p-4">
-                  <span className="text-zinc-500">Discount level</span>
+                  <span className="text-zinc-500">Nivel de descuento</span>
                   <span className="font-medium">{balance.discountLevel}%</span>
                 </div>
               )}
               {balance.discountStatus && (
                 <div className="flex justify-between p-4">
-                  <span className="text-zinc-500">Discount status</span>
+                  <span className="text-zinc-500">Estado de descuento</span>
                   <span className="font-medium">{balance.discountStatus}</span>
                 </div>
               )}
               {balance.totalSavings !== undefined && (
                 <div className="flex justify-between p-4">
-                  <span className="text-zinc-500">Total savings</span>
+                  <span className="text-zinc-500">Ahorro total</span>
                   <span className="font-medium">{formatCurrency(balance.totalSavings)}</span>
                 </div>
               )}
               {card.countVisits !== undefined && (
                 <div className="flex justify-between p-4">
-                  <span className="text-zinc-500">Total visits</span>
+                  <span className="text-zinc-500">Total de visitas</span>
                   <span className="font-medium">{card.countVisits}</span>
                 </div>
               )}
               {card.totalRewardsRedeemed !== undefined && (
                 <div className="flex justify-between p-4">
-                  <span className="text-zinc-500">Rewards redeemed</span>
+                  <span className="text-zinc-500">Recompensas canjeadas</span>
                   <span className="font-medium">{card.totalRewardsRedeemed}</span>
                 </div>
               )}
               <div className="flex justify-between p-4">
-                <span className="text-zinc-500">Card ID</span>
+                <span className="text-zinc-500">ID de tarjeta</span>
                 <span className="text-mono text-sm">{card.id}</span>
               </div>
               {card.serialNumber && (
                 <div className="flex justify-between p-4">
-                  <span className="text-zinc-500">Serial number</span>
+                  <span className="text-zinc-500">Número de serie</span>
                   <span className="text-mono text-sm">{card.serialNumber}</span>
                 </div>
               )}
               {card.installDate && (
                 <div className="flex justify-between p-4">
-                  <span className="text-zinc-500">Card installation date</span>
+                  <span className="text-zinc-500">Fecha de instalación</span>
                   <span className="font-medium">{card.installDate}</span>
                 </div>
               )}
               {card.lastAccrual && (
                 <div className="flex justify-between p-4">
-                  <span className="text-zinc-500">Last accrual</span>
+                  <span className="text-zinc-500">Última acumulación</span>
                   <span className="font-medium">{card.lastAccrual}</span>
                 </div>
               )}
               {card.expirationDate && (
                 <div className="flex justify-between p-4">
-                  <span className="text-zinc-500">Card expiration date</span>
+                  <span className="text-zinc-500">Fecha de expiración</span>
                   <span className="font-medium">{card.expirationDate}</span>
                 </div>
               )}
@@ -866,17 +874,17 @@ const ResultPage = () => {
         <Button
           onClick={() => navigate('/')}
           variant="outline"
-          className="w-full h-12 border-2 border-black bg-white text-black hover:bg-zinc-100 font-bold uppercase tracking-wider"
+          className="w-full h-12 btn-secondary"
           data-testid="scan-another-button"
         >
-          Scan Another Card
+          Escanear Otra Tarjeta
         </Button>
       </main>
 
       {/* Confirmation Modal */}
       <ConfirmationModal
         isOpen={confirmModal.open}
-        onClose={() => setConfirmModal({ open: false, action: null, details: [] })}
+        onClose={() => setConfirmModal({ open: false, action: null, details: [], purchaseAmount: '' })}
         onConfirm={handleAction}
         title={confirmModal.action}
         actionType={confirmModal.action}
@@ -884,6 +892,7 @@ const ResultPage = () => {
         card={card}
         config={config}
         loading={loading}
+        purchaseAmountFromParent={confirmModal.purchaseAmount}
       />
 
       {/* Success Modal */}

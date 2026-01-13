@@ -85,25 +85,25 @@ const SearchPage = () => {
       <header className="nav-header">
         <button
           onClick={() => navigate('/')}
-          className="flex items-center gap-2 p-2 hover:bg-zinc-100 rounded-lg transition-colors"
+          className="flex items-center gap-1 sm:gap-2 p-2 hover:bg-zinc-100 rounded-lg transition-colors"
           data-testid="back-button"
         >
           <ArrowLeft className="h-5 w-5 text-[#2E0854]" />
-          <span className="font-medium text-[#2E0854]">Volver</span>
+          <span className="font-medium text-[#2E0854] hidden sm:inline">Volver</span>
         </button>
         <img 
           src="/fonts/logo.png" 
           alt="Devotio Rewards" 
-          className="h-10"
+          className="h-8 sm:h-10"
         />
-        <div className="w-20" />
+        <div className="w-14 sm:w-20" />
       </header>
 
-      <main className="max-w-md mx-auto p-6">
-        <h2 className="text-heading text-3xl text-center mb-2" data-testid="search-title">
+      <main className="max-w-md mx-auto p-4 sm:p-6">
+        <h2 className="text-heading text-2xl sm:text-3xl text-center mb-2" data-testid="search-title">
           Buscar Clientes
         </h2>
-        <p className="text-center text-zinc-500 text-sm mb-8">
+        <p className="text-center text-zinc-500 text-xs sm:text-sm mb-6 sm:mb-8">
           Busca clientes por teléfono o correo electrónico
         </p>
 
@@ -111,7 +111,7 @@ const SearchPage = () => {
         <div className="flex gap-2 mb-4">
           <Button
             variant={searchType === 'phone' ? 'default' : 'outline'}
-            className={searchType === 'phone' ? 'btn-primary flex-1' : 'btn-secondary flex-1'}
+            className={`${searchType === 'phone' ? 'btn-primary' : 'btn-secondary'} flex-1 text-sm sm:text-base`}
             onClick={() => setSearchType('phone')}
             data-testid="search-by-phone"
           >
@@ -119,7 +119,7 @@ const SearchPage = () => {
           </Button>
           <Button
             variant={searchType === 'email' ? 'default' : 'outline'}
-            className={searchType === 'email' ? 'btn-primary flex-1' : 'btn-secondary flex-1'}
+            className={`${searchType === 'email' ? 'btn-primary' : 'btn-secondary'} flex-1 text-sm sm:text-base`}
             onClick={() => setSearchType('email')}
             data-testid="search-by-email"
           >
@@ -128,7 +128,7 @@ const SearchPage = () => {
         </div>
 
         {/* Search Form */}
-        <form onSubmit={handleSearch} className="mb-8">
+        <form onSubmit={handleSearch} className="mb-6 sm:mb-8">
           <div className="search-input-wrapper">
             <Search className="h-5 w-5" />
             <Input
@@ -136,21 +136,21 @@ const SearchPage = () => {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={searchType === 'phone' ? '+506 1234 5678' : 'cliente@correo.com'}
-              className="input-brutalist pl-12"
+              className="input-brutalist pl-12 text-sm sm:text-base"
               data-testid="search-input"
             />
           </div>
           <Button
             type="submit"
             disabled={loading || !searchQuery.trim()}
-            className="w-full mt-4 btn-primary"
+            className="w-full mt-4 btn-primary text-sm sm:text-base"
             data-testid="search-button"
           >
             {loading ? (
               <Loader2 className="h-5 w-5 animate-spin" />
             ) : (
               <>
-                <Search className="mr-2 h-5 w-5" />
+                <Search className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
                 Buscar
               </>
             )}
@@ -160,15 +160,15 @@ const SearchPage = () => {
         {/* Results */}
         {searched && !loading && (
           <div className="space-y-4">
-            <p className="text-sm font-semibold uppercase tracking-widest text-zinc-500">
+            <p className="text-xs sm:text-sm font-semibold uppercase tracking-widest text-zinc-500">
               Resultados ({results.length})
             </p>
 
             {results.length === 0 ? (
               <div className="empty-state card-brutalist">
-                <AlertCircle className="h-12 w-12 mx-auto mb-4 text-zinc-300" />
-                <p className="font-medium">No se encontraron clientes</p>
-                <p className="text-sm text-zinc-400 mt-1">
+                <AlertCircle className="h-10 w-10 sm:h-12 sm:w-12 mx-auto mb-4 text-zinc-300" />
+                <p className="font-medium text-sm sm:text-base">No se encontraron clientes</p>
+                <p className="text-xs sm:text-sm text-zinc-400 mt-1">
                   Intenta con un {searchType === 'phone' ? 'teléfono' : 'correo'} diferente
                 </p>
               </div>
@@ -182,26 +182,26 @@ const SearchPage = () => {
                     data-testid={`customer-${customer.id}`}
                   >
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-gradient-to-br from-[#F040A0] to-[#8A2BE2] rounded-lg flex items-center justify-center">
-                          <User className="h-6 w-6 text-white" />
+                      <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
+                        <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-[#F040A0] to-[#8A2BE2] rounded-lg flex items-center justify-center flex-shrink-0">
+                          <User className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
                         </div>
-                        <div>
-                          <p className="font-medium text-[#2E0854]" data-testid="customer-name">
+                        <div className="min-w-0 flex-1">
+                          <p className="font-medium text-[#2E0854] text-sm sm:text-base truncate" data-testid="customer-name">
                             {customer.firstName || 'N/A'} {customer.surname || ''}
                           </p>
-                          <p className="text-sm masked-data" data-testid="customer-contact-masked">
+                          <p className="text-xs sm:text-sm masked-data truncate" data-testid="customer-contact-masked">
                             {searchType === 'phone' 
                               ? (customer.phone || '***-***-****')
                               : (customer.email || '***@***.***')
                             }
                           </p>
-                          <p className="text-xs text-zinc-400 mt-1 text-mono">
+                          <p className="text-xs text-zinc-400 mt-1 text-mono truncate">
                             ID: {customer.id}
                           </p>
                         </div>
                       </div>
-                      <ChevronRight className="h-5 w-5 text-zinc-400" />
+                      <ChevronRight className="h-5 w-5 text-zinc-400 flex-shrink-0 ml-2" />
                     </div>
                   </button>
                 ))}

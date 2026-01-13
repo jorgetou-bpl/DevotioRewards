@@ -59,7 +59,7 @@ const ScannerPage = () => {
 
       const config = {
         fps: 10,
-        qrbox: { width: 300, height: 150 },
+        qrbox: { width: 280, height: 140 },
         aspectRatio: 1.777,
         formatsToSupport: [
           // QR Code
@@ -179,7 +179,7 @@ const ScannerPage = () => {
         <img 
           src="/fonts/logo.png" 
           alt="Devotio Rewards" 
-          className="h-10"
+          className="h-8 sm:h-10"
           data-testid="header-logo"
         />
         <button 
@@ -193,24 +193,24 @@ const ScannerPage = () => {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col items-center justify-center p-6">
+      <main className="flex-1 flex flex-col items-center justify-center p-4 sm:p-6">
         {/* User Info */}
-        <div className="text-center mb-8">
-          <p className="text-zinc-500 text-sm">Has iniciado sesión como:</p>
-          <h2 className="text-heading text-2xl mt-1" data-testid="user-name">
+        <div className="text-center mb-6 sm:mb-8">
+          <p className="text-zinc-500 text-xs sm:text-sm">Has iniciado sesión como:</p>
+          <h2 className="text-heading text-xl sm:text-2xl mt-1" data-testid="user-name">
             {user?.name || 'Usuario'}
           </h2>
-          <p className="text-zinc-500 text-sm masked-data" data-testid="user-email">
+          <p className="text-zinc-500 text-xs sm:text-sm masked-data" data-testid="user-email">
             {user?.email || '***@***.***'}
           </p>
-          <p className="text-zinc-400 text-sm mt-2">
+          <p className="text-zinc-400 text-xs sm:text-sm mt-2 px-4">
             Presiona el botón "Escanear" para escanear un código de barras o QR
           </p>
         </div>
 
         {/* Scanner Viewport */}
         <div className="w-full max-w-md">
-          <div className="scanner-viewport mb-6 relative" data-testid="scanner-viewport">
+          <div className="scanner-viewport mb-4 sm:mb-6 relative rounded-xl overflow-hidden" style={{ aspectRatio: '4/3' }} data-testid="scanner-viewport">
             {scanning ? (
               <>
                 <div 
@@ -221,7 +221,7 @@ const ScannerPage = () => {
                 />
                 <button
                   onClick={stopScanner}
-                  className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm p-2 rounded-lg shadow-lg hover:bg-white transition-colors z-20"
+                  className="absolute top-3 right-3 sm:top-4 sm:right-4 bg-white/90 backdrop-blur-sm p-2 rounded-lg shadow-lg hover:bg-white transition-colors z-20"
                   data-testid="stop-scan-button"
                   aria-label="Detener escaneo"
                 >
@@ -229,16 +229,16 @@ const ScannerPage = () => {
                 </button>
               </>
             ) : (
-              <div className="w-full h-full flex items-center justify-center">
+              <div className="w-full h-full flex items-center justify-center bg-[#2E0854]">
                 {cameraError ? (
-                  <div className="text-center text-zinc-400 p-4">
-                    <CameraOff className="h-12 w-12 mx-auto mb-2" />
-                    <p className="text-sm">{cameraError}</p>
+                  <div className="text-center text-zinc-300 p-4">
+                    <CameraOff className="h-10 w-10 sm:h-12 sm:w-12 mx-auto mb-2" />
+                    <p className="text-xs sm:text-sm">{cameraError}</p>
                   </div>
                 ) : (
-                  <div className="text-center text-zinc-400">
-                    <Camera className="h-12 w-12 mx-auto mb-2" />
-                    <p className="text-sm">Escáner de códigos de barras y QR</p>
+                  <div className="text-center text-zinc-300">
+                    <Camera className="h-10 w-10 sm:h-12 sm:w-12 mx-auto mb-2" />
+                    <p className="text-xs sm:text-sm">Escáner de códigos de barras y QR</p>
                   </div>
                 )}
               </div>
@@ -249,10 +249,10 @@ const ScannerPage = () => {
               <div className="absolute inset-0 flex items-center justify-center">
                 <Button
                   onClick={startScanner}
-                  className="btn-primary px-12 py-4 text-xl"
+                  className="btn-primary px-8 sm:px-12 py-3 sm:py-4 text-lg sm:text-xl"
                   data-testid="scan-button"
                 >
-                  <Scan className="mr-2 h-6 w-6" />
+                  <Scan className="mr-2 h-5 w-5 sm:h-6 sm:w-6" />
                   Escanear
                 </Button>
               </div>
@@ -268,15 +268,15 @@ const ScannerPage = () => {
           </div>
 
           {/* Manual Input / Search */}
-          <form onSubmit={handleManualSubmit} className="space-y-4">
+          <form onSubmit={handleManualSubmit} className="space-y-3 sm:space-y-4">
             <Button
               type="button"
               variant="outline"
-              className="w-full btn-secondary"
+              className="w-full btn-secondary text-sm sm:text-base"
               onClick={() => navigate('/search')}
               data-testid="search-customers-button"
             >
-              <Search className="mr-2 h-5 w-5" />
+              <Search className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
               Buscar clientes
             </Button>
 
@@ -286,14 +286,14 @@ const ScannerPage = () => {
                 value={manualInput}
                 onChange={(e) => setManualInput(e.target.value)}
                 placeholder="Ingresar ID de tarjeta manualmente"
-                className="input-brutalist"
+                className="input-brutalist text-sm sm:text-base pr-16"
                 data-testid="manual-input"
               />
               {manualInput && (
                 <Button
                   type="submit"
                   size="sm"
-                  className="absolute right-1 top-1/2 -translate-y-1/2 bg-[#8A2BE2] text-white px-4 h-10 rounded-lg hover:bg-[#7B27CC]"
+                  className="absolute right-1 top-1/2 -translate-y-1/2 bg-[#8A2BE2] text-white px-3 sm:px-4 h-9 sm:h-10 rounded-lg hover:bg-[#7B27CC] text-sm"
                   data-testid="manual-submit"
                 >
                   Ir
@@ -313,9 +313,9 @@ const ScannerPage = () => {
 
       {/* Sidebar Panel */}
       <aside className={`sidebar-panel ${menuOpen ? 'open' : ''}`} data-testid="sidebar-panel">
-        <div className="p-6">
-          <div className="flex items-center justify-between mb-8">
-            <span className="text-sm font-semibold uppercase tracking-widest text-zinc-500">Menú</span>
+        <div className="p-4 sm:p-6">
+          <div className="flex items-center justify-between mb-6 sm:mb-8">
+            <span className="text-xs sm:text-sm font-semibold uppercase tracking-widest text-zinc-500">Menú</span>
             <button 
               onClick={() => setMenuOpen(false)}
               className="p-2 hover:bg-zinc-100 rounded-lg transition-colors"
@@ -334,11 +334,11 @@ const ScannerPage = () => {
                   setMenuOpen(false);
                   item.action();
                 }}
-                className="w-full flex items-center gap-4 p-4 text-left hover:bg-zinc-100 rounded-lg transition-colors border-b border-zinc-100"
+                className="w-full flex items-center gap-3 sm:gap-4 p-3 sm:p-4 text-left hover:bg-zinc-100 rounded-lg transition-colors border-b border-zinc-100"
                 data-testid={item.testId}
               >
                 <item.icon className="h-5 w-5 text-[#8A2BE2]" strokeWidth={2} />
-                <span className="font-medium text-[#2E0854]">{item.label}</span>
+                <span className="font-medium text-sm sm:text-base text-[#2E0854]">{item.label}</span>
               </button>
             ))}
           </nav>

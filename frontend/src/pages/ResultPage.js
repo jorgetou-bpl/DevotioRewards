@@ -123,7 +123,7 @@ const StampGrid = ({ current, total }) => {
         key={i}
         className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full border-2 flex items-center justify-center transition-all ${
           i < current
-            ? 'bg-gradient-to-br from-[#F040A0] to-[#8A2BE2] border-transparent'
+            ? 'bg-[#120627] border-transparent'
             : 'bg-white border-zinc-300'
         }`}
       >

@@ -544,13 +544,13 @@ const ResultPage = () => {
               size="icon"
               onClick={() => setActionAmount(Math.max(1, actionAmount - 1))}
               className="h-12 w-12 sm:h-14 sm:w-14 border-2 rounded-lg bg-white hover:bg-zinc-50"
-              style={{ borderColor: '#2E0854', color: '#2E0854' }}
+              style={{ borderColor: '#120627', color: '#120627' }}
               data-testid="decrease-redeem"
             >
               <Minus className="h-5 w-5 sm:h-6 sm:w-6" />
             </Button>
             <div className="text-center">
-              <span className="text-4xl sm:text-5xl font-mono font-bold text-[#2E0854]" data-testid="redeem-amount">
+              <span className="text-4xl sm:text-5xl font-mono font-bold text-[#120627]" data-testid="redeem-amount">
                 {actionAmount}
               </span>
             </div>
@@ -559,7 +559,7 @@ const ResultPage = () => {
               size="icon"
               onClick={() => setActionAmount(Math.min(availableAmount, actionAmount + 1))}
               className="h-12 w-12 sm:h-14 sm:w-14 border-2 rounded-lg bg-white hover:bg-zinc-50"
-              style={{ borderColor: '#2E0854', color: '#2E0854' }}
+              style={{ borderColor: '#120627', color: '#120627' }}
               disabled={actionAmount >= availableAmount}
               data-testid="increase-redeem"
             >
@@ -612,17 +612,17 @@ const ResultPage = () => {
             size="icon"
             onClick={() => setActionAmount(Math.max(1, actionAmount - 1))}
             className="h-12 w-12 sm:h-14 sm:w-14 border-2 rounded-lg bg-white hover:bg-zinc-50"
-            style={{ borderColor: '#2E0854', color: '#2E0854' }}
+            style={{ borderColor: '#120627', color: '#120627' }}
           >
             <Minus className="h-5 w-5 sm:h-6 sm:w-6" />
           </Button>
-          <span className="text-4xl sm:text-5xl font-mono font-bold text-[#2E0854]">{actionAmount}</span>
+          <span className="text-4xl sm:text-5xl font-mono font-bold text-[#120627]">{actionAmount}</span>
           <Button
             variant="outline"
             size="icon"
             onClick={() => setActionAmount(actionAmount + 1)}
             className="h-12 w-12 sm:h-14 sm:w-14 border-2 rounded-lg bg-white hover:bg-zinc-50"
-            style={{ borderColor: '#2E0854', color: '#2E0854' }}
+            style={{ borderColor: '#120627', color: '#120627' }}
           >
             <Plus className="h-5 w-5 sm:h-6 sm:w-6" />
           </Button>

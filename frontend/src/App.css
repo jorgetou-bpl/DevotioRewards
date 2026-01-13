@@ -7,16 +7,16 @@
 
 /* Logo styling */
 .logo-text {
-    font-family: 'Chivo', sans-serif;
-    font-weight: 900;
-    font-style: italic;
-    letter-spacing: -0.03em;
+    font-family: 'Figtree', sans-serif;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: #2E0854;
 }
 
 /* Navigation styles */
 .nav-header {
     height: 60px;
-    border-bottom: 2px solid #09090B;
+    border-bottom: 1px solid #E4E4E7;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -31,7 +31,7 @@
 .sidebar-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.5);
+    background: rgba(46, 8, 84, 0.5);
     z-index: 100;
     opacity: 0;
     visibility: hidden;
@@ -52,7 +52,8 @@
     background: white;
     z-index: 101;
     transition: right 200ms ease-out;
-    border-left: 2px solid #09090B;
+    border-left: 1px solid #E4E4E7;
+    box-shadow: -4px 0 20px rgba(46, 8, 84, 0.1);
 }
 
 .sidebar-panel.open {
@@ -66,7 +67,7 @@
     align-items: center;
     justify-content: center;
     padding: 1rem;
-    background: linear-gradient(135deg, #F4F4F5 0%, #FFFFFF 100%);
+    background: linear-gradient(135deg, #fdf4ff 0%, #FFFFFF 50%, #f3e8ff 100%);
 }
 
 /* Card balance display */
@@ -88,12 +89,12 @@
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    border-radius: 2px;
+    border-radius: 9999px;
 }
 
 .status-badge.success {
-    background: #00FF94;
-    color: #09090B;
+    background: linear-gradient(135deg, #00C853 0%, #00E676 100%);
+    color: white;
 }
 
 .status-badge.error {
@@ -103,7 +104,7 @@
 
 .status-badge.pending {
     background: #FFD700;
-    color: #09090B;
+    color: #2E0854;
 }
 
 /* Action buttons grid */
@@ -145,24 +146,25 @@
 
 /* Customer card */
 .customer-card {
-    border: 2px solid #E4E4E7;
-    border-radius: 2px;
+    border: 1px solid #E4E4E7;
+    border-radius: 0.75rem;
     padding: 1rem;
     transition: all 200ms ease-out;
     cursor: pointer;
+    background: white;
 }
 
 .customer-card:hover {
-    border-color: #09090B;
+    border-color: #8A2BE2;
     transform: translateY(-2px);
-    box-shadow: 4px 4px 0 0 rgba(0, 0, 0, 0.1);
+    box-shadow: 0 8px 20px rgba(138, 43, 226, 0.15);
 }
 
 /* Masked data styling */
 .masked-data {
     font-family: 'JetBrains Mono', monospace;
     color: #71717A;
-    letter-spacing: 0.1em;
+    letter-spacing: 0.05em;
 }
 
 /* Loading spinner */
@@ -170,7 +172,7 @@
     width: 24px;
     height: 24px;
     border: 3px solid #E4E4E7;
-    border-top-color: #09090B;
+    border-top-color: #8A2BE2;
     border-radius: 50%;
     animation: spin 0.8s linear infinite;
 }
@@ -188,10 +190,10 @@
 
 /* Toast customization */
 [data-sonner-toast] {
-    font-family: 'IBM Plex Sans', sans-serif !important;
-    border: 2px solid #09090B !important;
-    border-radius: 2px !important;
-    box-shadow: 4px 4px 0 0 rgba(0, 0, 0, 1) !important;
+    font-family: 'Figtree', sans-serif !important;
+    border: 1px solid #E4E4E7 !important;
+    border-radius: 0.75rem !important;
+    box-shadow: 0 8px 20px rgba(46, 8, 84, 0.1) !important;
 }
 
 /* Mobile optimizations */

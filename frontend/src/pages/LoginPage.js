@@ -48,31 +48,31 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="auth-container" data-testid="login-page">
-      <div className="w-full max-w-md">
+    <div className="auth-container min-h-screen" data-testid="login-page">
+      <div className="w-full max-w-md px-4 sm:px-0">
         {/* Logo */}
-        <div className="text-center mb-8">
+        <div className="text-center mb-6 sm:mb-8">
           <img 
             src="/fonts/logo.png" 
             alt="Devotio Rewards" 
-            className="h-24 mx-auto mb-4"
+            className="h-16 sm:h-24 mx-auto mb-4"
             data-testid="logo-image"
           />
         </div>
 
         {/* Form Card */}
-        <div className="card-brutalist">
-          <h2 className="text-2xl text-heading text-center mb-2" data-testid="form-title">
+        <div className="card-brutalist p-4 sm:p-6">
+          <h2 className="text-xl sm:text-2xl text-heading text-center mb-2" data-testid="form-title">
             {isLogin ? 'Iniciar Sesión' : 'Crear Cuenta'}
           </h2>
-          <p className="text-center text-zinc-500 text-sm mb-8">
+          <p className="text-center text-zinc-500 text-xs sm:text-sm mb-6 sm:mb-8">
             Bienvenido al escáner de tarjetas de fidelidad
           </p>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
             {!isLogin && (
               <div className="space-y-2">
-                <Label htmlFor="name" className="text-sm font-medium uppercase tracking-wider">
+                <Label htmlFor="name" className="text-xs sm:text-sm font-medium uppercase tracking-wider">
                   Nombre
                 </Label>
                 <Input
@@ -81,7 +81,7 @@ const LoginPage = () => {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Tu nombre"
-                  className="input-brutalist"
+                  className="input-brutalist text-sm sm:text-base"
                   required={!isLogin}
                   data-testid="name-input"
                 />
@@ -89,18 +89,18 @@ const LoginPage = () => {
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-sm font-medium uppercase tracking-wider">
+              <Label htmlFor="email" className="text-xs sm:text-sm font-medium uppercase tracking-wider">
                 Correo Electrónico
               </Label>
               <div className="relative">
-                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
+                <Mail className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
                 <Input
                   id="email"
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="tu@correo.com"
-                  className="input-brutalist pl-12"
+                  className="input-brutalist pl-10 sm:pl-12 text-sm sm:text-base"
                   required
                   data-testid="email-input"
                 />
@@ -108,25 +108,25 @@ const LoginPage = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-sm font-medium uppercase tracking-wider">
+              <Label htmlFor="password" className="text-xs sm:text-sm font-medium uppercase tracking-wider">
                 Contraseña
               </Label>
               <div className="relative">
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
+                <Lock className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
                 <Input
                   id="password"
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="input-brutalist pl-12 pr-12"
+                  className="input-brutalist pl-10 sm:pl-12 pr-10 sm:pr-12 text-sm sm:text-base"
                   required
                   data-testid="password-input"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 transition-colors"
+                  className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 transition-colors"
                   data-testid="toggle-password"
                 >
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -137,7 +137,7 @@ const LoginPage = () => {
             <Button
               type="submit"
               disabled={loading}
-              className="w-full btn-primary"
+              className="w-full btn-primary text-sm sm:text-base"
               data-testid="submit-button"
             >
               {loading ? (
@@ -150,11 +150,11 @@ const LoginPage = () => {
             </Button>
           </form>
 
-          <div className="mt-6 text-center">
+          <div className="mt-4 sm:mt-6 text-center">
             <button
               type="button"
               onClick={() => setIsLogin(!isLogin)}
-              className="text-sm text-zinc-500 hover:text-[#8A2BE2] transition-colors underline"
+              className="text-xs sm:text-sm text-zinc-500 hover:text-[#8A2BE2] transition-colors underline"
               data-testid="toggle-mode"
             >
               {isLogin ? '¿No tienes cuenta? Regístrate' : '¿Ya tienes cuenta? Inicia sesión'}
@@ -162,10 +162,10 @@ const LoginPage = () => {
           </div>
 
           {isLogin && (
-            <div className="mt-4 text-center">
+            <div className="mt-3 sm:mt-4 text-center">
               <button
                 type="button"
-                className="text-sm font-semibold text-[#8A2BE2] hover:underline"
+                className="text-xs sm:text-sm font-semibold text-[#8A2BE2] hover:underline"
                 data-testid="forgot-password"
               >
                 ¿Olvidaste tu contraseña?
@@ -175,7 +175,7 @@ const LoginPage = () => {
         </div>
 
         {/* Footer */}
-        <p className="text-center text-xs text-zinc-400 mt-8">
+        <p className="text-center text-xs text-zinc-400 mt-6 sm:mt-8 px-4">
           Este sitio está protegido por reCAPTCHA y aplican la{' '}
           <a href="#" className="underline">Política de Privacidad</a> y los{' '}
           <a href="#" className="underline">Términos de Servicio</a> de Google.

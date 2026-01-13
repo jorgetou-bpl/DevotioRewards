@@ -698,7 +698,7 @@ const ResultPage = () => {
         </div>
 
         {/* Tabs */}
-        <div className="flex border rounded-xl mb-4 sm:mb-6 overflow-hidden" style={{ borderColor: '#2E0854' }}>
+        <div className="flex border rounded-xl mb-4 sm:mb-6 overflow-hidden" style={{ borderColor: '#120627' }}>
           {config.tabs.map((tab) => (
             <button
               key={tab}
@@ -708,8 +708,8 @@ const ResultPage = () => {
               }}
               className={`flex-1 py-2.5 sm:py-3 text-xs sm:text-sm font-semibold uppercase tracking-wider transition-colors ${
                 activeTab === tab
-                  ? 'bg-gradient-to-r from-[#F040A0] to-[#8A2BE2] text-white'
-                  : 'bg-white text-[#2E0854] hover:bg-zinc-50'
+                  ? 'bg-[#120627] text-white'
+                  : 'bg-white text-[#120627] hover:bg-zinc-50'
               }`}
               data-testid={`tab-${tab.toLowerCase()}`}
             >

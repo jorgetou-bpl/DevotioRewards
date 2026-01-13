@@ -100,15 +100,19 @@ code, .mono {
         @apply text-white hover:opacity-90 rounded-lg font-semibold tracking-wide h-12 
                shadow-lg active:translate-y-[1px] active:shadow-md 
                transition-all duration-200;
-        background: linear-gradient(135deg, #F040A0 0%, #8A2BE2 100%);
+        background: #120627;
+    }
+
+    .btn-primary:hover {
+        background: #1a0a3a;
     }
 
     .btn-secondary {
         @apply bg-white border-2 hover:bg-gray-50 rounded-lg font-semibold 
                tracking-wide h-12 shadow-md active:translate-y-[1px] 
                active:shadow-sm transition-all duration-200;
-        border-color: #2E0854;
-        color: #2E0854;
+        border-color: #120627;
+        color: #120627;
     }
 
     .card-brutalist {
@@ -440,11 +444,15 @@ code, .mono {
 
 /* Brand gradient backgrounds */
 .bg-brand-gradient {
+    background: #120627;
+}
+
+.bg-brand-gradient-light {
     background: linear-gradient(135deg, #F040A0 0%, #8A2BE2 100%);
 }
 
 .border-brand {
-    border-color: #2E0854;
+    border-color: #120627;
 }
 
 /* Customer ID banner with gradient */

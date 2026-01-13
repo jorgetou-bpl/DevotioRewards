@@ -101,18 +101,33 @@ code, .mono {
                shadow-lg active:translate-y-[1px] active:shadow-md 
                transition-all duration-200;
         background: #120627;
+        border: 2px solid white;
     }
 
     .btn-primary:hover {
         background: #1a0a3a;
     }
 
+    .btn-primary:active {
+        background: #8A2BE2;
+    }
+
     .btn-secondary {
-        @apply bg-white border-2 hover:bg-gray-50 rounded-lg font-semibold 
+        @apply bg-white border-2 rounded-lg font-semibold 
                tracking-wide h-12 shadow-md active:translate-y-[1px] 
                active:shadow-sm transition-all duration-200;
         border-color: #120627;
         color: #120627;
+    }
+
+    .btn-secondary:hover {
+        background: #f4f4f5;
+    }
+
+    .btn-secondary:active {
+        background: #8A2BE2;
+        border-color: #8A2BE2;
+        color: white;
     }
 
     .card-brutalist {

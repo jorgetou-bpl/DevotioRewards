@@ -122,7 +122,7 @@ const SettingsPage = () => {
                     <Switch
                       checked={settings[item.key] || false}
                       onCheckedChange={(checked) => handleToggle(item.key, checked)}
-                      className="data-[state=checked]:bg-gradient-to-r data-[state=checked]:from-[#F040A0] data-[state=checked]:to-[#8A2BE2] flex-shrink-0"
+                      className="data-[state=checked]:bg-[#120627] flex-shrink-0"
                       data-testid={`${item.testId}-switch`}
                     />
                   </div>

@@ -88,8 +88,8 @@ const SearchPage = () => {
           className="flex items-center gap-1 sm:gap-2 p-2 hover:bg-zinc-100 rounded-lg transition-colors"
           data-testid="back-button"
         >
-          <ArrowLeft className="h-5 w-5 text-[#2E0854]" />
-          <span className="font-medium text-[#2E0854] hidden sm:inline">Volver</span>
+          <ArrowLeft className="h-5 w-5 text-[#120627]" />
+          <span className="font-medium text-[#120627] hidden sm:inline">Volver</span>
         </button>
         <img 
           src="/fonts/logo.png" 
@@ -183,11 +183,11 @@ const SearchPage = () => {
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
-                        <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-[#F040A0] to-[#8A2BE2] rounded-lg flex items-center justify-center flex-shrink-0">
+                        <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-[#F040A0] to-[#120627] rounded-lg flex items-center justify-center flex-shrink-0">
                           <User className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
                         </div>
                         <div className="min-w-0 flex-1">
-                          <p className="font-medium text-[#2E0854] text-sm sm:text-base truncate" data-testid="customer-name">
+                          <p className="font-medium text-[#120627] text-sm sm:text-base truncate" data-testid="customer-name">
                             {customer.firstName || 'N/A'} {customer.surname || ''}
                           </p>
                           <p className="text-xs sm:text-sm masked-data truncate" data-testid="customer-contact-masked">
@@ -213,7 +213,7 @@ const SearchPage = () => {
         {/* Loading State */}
         {loading && searched && (
           <div className="flex justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-[#8A2BE2]" />
+            <Loader2 className="h-8 w-8 animate-spin text-[#120627]" />
           </div>
         )}
       </main>

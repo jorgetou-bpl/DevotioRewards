@@ -188,7 +188,7 @@ const ScannerPage = () => {
           data-testid="menu-button"
           aria-label="Abrir menú"
         >
-          <Menu className="h-6 w-6 text-[#2E0854]" strokeWidth={2} />
+          <Menu className="h-6 w-6 text-[#120627]" strokeWidth={2} />
         </button>
       </header>
 
@@ -225,11 +225,11 @@ const ScannerPage = () => {
                   data-testid="stop-scan-button"
                   aria-label="Detener escaneo"
                 >
-                  <X className="h-5 w-5 text-[#2E0854]" />
+                  <X className="h-5 w-5 text-[#120627]" />
                 </button>
               </>
             ) : (
-              <div className="w-full h-full flex items-center justify-center bg-[#2E0854]">
+              <div className="w-full h-full flex items-center justify-center bg-[#120627]">
                 {cameraError ? (
                   <div className="text-center text-zinc-300 p-4">
                     <CameraOff className="h-10 w-10 sm:h-12 sm:w-12 mx-auto mb-2" />
@@ -261,7 +261,7 @@ const ScannerPage = () => {
             {loading && (
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="bg-white/90 backdrop-blur-sm p-4 rounded-lg shadow-lg">
-                  <Loader2 className="h-8 w-8 animate-spin text-[#8A2BE2]" />
+                  <Loader2 className="h-8 w-8 animate-spin text-[#120627]" />
                 </div>
               </div>
             )}
@@ -293,7 +293,7 @@ const ScannerPage = () => {
                 <Button
                   type="submit"
                   size="sm"
-                  className="absolute right-1 top-1/2 -translate-y-1/2 bg-[#8A2BE2] text-white px-3 sm:px-4 h-9 sm:h-10 rounded-lg hover:bg-[#7B27CC] text-sm"
+                  className="absolute right-1 top-1/2 -translate-y-1/2 bg-[#120627] text-white px-3 sm:px-4 h-9 sm:h-10 rounded-lg hover:bg-[#7B27CC] text-sm"
                   data-testid="manual-submit"
                 >
                   Ir
@@ -322,7 +322,7 @@ const ScannerPage = () => {
               data-testid="close-menu-button"
               aria-label="Cerrar menú"
             >
-              <X className="h-5 w-5 text-[#2E0854]" />
+              <X className="h-5 w-5 text-[#120627]" />
             </button>
           </div>
           
@@ -337,8 +337,8 @@ const ScannerPage = () => {
                 className="w-full flex items-center gap-3 sm:gap-4 p-3 sm:p-4 text-left hover:bg-zinc-100 rounded-lg transition-colors border-b border-zinc-100"
                 data-testid={item.testId}
               >
-                <item.icon className="h-5 w-5 text-[#8A2BE2]" strokeWidth={2} />
-                <span className="font-medium text-sm sm:text-base text-[#2E0854]">{item.label}</span>
+                <item.icon className="h-5 w-5 text-[#120627]" strokeWidth={2} />
+                <span className="font-medium text-sm sm:text-base text-[#120627]">{item.label}</span>
               </button>
             ))}
           </nav>

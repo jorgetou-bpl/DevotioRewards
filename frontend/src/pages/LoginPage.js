@@ -154,7 +154,7 @@ const LoginPage = () => {
             <button
               type="button"
               onClick={() => setIsLogin(!isLogin)}
-              className="text-xs sm:text-sm text-zinc-500 hover:text-[#8A2BE2] transition-colors underline"
+              className="text-xs sm:text-sm text-zinc-500 hover:text-[#120627] transition-colors underline"
               data-testid="toggle-mode"
             >
               {isLogin ? '¿No tienes cuenta? Regístrate' : '¿Ya tienes cuenta? Inicia sesión'}
@@ -165,7 +165,7 @@ const LoginPage = () => {
             <div className="mt-3 sm:mt-4 text-center">
               <button
                 type="button"
-                className="text-xs sm:text-sm font-semibold text-[#8A2BE2] hover:underline"
+                className="text-xs sm:text-sm font-semibold text-[#120627] hover:underline"
                 data-testid="forgot-password"
               >
                 ¿Olvidaste tu contraseña?

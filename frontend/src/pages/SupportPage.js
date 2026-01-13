@@ -65,8 +65,8 @@ const SupportPage = () => {
           className="flex items-center gap-1 sm:gap-2 p-2 hover:bg-zinc-100 rounded-lg transition-colors"
           data-testid="back-button"
         >
-          <ArrowLeft className="h-5 w-5 text-[#2E0854]" />
-          <span className="font-medium text-[#2E0854] hidden sm:inline">Volver</span>
+          <ArrowLeft className="h-5 w-5 text-[#120627]" />
+          <span className="font-medium text-[#120627] hidden sm:inline">Volver</span>
         </button>
         <img 
           src="/fonts/logo.png" 
@@ -94,11 +94,11 @@ const SupportPage = () => {
               data-testid={item.testId}
             >
               <div className="flex items-center gap-3 sm:gap-4">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-[#F040A0] to-[#8A2BE2] rounded-lg flex items-center justify-center flex-shrink-0">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-[#F040A0] to-[#120627] rounded-lg flex items-center justify-center flex-shrink-0">
                   <item.icon className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-[#2E0854] text-sm sm:text-base">{item.title}</p>
+                  <p className="font-medium text-[#120627] text-sm sm:text-base">{item.title}</p>
                   <p className="text-xs sm:text-sm text-zinc-500 truncate">{item.description}</p>
                 </div>
                 <ExternalLink className="h-4 w-4 sm:h-5 sm:w-5 text-zinc-400 flex-shrink-0" />
@@ -110,8 +110,8 @@ const SupportPage = () => {
         {/* FAQ Section */}
         <div className="card-brutalist">
           <div className="flex items-center gap-2 mb-4">
-            <HelpCircle className="h-4 w-4 sm:h-5 sm:w-5 text-[#8A2BE2]" />
-            <h3 className="font-semibold uppercase tracking-wider text-xs sm:text-sm text-[#2E0854]">
+            <HelpCircle className="h-4 w-4 sm:h-5 sm:w-5 text-[#120627]" />
+            <h3 className="font-semibold uppercase tracking-wider text-xs sm:text-sm text-[#120627]">
               Preguntas Frecuentes
             </h3>
           </div>
@@ -119,7 +119,7 @@ const SupportPage = () => {
           <div className="space-y-3 sm:space-y-4">
             {faqItems.map((faq, index) => (
               <div key={index} className="border-b border-zinc-200 pb-3 sm:pb-4 last:border-0 last:pb-0">
-                <p className="font-medium mb-1 sm:mb-2 text-[#2E0854] text-sm" data-testid={`faq-question-${index}`}>
+                <p className="font-medium mb-1 sm:mb-2 text-[#120627] text-sm" data-testid={`faq-question-${index}`}>
                   {faq.question}
                 </p>
                 <p className="text-xs sm:text-sm text-zinc-500" data-testid={`faq-answer-${index}`}>

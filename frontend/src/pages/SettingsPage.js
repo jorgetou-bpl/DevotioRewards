@@ -81,8 +81,8 @@ const SettingsPage = () => {
           className="flex items-center gap-2 p-2 hover:bg-zinc-100 rounded-lg transition-colors"
           data-testid="back-button"
         >
-          <ArrowLeft className="h-5 w-5 text-[#2E0854]" />
-          <span className="font-medium text-[#2E0854] hidden sm:inline">Volver</span>
+          <ArrowLeft className="h-5 w-5 text-[#120627]" />
+          <span className="font-medium text-[#120627] hidden sm:inline">Volver</span>
         </button>
         <img 
           src="/fonts/logo.png" 
@@ -99,7 +99,7 @@ const SettingsPage = () => {
 
         {loading ? (
           <div className="flex justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-[#8A2BE2]" />
+            <Loader2 className="h-8 w-8 animate-spin text-[#120627]" />
           </div>
         ) : (
           <>
@@ -113,9 +113,9 @@ const SettingsPage = () => {
                 {settingsItems.map((item) => (
                   <div key={item.key} className="settings-row py-3 sm:py-4" data-testid={item.testId}>
                     <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
-                      <item.icon className="h-5 w-5 text-[#8A2BE2] flex-shrink-0" strokeWidth={2} />
+                      <item.icon className="h-5 w-5 text-[#120627] flex-shrink-0" strokeWidth={2} />
                       <div className="min-w-0">
-                        <p className="font-medium text-[#2E0854] text-sm sm:text-base">{item.label}</p>
+                        <p className="font-medium text-[#120627] text-sm sm:text-base">{item.label}</p>
                         <p className="text-xs sm:text-sm text-zinc-500 truncate">{item.description}</p>
                       </div>
                     </div>
@@ -139,15 +139,15 @@ const SettingsPage = () => {
               <div className="relative">
                 <button
                   onClick={() => setCurrencyOpen(!currencyOpen)}
-                  className="w-full flex items-center justify-between p-3 sm:p-4 border-2 border-zinc-200 rounded-xl hover:border-[#8A2BE2] transition-colors"
+                  className="w-full flex items-center justify-between p-3 sm:p-4 border-2 border-zinc-200 rounded-xl hover:border-[#120627] transition-colors"
                   data-testid="currency-selector"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-gradient-to-br from-[#F040A0] to-[#8A2BE2] rounded-lg flex items-center justify-center">
+                    <div className="w-10 h-10 bg-gradient-to-br from-[#F040A0] to-[#120627] rounded-lg flex items-center justify-center">
                       <span className="text-white font-bold text-lg">{currentCurrency.symbol}</span>
                     </div>
                     <div className="text-left">
-                      <p className="font-medium text-[#2E0854] text-sm sm:text-base">{currentCurrency.name}</p>
+                      <p className="font-medium text-[#120627] text-sm sm:text-base">{currentCurrency.name}</p>
                       <p className="text-xs sm:text-sm text-zinc-500">{currentCurrency.code}</p>
                     </div>
                   </div>
@@ -167,16 +167,16 @@ const SettingsPage = () => {
                         data-testid={`currency-${currency.code}`}
                       >
                         <div className="flex items-center gap-3">
-                          <span className="w-8 h-8 bg-zinc-100 rounded-lg flex items-center justify-center font-semibold text-[#2E0854]">
+                          <span className="w-8 h-8 bg-zinc-100 rounded-lg flex items-center justify-center font-semibold text-[#120627]">
                             {currency.symbol}
                           </span>
                           <div className="text-left">
-                            <p className="font-medium text-[#2E0854] text-sm">{currency.name}</p>
+                            <p className="font-medium text-[#120627] text-sm">{currency.name}</p>
                             <p className="text-xs text-zinc-500">{currency.code}</p>
                           </div>
                         </div>
                         {currency.code === settings.currency && (
-                          <Check className="h-5 w-5 text-[#8A2BE2]" />
+                          <Check className="h-5 w-5 text-[#120627]" />
                         )}
                       </button>
                     ))}

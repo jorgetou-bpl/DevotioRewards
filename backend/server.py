@@ -159,26 +159,24 @@ CUSTOMER_TO_CARD = {
 # ============ HELPER FUNCTIONS ============
 
 def mask_pii(data: dict) -> dict:
-    """Mask PII fields in the response"""
+    """Mask PII fields in the response - Keep firstName and surname visible, mask email and phone"""
     masked = data.copy()
     if 'customer' in masked and masked['customer']:
         customer = masked['customer'].copy()
-        for field in ['firstName', 'surname']:
-            if field in customer:
-                customer[field] = '***'
+        # Keep firstName and surname visible (not masked)
+        # Only mask email and phone
         if 'email' in customer:
             customer['email'] = '***@***.***'
         if 'phone' in customer:
             customer['phone'] = '***-***-****'
         masked['customer'] = customer
-    for field in ['firstName', 'surname', 'email', 'phone']:
+    # For top-level fields (not nested in customer)
+    for field in ['email', 'phone']:
         if field in masked:
             if field == 'email':
                 masked[field] = '***@***.***'
             elif field == 'phone':
                 masked[field] = '***-***-****'
-            else:
-                masked[field] = '***'
     return masked
 
 def extract_card_id_from_qr(qr_data: str) -> str:

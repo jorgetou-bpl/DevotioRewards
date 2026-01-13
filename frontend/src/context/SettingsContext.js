@@ -6,13 +6,32 @@ const SettingsContext = createContext(null);
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
+// Supported currencies
+export const CURRENCIES = [
+  { code: 'CRC', symbol: '₡', name: 'Colón Costarricense', locale: 'es-CR' },
+  { code: 'USD', symbol: '$', name: 'Dólar Estadounidense', locale: 'en-US' },
+  { code: 'EUR', symbol: '€', name: 'Euro', locale: 'es-ES' },
+  { code: 'MXN', symbol: '$', name: 'Peso Mexicano', locale: 'es-MX' },
+  { code: 'COP', symbol: '$', name: 'Peso Colombiano', locale: 'es-CO' },
+  { code: 'PEN', symbol: 'S/', name: 'Sol Peruano', locale: 'es-PE' },
+  { code: 'ARS', symbol: '$', name: 'Peso Argentino', locale: 'es-AR' },
+  { code: 'CLP', symbol: '$', name: 'Peso Chileno', locale: 'es-CL' },
+  { code: 'GTQ', symbol: 'Q', name: 'Quetzal Guatemalteco', locale: 'es-GT' },
+  { code: 'HNL', symbol: 'L', name: 'Lempira Hondureño', locale: 'es-HN' },
+  { code: 'NIO', symbol: 'C$', name: 'Córdoba Nicaragüense', locale: 'es-NI' },
+  { code: 'PAB', symbol: 'B/.', name: 'Balboa Panameño', locale: 'es-PA' },
+  { code: 'DOP', symbol: 'RD$', name: 'Peso Dominicano', locale: 'es-DO' },
+  { code: 'BRL', symbol: 'R$', name: 'Real Brasileño', locale: 'pt-BR' },
+];
+
 export const SettingsProvider = ({ children }) => {
   const { isAuthenticated, token } = useAuth();
   const [settings, setSettings] = useState({
     vibration: false,
     beep: false,
     show_result: true,
-    copy_to_clipboard: true
+    copy_to_clipboard: true,
+    currency: 'CRC'
   });
   const [loading, setLoading] = useState(false);
 
@@ -26,7 +45,7 @@ export const SettingsProvider = ({ children }) => {
     setLoading(true);
     try {
       const response = await axios.get(`${API}/settings`);
-      setSettings(response.data);
+      setSettings(prev => ({ ...prev, ...response.data }));
     } catch (error) {
       console.error('Failed to fetch settings:', error);
     } finally {
@@ -37,7 +56,7 @@ export const SettingsProvider = ({ children }) => {
   const updateSettings = async (newSettings) => {
     try {
       const response = await axios.put(`${API}/settings`, newSettings);
-      setSettings(response.data);
+      setSettings(prev => ({ ...prev, ...response.data }));
       return response.data;
     } catch (error) {
       console.error('Failed to update settings:', error);
@@ -82,6 +101,22 @@ export const SettingsProvider = ({ children }) => {
     return false;
   };
 
+  // Currency formatting helper
+  const formatCurrency = (amount) => {
+    const currencyConfig = CURRENCIES.find(c => c.code === settings.currency) || CURRENCIES[0];
+    return new Intl.NumberFormat(currencyConfig.locale, {
+      style: 'currency',
+      currency: currencyConfig.code,
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).format(amount);
+  };
+
+  // Get current currency info
+  const getCurrencyInfo = () => {
+    return CURRENCIES.find(c => c.code === settings.currency) || CURRENCIES[0];
+  };
+
   const value = {
     settings,
     loading,
@@ -89,7 +124,10 @@ export const SettingsProvider = ({ children }) => {
     triggerVibration,
     triggerBeep,
     copyToClipboard,
-    fetchSettings
+    fetchSettings,
+    formatCurrency,
+    getCurrencyInfo,
+    CURRENCIES
   };
 
   return (

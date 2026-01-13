@@ -23,15 +23,15 @@
 
 :root {
     /* Devotio Rewards Brand Colors */
-    --primary: #2E0854;
+    --primary: #120627;
     --primary-light: #301934;
     --secondary: #FFFFFF;
     --accent-pink: #F040A0;
-    --accent-purple: #8A2BE2;
-    --accent-gradient: linear-gradient(135deg, #F040A0 0%, #8A2BE2 100%);
+    --accent-purple: #120627;
+    --accent-gradient: linear-gradient(135deg, #F040A0 0%, #120627 100%);
     --background: #FFFFFF;
     --surface: #F4F4F5;
-    --text-primary: #2E0854;
+    --text-primary: #120627;
     --text-secondary: #71717A;
     --border: #E4E4E7;
     --success: #00C853;
@@ -127,14 +127,14 @@ code, .mono {
     }
     
     .input-brutalist:focus {
-        border-color: #8A2BE2;
+        border-color: #120627;
         --tw-ring-color: rgba(138, 43, 226, 0.2);
     }
 
     .text-heading {
         font-family: 'Figtree', sans-serif;
         font-weight: 600;
-        color: #2E0854;
+        color: #120627;
     }
 
     .text-mono {
@@ -142,7 +142,7 @@ code, .mono {
     }
     
     .gradient-text {
-        background: linear-gradient(135deg, #F040A0 0%, #8A2BE2 100%);
+        background: linear-gradient(135deg, #F040A0 0%, #120627 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         background-clip: text;
@@ -154,7 +154,7 @@ code, .mono {
     font-family: 'Figtree', sans-serif;
     font-weight: 600;
     letter-spacing: -0.02em;
-    color: #2E0854;
+    color: #120627;
 }
 
 /* Navigation styles */
@@ -248,7 +248,7 @@ code, .mono {
 
 .status-badge.pending {
     background: #FFD700;
-    color: #2E0854;
+    color: #120627;
 }
 
 /* Action buttons grid */
@@ -299,7 +299,7 @@ code, .mono {
 }
 
 .customer-card:hover {
-    border-color: #8A2BE2;
+    border-color: #120627;
     transform: translateY(-2px);
     box-shadow: 0 8px 20px rgba(138, 43, 226, 0.15);
 }
@@ -316,7 +316,7 @@ code, .mono {
     width: 24px;
     height: 24px;
     border: 3px solid #E4E4E7;
-    border-top-color: #8A2BE2;
+    border-top-color: #120627;
     border-radius: 50%;
     animation: spin 0.8s linear infinite;
 }
@@ -356,7 +356,7 @@ code, .mono {
     position: relative;
     width: 100%;
     aspect-ratio: 4/3;
-    background: #2E0854;
+    background: #120627;
     overflow: hidden;
     border-radius: 0.75rem;
 }
@@ -434,12 +434,12 @@ code, .mono {
 }
 
 ::-webkit-scrollbar-thumb {
-    background: linear-gradient(135deg, #F040A0 0%, #8A2BE2 100%);
+    background: linear-gradient(135deg, #F040A0 0%, #120627 100%);
     border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: #8A2BE2;
+    background: #120627;
 }
 
 /* Brand gradient backgrounds */
@@ -448,7 +448,7 @@ code, .mono {
 }
 
 .bg-brand-gradient-light {
-    background: linear-gradient(135deg, #F040A0 0%, #8A2BE2 100%);
+    background: linear-gradient(135deg, #F040A0 0%, #120627 100%);
 }
 
 .border-brand {
@@ -457,7 +457,7 @@ code, .mono {
 
 /* Customer ID banner with gradient */
 .customer-id-banner {
-    background: linear-gradient(135deg, #2E0854 0%, #4a1a6b 100%);
+    background: linear-gradient(135deg, #120627 0%, #1a0a3a 100%);
     color: white;
     border-radius: 0.75rem;
     padding: 1rem;

@@ -169,7 +169,7 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, actionType, deta
         </div>
         
         {/* Customer ID */}
-        <div className="bg-gradient-to-r from-[#2E0854] to-[#4a1a6b] text-white rounded-lg p-3 sm:p-4 mb-4">
+        <div className="bg-[#120627] text-white rounded-lg p-3 sm:p-4 mb-4">
           <p className="text-xs font-semibold uppercase tracking-wider text-white/70 mb-1">ID de Cliente</p>
           <p className="text-mono font-medium text-sm sm:text-base break-all">{card?.customer?.id || card?.customerId || '-'}</p>
         </div>

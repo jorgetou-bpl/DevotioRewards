@@ -430,13 +430,13 @@ const ResultPage = () => {
               size="icon"
               onClick={() => setActionAmount(Math.max(1, actionAmount - 1))}
               className="h-12 w-12 sm:h-14 sm:w-14 border-2 rounded-lg bg-white hover:bg-zinc-50"
-              style={{ borderColor: '#2E0854', color: '#2E0854' }}
+              style={{ borderColor: '#120627', color: '#120627' }}
               data-testid="decrease-amount"
             >
               <Minus className="h-5 w-5 sm:h-6 sm:w-6" />
             </Button>
             <div className="text-center">
-              <span className="text-4xl sm:text-5xl font-mono font-bold text-[#2E0854]" data-testid="action-amount">
+              <span className="text-4xl sm:text-5xl font-mono font-bold text-[#120627]" data-testid="action-amount">
                 {actionAmount}
               </span>
             </div>
@@ -445,7 +445,7 @@ const ResultPage = () => {
               size="icon"
               onClick={() => setActionAmount(actionAmount + 1)}
               className="h-12 w-12 sm:h-14 sm:w-14 border-2 rounded-lg bg-white hover:bg-zinc-50"
-              style={{ borderColor: '#2E0854', color: '#2E0854' }}
+              style={{ borderColor: '#120627', color: '#120627' }}
               data-testid="increase-amount"
             >
               <Plus className="h-5 w-5 sm:h-6 sm:w-6" />

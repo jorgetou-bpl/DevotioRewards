@@ -216,6 +216,13 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
         raise HTTPException(status_code=401, detail="Invalid token")
 
 async def call_boomerang_api(method: str, endpoint: str, data: dict = None) -> dict:
+    # Always use mock data for DEMO cards (for proposal demo purposes)
+    if '/cards/' in endpoint:
+        card_id = endpoint.split('/cards/')[-1].split('/')[0].upper()
+        if card_id.startswith('DEMO-'):
+            logger.info(f"Using mock data for demo card: {card_id}")
+            return get_mock_response(endpoint, method, data)
+    
     if not BOOMERANG_API_KEY:
         logger.warning("No Boomerang API key configured, returning mock data")
         return get_mock_response(endpoint, method, data)
@@ -233,11 +240,13 @@ async def call_boomerang_api(method: str, endpoint: str, data: dict = None) -> d
                 raise ValueError(f"Unsupported method: {method}")
             
             if response.status_code >= 400:
+                logger.error(f"Boomerang API error: {response.status_code} - {response.text}")
                 raise HTTPException(status_code=response.status_code, detail="Boomerang API error")
             return response.json()
         except httpx.TimeoutException:
             raise HTTPException(status_code=504, detail="Boomerang API timeout")
         except httpx.RequestError as e:
+            logger.error(f"Failed to connect to Boomerang API: {e}")
             raise HTTPException(status_code=502, detail="Failed to connect to Boomerang API")
 
 def get_mock_response(endpoint: str, method: str, data: dict = None) -> dict:

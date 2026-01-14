@@ -592,9 +592,7 @@ async def search_customers(
     # Build query parameters for Boomerang API
     params = f'page={page}&itemsPerPage={itemsPerPage}'
     
-    if query:
-        # General search - use the 'search' parameter for partial matching
-        params += f'&search={query}'
+    # For exact phone/email search, use Boomerang's native filtering
     if phone:
         params += f'&phone={phone}'
     if email:
@@ -602,6 +600,18 @@ async def search_customers(
     
     response = await call_boomerang_api('GET', f'/customers?{params}')
     customers = response.get('data', [])
+    
+    # If general query provided, filter results client-side (Boomerang's search doesn't work well)
+    if query and not phone and not email:
+        query_lower = query.lower()
+        customers = [
+            c for c in customers 
+            if query_lower in (c.get('firstName', '') or '').lower()
+            or query_lower in (c.get('surname', '') or '').lower()
+            or query_lower in (c.get('email', '') or '').lower()
+            or query_lower in (c.get('phone', '') or '').lower()
+        ]
+    
     return {"success": True, "customers": [mask_pii(c) for c in customers], "meta": response.get('meta', {})}
 
 @api_router.get("/customers/{customer_id}")

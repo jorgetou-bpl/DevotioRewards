@@ -488,6 +488,45 @@ async def redeem_visit(card_id: str, action_data: CardActionRequest, current_use
                                     "timestamp": datetime.now(timezone.utc).isoformat(), "action": "redeem_visit", "amount": action_data.amount})
     return {"success": True, "card": mask_pii(response.get('data', {})), "message": "Visit redeemed successfully"}
 
+@api_router.post("/cards/{card_id}/subtract-visit")
+async def subtract_visit(card_id: str, action_data: CardActionRequest, current_user: dict = Depends(get_current_user)):
+    """Subtract visits from multipass/membership cards"""
+    payload = {"visits": action_data.amount or 1}
+    if action_data.comment:
+        payload["comment"] = action_data.comment
+    response = await call_boomerang_api('POST', f'/cards/{card_id}/subtract-visit', payload)
+    await db.scan_logs.insert_one({"user_id": current_user['id'], "card_id": card_id, 
+                                    "timestamp": datetime.now(timezone.utc).isoformat(), "action": "subtract_visit", "amount": action_data.amount})
+    return {"success": True, "card": mask_pii(response.get('data', {})), "message": "Visita canjeada exitosamente"}
+
+@api_router.post("/cards/{card_id}/add-reward")
+async def add_reward(card_id: str, action_data: CardActionRequest, current_user: dict = Depends(get_current_user)):
+    """Add rewards to reward cards (type ID 7)"""
+    payload = {"rewards": int(action_data.amount or 1)}
+    if action_data.comment:
+        payload["comment"] = action_data.comment
+    if action_data.purchaseSum:
+        payload["purchaseSum"] = action_data.purchaseSum
+    response = await call_boomerang_api('POST', f'/cards/{card_id}/add-reward', payload)
+    await db.scan_logs.insert_one({"user_id": current_user['id'], "card_id": card_id, 
+                                    "timestamp": datetime.now(timezone.utc).isoformat(), "action": "add_reward", "amount": action_data.amount})
+    return {"success": True, "card": mask_pii(response.get('data', {})), "message": "Recompensas agregadas exitosamente"}
+
+@api_router.post("/cards/{card_id}/receive-reward")
+async def receive_reward(card_id: str, action_data: CardActionRequest, current_user: dict = Depends(get_current_user)):
+    """Receive/redeem reward from reward cards (type ID 7). Requires reward tier ID."""
+    # For receive-reward, the API expects 'id' field with the reward tier ID
+    # If amount is passed, use it as the reward tier ID, otherwise use 1 as default
+    payload = {"id": int(action_data.amount or 1)}
+    if action_data.comment:
+        payload["comment"] = action_data.comment
+    if action_data.purchaseSum:
+        payload["purchaseSum"] = action_data.purchaseSum
+    response = await call_boomerang_api('POST', f'/cards/{card_id}/receive-reward', payload)
+    await db.scan_logs.insert_one({"user_id": current_user['id'], "card_id": card_id, 
+                                    "timestamp": datetime.now(timezone.utc).isoformat(), "action": "receive_reward", "amount": action_data.amount})
+    return {"success": True, "card": mask_pii(response.get('data', {})), "message": "Recompensa canjeada exitosamente"}
+
 # ============ CUSTOMER ROUTES ============
 
 @api_router.get("/customers")

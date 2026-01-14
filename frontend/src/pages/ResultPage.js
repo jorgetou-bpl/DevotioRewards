@@ -654,6 +654,9 @@ const ResultPage = () => {
         if (normalizedType === 'certificate' || normalizedType === 'gift' || normalizedType === 'gift_card') {
           // Gift/certificate cards use the 'balance' field
           availableAmount = balance.balance || balance.bonusBalance || 0;
+        } else if (normalizedType === 'reward') {
+          // Reward cards use bonusBalance for scores
+          availableAmount = balance.bonusBalance || 0;
         } else if (balance.numberRewardsUnused !== undefined && balance.numberRewardsUnused !== null) {
           availableAmount = balance.numberRewardsUnused;
         } else if (balance.visitsAvailable !== undefined && balance.visitsAvailable !== null) {
@@ -667,6 +670,8 @@ const ResultPage = () => {
       let availableLabel = 'Puntos disponibles';
       if (normalizedType === 'certificate' || normalizedType === 'gift' || normalizedType === 'gift_card') {
         availableLabel = 'Saldo disponible';
+      } else if (normalizedType === 'reward') {
+        availableLabel = 'Puntos acumulados';
       } else if (balance.numberRewardsUnused !== undefined && balance.numberRewardsUnused !== null) {
         availableLabel = 'Recompensas disponibles';
       } else if (balance.visitsAvailable !== undefined && balance.visitsAvailable !== null) {

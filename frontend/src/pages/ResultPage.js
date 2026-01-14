@@ -525,38 +525,49 @@ const ResultPage = () => {
             </p>
           </div>
           
-          {/* Stamp counter */}
-          <div className="flex items-center justify-center gap-4 sm:gap-6">
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => setActionAmount(Math.max(1, actionAmount - 1))}
-              className="h-12 w-12 sm:h-14 sm:w-14 border-2 rounded-lg bg-white hover:bg-zinc-50"
-              style={{ borderColor: '#120627', color: '#120627' }}
-              data-testid="decrease-amount"
-            >
-              <Minus className="h-5 w-5 sm:h-6 sm:w-6" />
-            </Button>
-            <div className="text-center">
-              <span className="text-4xl sm:text-5xl font-mono font-bold text-[#120627]" data-testid="action-amount">
-                {actionAmount}
-              </span>
+          {/* Stamp counter - with keyboard input */}
+          <div className="card-brutalist">
+            <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500 block mb-2">
+              Cantidad de sellos
+            </label>
+            <div className="flex items-center gap-3">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setActionAmount(Math.max(1, actionAmount - 1))}
+                className="h-12 w-12 sm:h-14 sm:w-14 border-2 rounded-lg bg-white hover:bg-zinc-50 flex-shrink-0"
+                style={{ borderColor: '#120627', color: '#120627' }}
+                data-testid="decrease-amount"
+              >
+                <Minus className="h-5 w-5 sm:h-6 sm:w-6" />
+              </Button>
+              <Input
+                type="number"
+                value={actionAmount}
+                onChange={(e) => {
+                  const val = parseInt(e.target.value) || 1;
+                  setActionAmount(Math.max(1, val));
+                }}
+                min="1"
+                className="input-brutalist text-2xl sm:text-3xl font-mono h-12 sm:h-14 text-center flex-1"
+                data-testid="action-amount-input"
+              />
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setActionAmount(actionAmount + 1)}
+                className="h-12 w-12 sm:h-14 sm:w-14 border-2 rounded-lg bg-white hover:bg-zinc-50 flex-shrink-0"
+                style={{ borderColor: '#120627', color: '#120627' }}
+                data-testid="increase-amount"
+              >
+                <Plus className="h-5 w-5 sm:h-6 sm:w-6" />
+              </Button>
             </div>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => setActionAmount(actionAmount + 1)}
-              className="h-12 w-12 sm:h-14 sm:w-14 border-2 rounded-lg bg-white hover:bg-zinc-50"
-              style={{ borderColor: '#120627', color: '#120627' }}
-              data-testid="increase-amount"
-            >
-              <Plus className="h-5 w-5 sm:h-6 sm:w-6" />
-            </Button>
           </div>
           
           <Button
             onClick={() => openConfirmation('Agregar')}
-            disabled={loading}
+            disabled={loading || actionAmount < 1}
             className="w-full h-12 sm:h-14 text-base sm:text-lg btn-primary"
             data-testid="add-stamp-button"
           >

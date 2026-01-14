@@ -385,8 +385,8 @@ const ResultPage = () => {
     );
   }
 
-  const cardType = card.type || 'stamp_card';
-  const config = CARD_TYPE_CONFIG[cardType] || CARD_TYPE_CONFIG.stamp_card;
+  const cardType = normalizeCardType(card.type);
+  const config = CARD_TYPE_CONFIG[cardType] || CARD_TYPE_CONFIG.stamp;
   const balance = card.balance || {};
   const CardIcon = config.icon;
 

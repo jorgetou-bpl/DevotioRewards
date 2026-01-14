@@ -150,26 +150,26 @@ const CARD_TYPE_CONFIG = {
       canjear: { label: 'Canjear Saldo', endpoint: 'subtract-point' }
     }
   },
-  // Membership card (type ID 6)
+  // Membership card (type ID 6) - Uses visits or points based on config
   membership: {
     name: 'Membresía',
     icon: User,
     color: '#8A2BE2',
     tabs: ['Agregar', 'Canjear'],
     actions: {
-      agregar: { label: 'Agregar Puntos', endpoint: 'add-point' },
-      canjear: { label: 'Canjear Recompensa', endpoint: 'redeem-reward' }
+      agregar: { label: 'Agregar Visitas', endpoint: 'add-visit' },
+      canjear: { label: 'Canjear Visita', endpoint: 'subtract-visit' }
     }
   },
-  // Reward card (type ID 7)
+  // Reward card (type ID 7) - Uses add-reward and receive-reward
   reward: {
     name: 'Tarjeta de Recompensa',
     icon: Star,
     color: '#F040A0',
     tabs: ['Agregar', 'Canjear'],
     actions: {
-      agregar: { label: 'Agregar Puntos', endpoint: 'add-point' },
-      canjear: { label: 'Canjear Recompensa', endpoint: 'redeem-reward' }
+      agregar: { label: 'Agregar Recompensas', endpoint: 'add-reward' },
+      canjear: { label: 'Canjear Recompensa', endpoint: 'receive-reward' }
     }
   },
   // Points card (legacy/demo)

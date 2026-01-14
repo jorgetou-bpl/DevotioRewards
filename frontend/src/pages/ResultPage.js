@@ -677,10 +677,8 @@ const ResultPage = () => {
           // Reward cards use bonusBalance for scores
           availableAmount = balance.bonusBalance || 0;
         } else if (normalizedType === 'membership') {
-          // Membership cards - get visits from customerSubscription or currentNumberOfUses
-          // customerSubscription.balance shows remaining visits in the subscription
-          const subscription = card.customerSubscription || {};
-          availableAmount = subscription.balance || balance.currentNumberOfUses || 0;
+          // Membership cards - currentNumberOfUses tracks available visits
+          availableAmount = balance.currentNumberOfUses || 0;
         } else if (normalizedType === 'multipass') {
           // Multipass cards use currentNumberOfUses for available visits
           availableAmount = balance.currentNumberOfUses || 0;

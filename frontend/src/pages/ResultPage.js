@@ -633,9 +633,34 @@ const ResultPage = () => {
 
     // For redeem/points tabs
     if (activeTab === 'Canjear' || activeTab === 'Puntos') {
-      const availableAmount = activeTab === 'Canjear' 
-        ? (balance.numberRewardsUnused || balance.bonusBalance || balance.visitsAvailable || 0)
-        : (balance.bonusBalance || 0);
+      // Calculate available amount based on card type
+      // Gift/certificate cards use 'balance', others use bonusBalance, numberRewardsUnused, etc.
+      let availableAmount = 0;
+      if (activeTab === 'Puntos') {
+        availableAmount = balance.bonusBalance || 0;
+      } else {
+        // For Canjear tab - check different balance fields based on card type
+        if (normalizedType === 'certificate' || normalizedType === 'gift' || normalizedType === 'gift_card') {
+          // Gift/certificate cards use the 'balance' field
+          availableAmount = balance.balance || balance.bonusBalance || 0;
+        } else if (balance.numberRewardsUnused !== undefined && balance.numberRewardsUnused !== null) {
+          availableAmount = balance.numberRewardsUnused;
+        } else if (balance.visitsAvailable !== undefined && balance.visitsAvailable !== null) {
+          availableAmount = balance.visitsAvailable;
+        } else {
+          availableAmount = balance.bonusBalance || balance.balance || 0;
+        }
+      }
+      
+      // Determine the label for available amount
+      let availableLabel = 'Puntos disponibles';
+      if (normalizedType === 'certificate' || normalizedType === 'gift' || normalizedType === 'gift_card') {
+        availableLabel = 'Saldo disponible';
+      } else if (balance.numberRewardsUnused !== undefined && balance.numberRewardsUnused !== null) {
+        availableLabel = 'Recompensas disponibles';
+      } else if (balance.visitsAvailable !== undefined && balance.visitsAvailable !== null) {
+        availableLabel = 'Visitas disponibles';
+      }
       
       return (
         <div className="space-y-4 sm:space-y-6">
@@ -645,45 +670,55 @@ const ResultPage = () => {
               {availableAmount}
             </span>
             <p className="text-xs sm:text-sm text-zinc-500 mt-2">
-              {activeTab === 'Puntos' ? 'Puntos disponibles' : 
-               balance.numberRewardsUnused ? 'Recompensas disponibles' : 
-               balance.visitsAvailable ? 'Visitas disponibles' : 'Puntos disponibles'}
+              {availableLabel}
             </p>
           </div>
           
-          {/* Amount selector */}
-          <div className="flex items-center justify-center gap-4 sm:gap-6">
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => setActionAmount(Math.max(1, actionAmount - 1))}
-              className="h-12 w-12 sm:h-14 sm:w-14 border-2 rounded-lg bg-white hover:bg-zinc-50"
-              style={{ borderColor: '#120627', color: '#120627' }}
-              data-testid="decrease-redeem"
-            >
-              <Minus className="h-5 w-5 sm:h-6 sm:w-6" />
-            </Button>
-            <div className="text-center">
-              <span className="text-4xl sm:text-5xl font-mono font-bold text-[#120627]" data-testid="redeem-amount">
-                {actionAmount}
-              </span>
+          {/* Amount input - allows keyboard entry */}
+          <div className="card-brutalist">
+            <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500 block mb-2">
+              Cantidad a canjear
+            </label>
+            <div className="flex items-center gap-3">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setActionAmount(Math.max(1, actionAmount - 1))}
+                className="h-12 w-12 sm:h-14 sm:w-14 border-2 rounded-lg bg-white hover:bg-zinc-50 flex-shrink-0"
+                style={{ borderColor: '#120627', color: '#120627' }}
+                data-testid="decrease-redeem"
+              >
+                <Minus className="h-5 w-5 sm:h-6 sm:w-6" />
+              </Button>
+              <Input
+                type="number"
+                value={actionAmount}
+                onChange={(e) => {
+                  const val = parseInt(e.target.value) || 1;
+                  setActionAmount(Math.max(1, Math.min(availableAmount || 999999, val)));
+                }}
+                min="1"
+                max={availableAmount || 999999}
+                className="input-brutalist text-2xl sm:text-3xl font-mono h-12 sm:h-14 text-center flex-1"
+                data-testid="redeem-amount-input"
+              />
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setActionAmount(Math.min(availableAmount || 999999, actionAmount + 1))}
+                className="h-12 w-12 sm:h-14 sm:w-14 border-2 rounded-lg bg-white hover:bg-zinc-50 flex-shrink-0"
+                style={{ borderColor: '#120627', color: '#120627' }}
+                disabled={availableAmount > 0 && actionAmount >= availableAmount}
+                data-testid="increase-redeem"
+              >
+                <Plus className="h-5 w-5 sm:h-6 sm:w-6" />
+              </Button>
             </div>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => setActionAmount(Math.min(availableAmount, actionAmount + 1))}
-              className="h-12 w-12 sm:h-14 sm:w-14 border-2 rounded-lg bg-white hover:bg-zinc-50"
-              style={{ borderColor: '#120627', color: '#120627' }}
-              disabled={actionAmount >= availableAmount}
-              data-testid="increase-redeem"
-            >
-              <Plus className="h-5 w-5 sm:h-6 sm:w-6" />
-            </Button>
           </div>
           
           <Button
             onClick={() => openConfirmation(activeTab)}
-            disabled={loading || availableAmount === 0 || actionAmount > availableAmount}
+            disabled={loading || (availableAmount > 0 && actionAmount > availableAmount) || actionAmount < 1}
             className="w-full h-12 sm:h-14 text-base sm:text-lg btn-primary disabled:opacity-50"
             data-testid="redeem-button"
           >

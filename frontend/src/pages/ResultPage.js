@@ -676,6 +676,14 @@ const ResultPage = () => {
         } else if (normalizedType === 'reward') {
           // Reward cards use bonusBalance for scores
           availableAmount = balance.bonusBalance || 0;
+        } else if (normalizedType === 'membership') {
+          // Membership cards - get visits from customerSubscription or currentNumberOfUses
+          // customerSubscription.balance shows remaining visits in the subscription
+          const subscription = card.customerSubscription || {};
+          availableAmount = subscription.balance || balance.currentNumberOfUses || 0;
+        } else if (normalizedType === 'multipass') {
+          // Multipass cards use currentNumberOfUses for available visits
+          availableAmount = balance.currentNumberOfUses || 0;
         } else if (balance.numberRewardsUnused !== undefined && balance.numberRewardsUnused !== null) {
           availableAmount = balance.numberRewardsUnused;
         } else if (balance.visitsAvailable !== undefined && balance.visitsAvailable !== null) {
@@ -693,6 +701,10 @@ const ResultPage = () => {
         availableLabel = 'Cashback disponible';
       } else if (normalizedType === 'reward') {
         availableLabel = 'Puntos acumulados';
+      } else if (normalizedType === 'membership') {
+        availableLabel = 'Visitas disponibles';
+      } else if (normalizedType === 'multipass') {
+        availableLabel = 'Visitas disponibles';
       } else if (balance.numberRewardsUnused !== undefined && balance.numberRewardsUnused !== null) {
         availableLabel = 'Recompensas disponibles';
       } else if (balance.visitsAvailable !== undefined && balance.visitsAvailable !== null) {

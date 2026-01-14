@@ -763,34 +763,49 @@ const ResultPage = () => {
       );
     }
 
-    // Default: simple counter with action
+    // Default: simple counter with action (keyboard input enabled)
     return (
       <div className="space-y-4 sm:space-y-6">
-        <div className="flex items-center justify-center gap-4 sm:gap-6">
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => setActionAmount(Math.max(1, actionAmount - 1))}
-            className="h-12 w-12 sm:h-14 sm:w-14 border-2 rounded-lg bg-white hover:bg-zinc-50"
-            style={{ borderColor: '#120627', color: '#120627' }}
-          >
-            <Minus className="h-5 w-5 sm:h-6 sm:w-6" />
-          </Button>
-          <span className="text-4xl sm:text-5xl font-mono font-bold text-[#120627]">{actionAmount}</span>
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => setActionAmount(actionAmount + 1)}
-            className="h-12 w-12 sm:h-14 sm:w-14 border-2 rounded-lg bg-white hover:bg-zinc-50"
-            style={{ borderColor: '#120627', color: '#120627' }}
-          >
-            <Plus className="h-5 w-5 sm:h-6 sm:w-6" />
-          </Button>
+        <div className="card-brutalist">
+          <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500 block mb-2">
+            Cantidad
+          </label>
+          <div className="flex items-center gap-3">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setActionAmount(Math.max(1, actionAmount - 1))}
+              className="h-12 w-12 sm:h-14 sm:w-14 border-2 rounded-lg bg-white hover:bg-zinc-50 flex-shrink-0"
+              style={{ borderColor: '#120627', color: '#120627' }}
+            >
+              <Minus className="h-5 w-5 sm:h-6 sm:w-6" />
+            </Button>
+            <Input
+              type="number"
+              value={actionAmount}
+              onChange={(e) => {
+                const val = parseInt(e.target.value) || 1;
+                setActionAmount(Math.max(1, val));
+              }}
+              min="1"
+              className="input-brutalist text-2xl sm:text-3xl font-mono h-12 sm:h-14 text-center flex-1"
+              data-testid="default-amount-input"
+            />
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setActionAmount(actionAmount + 1)}
+              className="h-12 w-12 sm:h-14 sm:w-14 border-2 rounded-lg bg-white hover:bg-zinc-50 flex-shrink-0"
+              style={{ borderColor: '#120627', color: '#120627' }}
+            >
+              <Plus className="h-5 w-5 sm:h-6 sm:w-6" />
+            </Button>
+          </div>
         </div>
         
         <Button
           onClick={() => openConfirmation(activeTab)}
-          disabled={loading}
+          disabled={loading || actionAmount < 1}
           className="w-full h-12 sm:h-14 text-base sm:text-lg btn-primary"
         >
           {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : actionConfig.label}

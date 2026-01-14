@@ -39,7 +39,7 @@ const CARD_TYPE_CONFIG = {
     tabs: ['Agregar', 'Canjear'],
     actions: {
       agregar: { label: 'Agregar Sellos', endpoint: 'add-stamp' },
-      canjear: { label: 'Canjear Recompensa', endpoint: 'redeem-reward' }
+      canjear: { label: 'Canjear Recompensa', endpoint: 'subtract-reward' }
     }
   },
   stamp_card: { // Alias for demo cards
@@ -49,7 +49,7 @@ const CARD_TYPE_CONFIG = {
     tabs: ['Agregar', 'Canjear'],
     actions: {
       agregar: { label: 'Agregar Sellos', endpoint: 'add-stamp' },
-      canjear: { label: 'Canjear Recompensa', endpoint: 'redeem-reward' }
+      canjear: { label: 'Canjear Recompensa', endpoint: 'subtract-reward' }
     }
   },
   // Cashback card (type ID 1)

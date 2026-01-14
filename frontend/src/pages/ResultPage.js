@@ -119,15 +119,25 @@ const CARD_TYPE_CONFIG = {
       agregar: { label: 'Agregar Puntos', endpoint: 'add-point', amountLabel: 'Ingrese monto de compra' }
     }
   },
-  // Gift card (type ID 5)
+  // Gift card (type ID 5) - Boomerang API returns "certificate" type
   gift: {
     name: 'Tarjeta de Regalo',
     icon: Gift,
     color: '#8A2BE2',
     tabs: ['Agregar', 'Canjear'],
     actions: {
-      agregar: { label: 'Agregar Puntos', endpoint: 'add-point' },
-      canjear: { label: 'Canjear Puntos', endpoint: 'redeem-points' }
+      agregar: { label: 'Agregar Saldo', endpoint: 'add-point' },
+      canjear: { label: 'Canjear Saldo', endpoint: 'subtract-point' }
+    }
+  },
+  certificate: { // Boomerang API name for gift cards
+    name: 'Tarjeta de Regalo',
+    icon: Gift,
+    color: '#8A2BE2',
+    tabs: ['Agregar', 'Canjear'],
+    actions: {
+      agregar: { label: 'Agregar Saldo', endpoint: 'add-point' },
+      canjear: { label: 'Canjear Saldo', endpoint: 'subtract-point' }
     }
   },
   gift_card: { // Alias for demo cards
@@ -136,8 +146,8 @@ const CARD_TYPE_CONFIG = {
     color: '#8A2BE2',
     tabs: ['Agregar', 'Canjear'],
     actions: {
-      agregar: { label: 'Agregar Puntos', endpoint: 'add-point' },
-      canjear: { label: 'Canjear Puntos', endpoint: 'redeem-points' }
+      agregar: { label: 'Agregar Saldo', endpoint: 'add-point' },
+      canjear: { label: 'Canjear Saldo', endpoint: 'subtract-point' }
     }
   },
   // Membership card (type ID 6)

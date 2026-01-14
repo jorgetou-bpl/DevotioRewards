@@ -296,6 +296,11 @@ def get_mock_response(endpoint: str, method: str, data: dict = None) -> dict:
             balance['stampsBeforeReward'] = max(0, balance.get('numberStampsTotal', 10) - balance['currentNumberOfUses'])
             return {"code": 200, "data": {"id": card_id, "balance": balance}}
         
+        if 'subtract-reward' in endpoint:
+            rewards = data.get('rewards', 1) if data else 1
+            balance['numberRewardsUnused'] = max(0, balance.get('numberRewardsUnused', 0) - rewards)
+            return {"code": 200, "data": {"id": card_id, "balance": balance}}
+        
         if 'add-point' in endpoint:
             points = data.get('points', 10) if data else 10
             balance['bonusBalance'] = balance.get('bonusBalance', 0) + int(points)

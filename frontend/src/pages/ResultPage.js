@@ -678,6 +678,70 @@ const ResultPage = () => {
         availableLabel = 'Visitas disponibles';
       }
       
+      // Special handling for reward cards - show available reward tiers
+      if (normalizedType === 'reward' && activeTab === 'Canjear') {
+        const availableRewardTiers = card.availableRewardTiers || [];
+        
+        return (
+          <div className="space-y-4 sm:space-y-6">
+            {/* Points balance display */}
+            <div className="text-center p-4 sm:p-6 bg-zinc-50 rounded-xl">
+              <span className="text-4xl sm:text-5xl font-mono font-bold gradient-text">
+                {availableAmount}
+              </span>
+              <p className="text-xs sm:text-sm text-zinc-500 mt-2">
+                {availableLabel}
+              </p>
+            </div>
+            
+            {/* Available reward tiers */}
+            {availableRewardTiers.length > 0 ? (
+              <div className="space-y-3">
+                <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500 block">
+                  Recompensas disponibles
+                </label>
+                {availableRewardTiers.map((tier) => (
+                  <button
+                    key={tier.id}
+                    onClick={() => {
+                      setActionAmount(tier.id); // Store the tier ID
+                      openConfirmation('Canjear', tier);
+                    }}
+                    disabled={loading}
+                    className="w-full p-4 border-2 rounded-xl text-left hover:border-[#120627] hover:bg-zinc-50 transition-all"
+                    style={{ borderColor: actionAmount === tier.id ? '#120627' : '#e4e4e7' }}
+                    data-testid={`reward-tier-${tier.id}`}
+                  >
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <p className="font-medium text-sm sm:text-base">{tier.name}</p>
+                        <p className="text-xs text-zinc-500 mt-1">
+                          Requiere: {tier.threshold} puntos
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-lg font-bold text-[#120627]">
+                          {tier.value > 0 ? `$${tier.value}` : 'Gratis'}
+                        </span>
+                      </div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center p-6 bg-zinc-50 rounded-xl">
+                <p className="text-zinc-500 text-sm">
+                  No hay recompensas disponibles aún.
+                </p>
+                <p className="text-zinc-400 text-xs mt-2">
+                  Acumula más puntos para desbloquear recompensas.
+                </p>
+              </div>
+            )}
+          </div>
+        );
+      }
+      
       return (
         <div className="space-y-4 sm:space-y-6">
           {/* Available balance display */}

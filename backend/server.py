@@ -580,9 +580,27 @@ async def receive_reward(card_id: str, action_data: CardActionRequest, current_u
 # ============ CUSTOMER ROUTES ============
 
 @api_router.get("/customers")
-async def search_customers(phone: Optional[str] = None, email: Optional[str] = None, page: int = 1, 
-                           itemsPerPage: int = 30, current_user: dict = Depends(get_current_user)):
-    response = await call_boomerang_api('GET', f'/customers?page={page}&itemsPerPage={itemsPerPage}')
+async def search_customers(
+    query: Optional[str] = None,
+    phone: Optional[str] = None, 
+    email: Optional[str] = None, 
+    page: int = 1, 
+    itemsPerPage: int = 30, 
+    current_user: dict = Depends(get_current_user)
+):
+    """Search customers by phone, email, or general search query"""
+    # Build query parameters for Boomerang API
+    params = f'page={page}&itemsPerPage={itemsPerPage}'
+    
+    if query:
+        # General search - use the 'search' parameter for partial matching
+        params += f'&search={query}'
+    if phone:
+        params += f'&phone={phone}'
+    if email:
+        params += f'&email={email}'
+    
+    response = await call_boomerang_api('GET', f'/customers?{params}')
     customers = response.get('data', [])
     return {"success": True, "customers": [mask_pii(c) for c in customers], "meta": response.get('meta', {})}
 

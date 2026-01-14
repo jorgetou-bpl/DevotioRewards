@@ -1,129 +1,124 @@
-<analysis>**original_problem_statement:** 
-The user wants to build a custom scanner app for a SaaS whitelabel service, Devotio Rewards. This app needs to connect to the Boomerangme API. The primary requirement is to prevent the display of Personally Identifiable Information (PII) like full name, email, and phone number when a loyalty card is scanned, which is a limitation of the default Boomerang scanner app. The app should display non-sensitive data such as customer ID, transaction status, and loyalty points.
+<analysis>**original_problem_statement:**
+The user wants to build a custom scanner app for a SaaS whitelabel service, Devotio Rewards. This app needs to connect to the Boomerangme API. The primary requirement is to prevent the display of Personally Identifiable Information (PII) like email and phone number when a loyalty card is scanned. The app should display non-sensitive data such as customer name, ID, transaction status, and loyalty points.
 
 **PRODUCT REQUIREMENTS:**
--   **PII Masking:** Hide customer's full name, email, and phone number on the scan result screen.
+-   **PII Masking:** Hide customer's email and phone number on the scan result screen. Customer's full name should be visible.
 -   **Data Display:** Show Card ID, Customer ID, and loyalty status (stamps, points, rewards).
 -   **Core Functionality:**
-    -   Scan loyalty card barcodes (initially requested as QR codes).
+    -   Scan loyalty card barcodes and QR codes.
     -   Fetch card and customer details from the Boomerangme API.
-    -   Process loyalty actions: add stamps/points, redeem rewards, apply discounts, etc., for various card types.
-    -   Display transaction confirmation.
+    -   Process loyalty actions for various card types (Stamp, Cashback, Discount, Coupon, Gift, Multipass, Membership, Reward).
+    -   Display a transaction confirmation modal where the purchase amount is read-only and comments are mandatory.
     -   Allow searching for customers.
--   **Branding:** The app should be branded as Devotio Rewards.
--   **Demo Data:** The app must include comprehensive demo data for various customer and card scenarios to be used in a sales proposal.
+-   **Branding:** The app must be branded for the client Devotio Rewards, using their logo, colors (), and  typography.
+-   **Localization & Currency:** The app must be in Spanish and allow users to select their currency from a list in the settings.
+-   **Mobile-First Design:** The web app must be fully responsive and optimized for mobile and tablet devices.
 
-**User's preferred language**: English
+**User's preferred language**: English (The user communicates in English, but has explicitly requested the application's UI and all text be in Spanish).
 
 **what currently exists?**
-A full-stack application with a React frontend and FastAPI backend is in place. The application runs on mock data, simulating interactions with the Boomerangme API. The UI includes pages for login, barcode scanning, displaying scan results for various card types (Stamp, Cashback, Discount, etc.), settings, and customer search. The backend includes endpoints for mock user authentication and proxying API calls, with logic to mask PII. The application has been branded as Devotio Rewards, and it is populated with extensive demo data to showcase its features for a client proposal. A multi-tenancy architecture has been discussed but deferred.
+A full-stack application with a React frontend and FastAPI backend. The UI is fully branded for Devotio Rewards, translated into Spanish, and designed to be mobile-responsive. The backend is connected to the user's UAT Boomerang API key. It successfully authenticates and can fetch data for stamp cards, but fails to handle other card types, causing errors. A currency selection feature has been added to the settings page. A fallback to mock data exists for card IDs starting with .
 
 **Last working item**: 
-- **Last item agent was working:** The agent was implementing UI and functional changes requested by the user to refine the transaction confirmation flow for the proposal demo. The specific changes were:
-    1.  Make the  always visible at the top of the card view.
-    2.  Fix button styling so they remain black on click (avoiding white text on a white background).
-    3.  Implement a detailed confirmation modal that specifies the action being confirmed (e.g., Confirm +1 Stamp).
-    4.  Change the currency display to Costa Rican Colón (CRC ).
+- **Last item agent was working:** The agent was investigating and planning to fix a critical bug where the application fails to handle different types of Boomerang cards. The user reported that scanning a discount card was incorrectly processed as a stamp card, leading to an  error from the Boomerang API. The agent analyzed the API documentation and identified the different card type IDs and their corresponding API endpoints but has not yet implemented the fix.
 - **Status:** IN PROGRESS
-- **Agent Testing Done:** N (Agent implemented the code but did not fully test or show verification for all requested changes. The last action was attempting to test the confirmation modal.)
-- **Which testing method agent to use?** Frontend testing agent. The agent should use the screenshot tool to visually verify all UI changes across different card types: 1.  position. 2. Button click behavior. 3. Content of the confirmation modal for different actions. 4. Presence of the  currency symbol on relevant pages (e.g., Discount and Cashback cards).
-- **User Testing Done:** N
+- **Agent Testing Done:** N
+- **Which testing method agent to use?** both. The backend agent needs to verify the API calls for each card type using . The frontend agent should test the UI rendering for each card type to ensure the correct information and action buttons are displayed.
+- **User Testing Done:** N (User testing is blocked by the bug).
 
 **All Pending/In progress Issue list**: 
-- **Issue 1:** Verify and Finalize UI/UX Refinements (P0)
+- **Issue 1:** Fix Boomerang API Card Type Handling and UI Rendering (P0)
 
 **Issues Detail:**
-- **Issue 1:** Verify and Finalize UI/UX Refinements (P0)
-    - **Description:** The user requested several UI updates for the card result and confirmation modals. The agent has implemented the code but has not yet fully tested and verified that all changes work as expected.
-    - **Attempted fixes:** The agent overwrote  to include the new logic.
-    - **Next debug checklist:**
-        1.  Navigate to the result page with a demo card (e.g., ).
-        2.  **Verify Customer ID:** Confirm that the  is visible at the top of the card details section.
-        3.  **Verify Confirmation Modal:**
-            -   Click an action button (e.g., ADD STAMP).
-            -   Check if the confirmation modal appears and displays the correct action details (e.g., Confirm +1 Stamp).
-        4.  **Verify Button Style:** Click the Confirm button in the modal and ensure it does not turn white.
-        5.  **Verify Currency:**
-            -   Test a card type that involves currency (e.g.,  - Cashback).
-            -   Confirm that the currency symbol is displayed as the Costa Rican Colón ().
-        6.  **Verify Success View:** After confirming an action, check the success modal/view.
-    - **Why fix this issue and what will be achieved with the fix?** Finalizing these changes is crucial for the user's client proposal, as it ensures the demo is polished and meets the specified UX requirements.
-    - **Status:** IN PROGRESS
-    - **Is recurring issue?** N
-    - **Should Test frontend/backend/both after fix?** Frontend
-    - **Blocked on other issue:** None
+- **Issue 1:** 
+     - **Description**: The application backend incorrectly processes all scanned cards as Stamp cards (type ID 0). This causes a  from the Boomerang API when any other card type (Discount, Coupon, etc.) is scanned. The frontend is also not equipped to dynamically render the correct UI and actions for the 8 different card types provided by the Boomerang API. The user also noted that for a real stamp card, the stamp visuals were not displayed correctly.
+     - **Attempted fixes**: The agent successfully fixed the API authentication by changing the header to . They also analyzed the API documentation and created a list of all card type IDs (0-7) and their associated endpoints.
+     - **Next debug checklist**: 
+        1.  **Backend ():**
+            -   In the  endpoint, after fetching card data, ensure the full card object, including  and , is passed to the frontend.
+            -   Create distinct logic within the action endpoints (e.g., ) to call the correct Boomerang API endpoint based on the card's type (e.g.,  for Discount cards,  for Coupon cards, etc.).
+        2.  **Frontend ():**
+            -   Implement a  statement or an object-mapping strategy based on the  received from the backend.
+            -   Dynamically render the correct UI components, information (e.g., discount level, points balance), and action buttons for each of the 8 card types.
+            -   Fix the stamp card UI to correctly display the stamps/rewards based on the  field from the live API response, as it's not working correctly.
+     - **Why fix this issue and what will be achieved with the fix?** This is a critical blocker. The core functionality of the app is to handle various loyalty cards, and it is currently failing for all but one type. Fixing this will make the app usable for UAT.
+     - **Status:** IN PROGRESS
+     - **Is recurring issue?** N
+     - **Should Test frontend/backend/both after fix?** both
+     - **Blocked on other issue:** None
 
 **In progress Task List**:
-- This is covered by the pending issue above.
+- Covered by the pending issue above.
 
 **Upcoming and Future Tasks**
 - **Upcoming Tasks:**
-    - **P1: Connect to Real Boomerang API:**
-        - **Task:** Integrate the client's actual Boomerang API key.
-        - **File:** Add  to .
-        - **Action:** Modify the  function in  to use the real API key when it's available, bypassing the mock data.
+    - **P1: User Acceptance Testing (UAT) Support:** Assist the user in testing all 8 card types against the real Boomerang API once the card-type handling bug is fixed.
 - **Future Tasks:**
-    - **P2: Implement Multi-Tenant Architecture:** Build an admin panel for managing multiple clients, including encrypted API key storage per tenant, custom branding, and dynamic API routing.
-    - **P2: Build Analytics Dashboard:** Create a dashboard for admins to view usage statistics and scan history.
-    - **P2: Integrate Webhooks:** Set up webhook listeners to receive real-time events from Boomerang (e.g., , ).
-    - **P2: App Store Publishing:** Assist with packaging and publishing the application to the App Store, as mentioned by the user.
+    - **P2: Implement Multi-Tenant Architecture:** Build an admin panel for managing multiple clients.
+    - **P2: Build Analytics Dashboard:** Create a dashboard for viewing usage statistics.
+    - **P2: Integrate Webhooks:** Set up listeners for real-time events from Boomerang.
+    - **P2: App Store Publishing:** Assist with packaging the web app for mobile app stores.
 
 **Completed work in this session**
-- **Full-Stack Scaffolding:** Created the initial React frontend and FastAPI backend.
-- **Core App Pages:** Implemented UI for Login, Scanner, Result, Settings, and Search pages.
-- **Barcode Scanner Integration:** Replaced the initial QR code scanner with a barcode scanner () based on user clarification.
-- **Branding:** Updated all UI components and assets to reflect the Devotio Rewards brand.
-- **PII Masking:** Implemented backend logic to mask customer name, email, and phone in API responses.
-- **Comprehensive Demo Data:** Populated the backend with mock data for 6+ card types (Stamp, Cashback, Discount, Gift Card, Coupon, Multipass) to enable a thorough demo.
-- **Dynamic Transaction UI:** Developed the  to dynamically render different UIs and actions based on the scanned card type.
-- **Multi-Tenancy Planning:** Analyzed the Boomerang API and proposed a multi-tenant architecture, which was deferred by the user.
+- **Full Re-branding:** Updated the entire application with the Devotio Rewards logo, a new dark purple color scheme (), and the  custom font.
+- **Spanish Translation:** Translated all pages and components of the application into Spanish.
+- **Mobile Responsiveness:** Made all pages (Login, Scanner, Result, Settings, etc.) mobile-friendly.
+- **Currency Selection:** Implemented a feature in the Settings page to allow users to select their preferred currency (USD, EUR, CRC, etc.).
+- **API Integration & Fixes:**
+    - Integrated the user's Boomerang UAT API key.
+    - Fixed the API authentication mechanism to use  instead of  token.
+    - Improved backend error handling to provide more descriptive messages in Spanish.
+- **PII Policy Update:** Modified the PII masking logic to display the customer's full name while continuing to mask email and phone number.
+- **UI/UX Refinements:**
+    - Made the comment field mandatory and the purchase amount read-only in the confirmation modal.
+    - Improved button styling on the scanner page for better visibility and interaction feedback.
 
 **Earlier issues found/mentioned but not fixed**
-- **Issue 1: API Authentication Status Codes**
-    - **Description:** The initial test report () noted that some authentication endpoints were returning a  status code instead of the more appropriate . The agent dismissed this as a minor issue.
-    - **Debug checklist:** Review the authentication logic in  for login and protected endpoints. Ensure that failed authentication attempts correctly raise an  with a  of 401.
-    - **Why to solve this issue and what will be achieved with this?** Using correct HTTP status codes is a best practice for API design and ensures that frontend clients can handle auth errors reliably.
-    - **Should Test frontend/backend/both after fix:** Backend
-    - **Is recurring issue?** N
+   - **Issue 1: API Authentication Status Codes**
+     - **Description:** Some authentication endpoints return  instead of the more appropriate  on failure. This was noted in a previous test report but never addressed.
+     - **Debug checklist:** Review auth logic in . Ensure failed auth attempts raise an  with .
+     - **Why to solve this issue and what will be achieved with this?** Using correct HTTP status codes is an API design best practice and helps frontend clients handle errors reliably.
+     - **Should Test frontend/backend/both after fix:** Backend
+     - **Is recurring issue?** Y
 
 **Known issue recurrence from previous fork**
-- N/A
+  - N/A
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
--   **Frontend:** React, React Router, Tailwind CSS, Shadcn UI, ,  (for barcode scanning).
--   **Backend:** FastAPI, Pydantic,  for JWT authentication.
+-   **Frontend:** React, React Router, Tailwind CSS, Shadcn UI, ,  (for barcode/QR scanning).
+-   **Backend:** FastAPI, Pydantic,  for JWT,  for calling the external Boomerang API.
 -   **Database:** MongoDB (for user storage).
--   **Architecture:** Single-tenant model using mock data. The backend acts as a proxy to the Boomerang API, adding a PII-masking layer.
+-   **Architecture:** The backend acts as a proxy to the Boomerang API, adding a PII-masking layer and handling business logic. It now uses a real API key with a fallback to mock data for demo cards.
 
 **key DB schema**
--   **users:**  (Implicitly managed in ).
+-   **users:**  (Managed in ).
 
 **changes in tech stack**
-- None
+- None.
 
 **All files of reference**
--   : Contains all backend logic, API endpoints, PII masking, and extensive mock data. **Primary file for backend changes.**
--   : The most complex frontend component, dynamically rendering UI for different card types and handling transactions. **Primary file for frontend UI changes.**
--   : Contains the barcode scanning implementation.
--   : Environment file where the real Boomerang API key will eventually be stored.
--   : Project documentation created by the agent.
+-   : Primary file for all backend logic, API endpoints, and Boomerang integration. **This is where the card type logic must be fixed.**
+-   : The most complex frontend page, which dynamically renders the UI for different card types. **This is where the dynamic UI based on card type must be built.**
+-   : Contains the new currency selection feature.
+-   : Manages the state for currency.
+-   : Stores the .
+-   : Project Requirements Document.
 
 **Areas that need refactoring**:
-- The mock data logic within  is extensive and tightly coupled with the API endpoint functions. This should be refactored into a separate module and the API endpoints should be cleaned up to clearly distinguish between using mock data and making a real API call.
+- The API endpoint logic in  is becoming complex. The logic for handling different card type actions should be broken down into smaller, more manageable functions instead of a large series of  statements within one endpoint.
 
 **key api endpoints**
 -   **Auth:** , 
--   **Data:** , , 
--   **Actions:**  (e.g., , , )
+-   **Data:**  (replaces )
+-   **Actions:**  (e.g., , ). This endpoint's internal logic needs to be expanded to support all card types.
 
 **Critical Info for New Agent**
--   **Proposal Mode:** The app is currently set up for a client proposal and runs **entirely on mock data**. Do not attempt to use a real API key unless the user provides one.
--   **Focus on UI Polish:** The immediate next step is to finalize and verify the UI changes from the user's last request to perfect the demo.
--   **Multi-Tenancy is Deferred:** Do not start implementing the multi-tenant architecture. The user has explicitly decided to keep the app single-tenant for now.
--   **API Key Location:** The user knows the API key goes in . Wait for them to provide it.
+-   **Real API in Use:** The application is connected to a live UAT Boomerang API key. The mock data is only used for card IDs starting with . All other card IDs will trigger a real API call.
+-   **Main Blocker:** The immediate and highest priority task is to fix the backend and frontend logic to correctly handle all 8 of Boomerang's card types. The app is not usable for testing until this is resolved.
+-   **User is Ready to Test:** The user is actively trying to perform UAT and is blocked by the card-type bug. They have provided links to test cards for each type.
 
 **documents and test reports created in this job**
 -   
@@ -131,44 +126,40 @@ A full-stack application with a React frontend and FastAPI backend is in place. 
 -   
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  **Request (In Progress):** Make UI changes:  visible, fix button click color, add confirmation modal with amount, and change currency to CRC.
-2.  **Question:** How to implement OAuth for multi-tenancy?
-    -   **Status:** Answered. Agent explained Boomerang uses API keys, not OAuth, and proposed a multi-tenant architecture.
-3.  **Request:** Keep the app simple for the proposal and defer multi-tenancy.
-    -   **Status:** Acknowledged.
-4.  **Request:** Add demo customers with points data.
-    -   **Status:** Completed.
-5.  **Clarification:** Cards use barcodes, not QR codes.
-    -   **Status:** Completed. Agent switched to a barcode scanning library.
-6.  **Question:** Where do I update the API key?
-    -   **Status:** Answered.
-7.  **Request:** Change branding to Devotio Rewards.
-    -   **Status:** Completed.
-8.  **Confirmation:** The user confirmed the plan and asked the agent to proceed.
-    -   **Status:** Completed.
-9.  **Request:** Keep going.
-    -   **Status:** Acknowledged.
-10. **Question:** What are the next steps after the initial build?
-    -   **Status:** Answered. Agent suggested adding the real API key and QR code scanning.
+1.  **Feedback (In Progress):** User reported that scanning a discount card shows a stamp card UI and returns an Irrelevant card type error. Provided a list of 7 different card types to test.
+2.  **Request:** User asked if the agent considered all card type scenarios and provided links to the API documentation.
+3.  **Status Update:** Agent confirmed the API connection is working and asked the user to test with real cards.
+4.  **Confirmation:** User confirmed they will begin testing with real cards.
+5.  **Request:** Change all buttons/switches to color .
+6.  **Request:** Add a border to the Scan button for better visibility and change the active state color of secondary buttons.
+7.  **Request (Completed):** Add the Boomerang API key .
+8.  **Request (Completed):** Make the app mobile-friendly.
+9.  **Request (Completed):** Add a currency selection option in settings.
+10. **Request (Completed):** A large set of changes including translating the app to Spanish, adding QR support, updating branding, changing PII rules, and modifying the confirmation modal.
 
 **Project Health Check:**
--   **Broken:** None.
--   **Mocked:** All communication with the Boomerangme API is mocked in . This is the core dependency that is not yet real.
+-   **Broken:** The core functionality of processing different loyalty card types is broken.
+-   **Mocked:** Only fallback logic for  cards is mocked. The primary API communication is now live.
 
 **3rd Party Integrations**
--   **Boomerangme API:** The primary external service. Integration is currently mocked using  calls in the backend. Authentication is via API Key (Bearer Token).
--   **@zxing/library:** v0.21.0. Used on the frontend for barcode scanning.
+-   **Boomerangme API:** Live integration using an API key ( header) via the  endpoint.
+-   **@zxing/library:** Used for barcode scanning (via ).
 
 **Testing status**
--   **Testing agent used after significant changes:** YES (Used once early in development).
+-   **Testing agent used after significant changes:** YES. Ran comprehensive tests which passed, but user testing later revealed the critical card-type bug.
 -   **Troubleshoot agent used after agent stuck in loop:** NO
--   **Test files created:** []
--   **Known regressions:** None.
+-   **Test files created:** [, ]
+-   **Known regressions:** The move from mock data to a real API without proper card-type handling broke the functionality for all non-stamp cards.
 
 **Credentials to test flow:**
--   **Login:** Use any email and password (e.g.,  / ). The system will create an account if it doesn't exist.
--   **Demo Card IDs:** Use  through  in the manual input on the scanner page to test different card types.
+-   **Login:** Use  /  or register a new user.
+-   **UAT API Key:**  (already in ).
+-   **Test Cards:** The user has provided URLs for various card types to test with (Discount, Coupon, Gift, etc.). Extract the card IDs from these URLs for testing.
+    -   Discount: 
+    -   Coupon: 
+    -   Gift: 
+    -   And others from the user's message.
 
 **What agent forgot to execute**
--   The agent did not fully test and verify all the UI changes requested in the user's last message. Specifically, verification for the button click style, the success modal, and the CRC currency symbol across all relevant views is still pending.
--   The agent did not address the / status code discrepancy found during the initial automated testing.</analysis>
+-   The agent failed to implement the logic to handle different Boomerang card types when connecting to the real API. They identified the need but did not write the code, leading to the current critical bug.
+-   The long-standing issue of using  instead of  for unauthorized access has still not been addressed.</analysis>

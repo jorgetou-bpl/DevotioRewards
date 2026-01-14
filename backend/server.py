@@ -437,6 +437,19 @@ async def add_stamp(card_id: str, action_data: CardActionRequest, current_user: 
                                     "timestamp": datetime.now(timezone.utc).isoformat(), "action": "add_stamp", "amount": action_data.amount})
     return {"success": True, "card": mask_pii(response.get('data', {})), "message": "Stamp added successfully"}
 
+@api_router.post("/cards/{card_id}/subtract-reward")
+async def subtract_reward(card_id: str, action_data: CardActionRequest, current_user: dict = Depends(get_current_user)):
+    """Subtract/redeem rewards from stamp cards (type ID 0)"""
+    payload = {"rewards": int(action_data.amount or 1)}
+    if action_data.comment:
+        payload["comment"] = action_data.comment
+    if action_data.purchaseSum:
+        payload["purchaseSum"] = action_data.purchaseSum
+    response = await call_boomerang_api('POST', f'/cards/{card_id}/subtract-reward', payload)
+    await db.scan_logs.insert_one({"user_id": current_user['id'], "card_id": card_id, 
+                                    "timestamp": datetime.now(timezone.utc).isoformat(), "action": "subtract_reward", "amount": action_data.amount})
+    return {"success": True, "card": mask_pii(response.get('data', {})), "message": "Recompensa canjeada exitosamente"}
+
 @api_router.post("/cards/{card_id}/add-point")
 async def add_points(card_id: str, action_data: CardActionRequest, current_user: dict = Depends(get_current_user)):
     payload = {"points": float(action_data.amount or 1)}

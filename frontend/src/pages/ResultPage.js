@@ -880,31 +880,45 @@ const ResultPage = () => {
           {showCardInfo && (
             <div className="border-t border-zinc-200 divide-y divide-zinc-100">
               {/* Dynamic fields based on card type */}
-              {balance.currentNumberOfUses !== undefined && (
+              {(balance.currentNumberOfUses !== undefined && balance.currentNumberOfUses !== null) && (
                 <div className="flex justify-between p-3 sm:p-4">
                   <span className="text-zinc-500 text-sm">Sellos activos</span>
                   <span className="font-medium text-sm">{balance.currentNumberOfUses}/{balance.numberStampsTotal || 10}</span>
                 </div>
               )}
-              {balance.numberRewardsUnused !== undefined && (
+              {(balance.numberRewardsUnused !== undefined && balance.numberRewardsUnused !== null) && (
                 <div className="flex justify-between p-3 sm:p-4">
                   <span className="text-zinc-500 text-sm">Recompensas disponibles</span>
                   <span className="font-medium text-sm">{balance.numberRewardsUnused}</span>
                 </div>
               )}
-              {balance.bonusBalance !== undefined && (
+              {(balance.bonusBalance !== undefined && balance.bonusBalance !== null) && (
                 <div className="flex justify-between p-3 sm:p-4">
                   <span className="text-zinc-500 text-sm">Balance de puntos</span>
                   <span className="font-medium text-sm">{balance.bonusBalance}</span>
                 </div>
               )}
-              {balance.balance !== undefined && balance.balance > 0 && (
+              {(balance.balance !== undefined && balance.balance !== null && balance.balance > 0) && (
                 <div className="flex justify-between p-3 sm:p-4">
                   <span className="text-zinc-500 text-sm">Balance total</span>
                   <span className="font-medium text-sm">{formatCurrency(balance.balance)}</span>
                 </div>
               )}
-              {balance.discountLevel && (
+              {/* Discount card specific fields */}
+              {(balance.discountPercentage !== undefined && balance.discountPercentage !== null) && (
+                <div className="flex justify-between p-3 sm:p-4">
+                  <span className="text-zinc-500 text-sm">Porcentaje de descuento</span>
+                  <span className="font-medium text-sm">{balance.discountPercentage}%</span>
+                </div>
+              )}
+              {(balance.discountAmount !== undefined && balance.discountAmount !== null && balance.discountAmount > 0) && (
+                <div className="flex justify-between p-3 sm:p-4">
+                  <span className="text-zinc-500 text-sm">Monto acumulado</span>
+                  <span className="font-medium text-sm">{formatCurrency(balance.discountAmount / 100)}</span>
+                </div>
+              )}
+              {/* Legacy demo fields */}
+              {(balance.discountLevel !== undefined && balance.discountLevel !== null && !balance.discountPercentage) && (
                 <div className="flex justify-between p-3 sm:p-4">
                   <span className="text-zinc-500 text-sm">Nivel de descuento</span>
                   <span className="font-medium text-sm">{balance.discountLevel}%</span>
@@ -916,7 +930,7 @@ const ResultPage = () => {
                   <span className="font-medium text-sm">{balance.discountStatus}</span>
                 </div>
               )}
-              {balance.totalSavings !== undefined && (
+              {(balance.totalSavings !== undefined && balance.totalSavings !== null) && (
                 <div className="flex justify-between p-3 sm:p-4">
                   <span className="text-zinc-500 text-sm">Ahorro total</span>
                   <span className="font-medium text-sm">{formatCurrency(balance.totalSavings)}</span>
@@ -928,7 +942,7 @@ const ResultPage = () => {
                   <span className="font-medium text-sm">{card.countVisits}</span>
                 </div>
               )}
-              {card.totalRewardsRedeemed !== undefined && (
+              {(card.totalRewardsRedeemed !== undefined && card.totalRewardsRedeemed !== null) && (
                 <div className="flex justify-between p-3 sm:p-4">
                   <span className="text-zinc-500 text-sm">Recompensas canjeadas</span>
                   <span className="font-medium text-sm">{card.totalRewardsRedeemed}</span>
@@ -960,6 +974,12 @@ const ResultPage = () => {
                 <div className="flex justify-between p-3 sm:p-4">
                   <span className="text-zinc-500 text-sm">Fecha de expiración</span>
                   <span className="font-medium text-sm">{card.expirationDate}</span>
+                </div>
+              )}
+              {card.expiresAt && (
+                <div className="flex justify-between p-3 sm:p-4">
+                  <span className="text-zinc-500 text-sm">Expira</span>
+                  <span className="font-medium text-sm">{new Date(card.expiresAt).toLocaleDateString('es')}</span>
                 </div>
               )}
             </div>

@@ -210,6 +210,30 @@ const normalizeCardType = (type) => {
 
 // Stamp visual component
 const StampGrid = ({ current, total }) => {
+  // For cards with many stamps (>12), show a simplified progress view
+  if (total > 12) {
+    const percentage = Math.min(100, Math.round((current / total) * 100));
+    return (
+      <div className="space-y-3" data-testid="stamp-grid">
+        <div className="flex justify-between items-end">
+          <div className="flex items-center gap-2">
+            <Star className="h-6 w-6 text-[#120627] fill-[#120627]" />
+            <span className="text-3xl font-mono font-bold text-[#120627]">{current}</span>
+            <span className="text-lg text-zinc-400">/ {total}</span>
+          </div>
+          <span className="text-sm text-zinc-500">{percentage}%</span>
+        </div>
+        <div className="w-full h-3 bg-zinc-200 rounded-full overflow-hidden">
+          <div 
+            className="h-full bg-gradient-to-r from-[#120627] to-[#F040A0] transition-all duration-500"
+            style={{ width: `${percentage}%` }}
+          />
+        </div>
+      </div>
+    );
+  }
+  
+  // For standard stamp cards (≤12 stamps), show individual stars
   const stamps = [];
   for (let i = 0; i < total; i++) {
     stamps.push(

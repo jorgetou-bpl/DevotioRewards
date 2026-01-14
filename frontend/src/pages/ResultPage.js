@@ -61,7 +61,7 @@ const CARD_TYPE_CONFIG = {
     requiresPurchaseAmount: true,
     actions: {
       agregar: { label: 'Agregar Puntos', endpoint: 'add-point', amountLabel: 'Ingrese monto de compra' },
-      canjear: { label: 'Canjear Puntos', endpoint: 'redeem-points' }
+      canjear: { label: 'Canjear Saldo', endpoint: 'subtract-point' }
     }
   },
   cashback_card: { // Alias for demo cards
@@ -72,7 +72,7 @@ const CARD_TYPE_CONFIG = {
     requiresPurchaseAmount: true,
     actions: {
       agregar: { label: 'Agregar Puntos', endpoint: 'add-point', amountLabel: 'Ingrese monto de compra' },
-      canjear: { label: 'Canjear Puntos', endpoint: 'redeem-points' }
+      canjear: { label: 'Canjear Saldo', endpoint: 'subtract-point' }
     }
   },
   // Multipass card (type ID 2)

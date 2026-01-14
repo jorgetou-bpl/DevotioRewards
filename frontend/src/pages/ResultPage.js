@@ -400,7 +400,7 @@ const ResultPage = () => {
   const balance = card.balance || {};
   const CardIcon = config.icon;
 
-  const openConfirmation = (action) => {
+  const openConfirmation = (action, rewardTier = null) => {
     const details = [];
     const actionLower = action.toLowerCase();
     
@@ -412,7 +412,13 @@ const ResultPage = () => {
     } else if (actionLower === 'agregar') {
       details.push({ label: 'Cantidad', value: actionAmount });
     } else if (actionLower === 'canjear') {
-      details.push({ label: 'Cantidad a Canjear', value: actionAmount });
+      if (rewardTier) {
+        // For reward card tier redemption
+        details.push({ label: 'Recompensa', value: rewardTier.name });
+        details.push({ label: 'Puntos requeridos', value: rewardTier.threshold });
+      } else {
+        details.push({ label: 'Cantidad a Canjear', value: actionAmount });
+      }
     }
     
     if (actionLower === 'usar') {
@@ -423,7 +429,8 @@ const ResultPage = () => {
       open: true, 
       action, 
       details,
-      purchaseAmount: config.requiresPurchaseAmount ? purchaseAmount : ''
+      purchaseAmount: config.requiresPurchaseAmount ? purchaseAmount : '',
+      rewardTier: rewardTier // Store the reward tier for later use
     });
   };
 

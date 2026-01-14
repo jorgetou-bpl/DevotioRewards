@@ -440,11 +440,17 @@ async def redeem_points(card_id: str, action_data: CardActionRequest, current_us
 
 @api_router.post("/cards/{card_id}/use-coupon")
 async def use_coupon(card_id: str, action_data: CardActionRequest, current_user: dict = Depends(get_current_user)):
-    payload = {"purchaseSum": action_data.purchaseSum or 0}
-    response = await call_boomerang_api('POST', f'/cards/{card_id}/use-coupon', payload)
+    # Boomerang API v2 uses "redeem-coupon" endpoint, not "use-coupon"
+    payload = {}
+    if action_data.comment:
+        payload["comment"] = action_data.comment
+    if action_data.purchaseSum:
+        payload["purchaseSum"] = action_data.purchaseSum
+    
+    response = await call_boomerang_api('POST', f'/cards/{card_id}/redeem-coupon', payload)
     await db.scan_logs.insert_one({"user_id": current_user['id'], "card_id": card_id, 
-                                    "timestamp": datetime.now(timezone.utc).isoformat(), "action": "use_coupon"})
-    return {"success": True, "card": mask_pii(response.get('data', {})), "message": "Coupon used successfully"}
+                                    "timestamp": datetime.now(timezone.utc).isoformat(), "action": "redeem_coupon"})
+    return {"success": True, "card": mask_pii(response.get('data', {})), "message": "Cupón canjeado exitosamente"}
 
 @api_router.post("/cards/{card_id}/add-visit")
 async def add_visit(card_id: str, action_data: CardActionRequest, current_user: dict = Depends(get_current_user)):

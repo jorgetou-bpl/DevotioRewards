@@ -492,18 +492,26 @@ const ResultPage = () => {
     
     if (!actionConfig) return null;
 
+    // Normalize card type for logic (remove _card suffix if present)
+    const normalizedType = cardType.replace('_card', '');
+
     // For stamp cards, show stamp grid
-    if (cardType === 'stamp_card' && activeTab === 'Agregar') {
+    if ((normalizedType === 'stamp') && activeTab === 'Agregar') {
+      // Get stamps from balance - handle both API formats
+      const currentStamps = balance.currentNumberOfUses ?? balance.stamps ?? 0;
+      const totalStamps = balance.numberStampsTotal ?? balance.totalStamps ?? 10;
+      const stampsToReward = balance.stampsBeforeReward ?? (totalStamps - currentStamps);
+      
       return (
         <div className="space-y-4 sm:space-y-6">
           <StampGrid 
-            current={balance.currentNumberOfUses || 0} 
-            total={balance.numberStampsTotal || 10} 
+            current={currentStamps} 
+            total={totalStamps} 
           />
           
           <div className="text-center">
             <p className="text-xs sm:text-sm text-zinc-500">
-              {balance.stampsBeforeReward || 0} sellos hasta la próxima recompensa
+              {stampsToReward} sellos hasta la próxima recompensa
             </p>
           </div>
           
@@ -550,22 +558,34 @@ const ResultPage = () => {
 
     // For discount/cashback cards with purchase amount
     if (config.requiresPurchaseAmount && activeTab === 'Agregar') {
+      // Get discount/cashback info from balance - handle different API field names
+      const discountLevel = balance.discountLevel ?? balance.discountPercentage ?? null;
+      const cashbackPercent = balance.cashbackPercent ?? balance.cashbackPercentage ?? null;
+      const discountAmount = balance.discountAmount ?? 0;
+      const totalTransactions = balance.transactionsAmount ?? discountAmount;
+      
       return (
         <div className="space-y-4 sm:space-y-6">
-          {/* Discount/Cashback level display */}
-          {balance.discountLevel && (
+          {/* Discount level display */}
+          {discountLevel !== null && (
             <div className="text-center">
               <span className="text-5xl sm:text-6xl font-mono font-bold gradient-text">
-                {balance.discountLevel}%
+                {discountLevel}%
               </span>
               <p className="text-xs sm:text-sm text-zinc-500 mt-1">Nivel de descuento</p>
+              {totalTransactions > 0 && (
+                <p className="text-xs text-zinc-400 mt-2">
+                  Total acumulado: {formatCurrency(totalTransactions / 100)}
+                </p>
+              )}
             </div>
           )}
           
-          {balance.cashbackPercent && (
+          {/* Cashback level display */}
+          {cashbackPercent !== null && !discountLevel && (
             <div className="text-center">
               <span className="text-5xl sm:text-6xl font-mono font-bold gradient-text">
-                {balance.cashbackPercent}%
+                {cashbackPercent}%
               </span>
               <p className="text-xs sm:text-sm text-zinc-500 mt-1">Tasa de cashback</p>
             </div>

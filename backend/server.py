@@ -342,6 +342,11 @@ def get_mock_response(endpoint: str, method: str, data: dict = None) -> dict:
             balance['numberRewardsUnused'] = balance.get('numberRewardsUnused', 0) + rewards
             return {"code": 200, "data": {"id": card_id, "balance": balance}}
         
+        if 'add-scores' in endpoint:
+            scores = data.get('scores', 1) if data else 1
+            balance['bonusBalance'] = balance.get('bonusBalance', 0) + scores
+            return {"code": 200, "data": {"id": card_id, "balance": balance}}
+        
         if 'receive-reward' in endpoint:
             balance['numberRewardsUnused'] = max(0, balance.get('numberRewardsUnused', 0) - 1)
             return {"code": 200, "data": {"id": card_id, "balance": balance}}

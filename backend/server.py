@@ -331,6 +331,20 @@ def get_mock_response(endpoint: str, method: str, data: dict = None) -> dict:
             balance['visitsAvailable'] = max(0, balance.get('visitsAvailable', 0) - visits)
             balance['visitsUsed'] = balance.get('visitsUsed', 0) + visits
             return {"code": 200, "data": {"id": card_id, "balance": balance}}
+        
+        if 'subtract-visit' in endpoint:
+            visits = data.get('visits', 1) if data else 1
+            balance['visitsAvailable'] = max(0, balance.get('visitsAvailable', 0) - visits)
+            return {"code": 200, "data": {"id": card_id, "balance": balance}}
+        
+        if 'add-reward' in endpoint:
+            rewards = data.get('rewards', 1) if data else 1
+            balance['numberRewardsUnused'] = balance.get('numberRewardsUnused', 0) + rewards
+            return {"code": 200, "data": {"id": card_id, "balance": balance}}
+        
+        if 'receive-reward' in endpoint:
+            balance['numberRewardsUnused'] = max(0, balance.get('numberRewardsUnused', 0) - 1)
+            return {"code": 200, "data": {"id": card_id, "balance": balance}}
     
     # Search customers
     if '/customers' in endpoint and method == 'GET':

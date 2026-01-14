@@ -311,9 +311,9 @@ def get_mock_response(endpoint: str, method: str, data: dict = None) -> dict:
             balance['bonusBalance'] = max(0, balance.get('bonusBalance', 0) - points)
             return {"code": 200, "data": {"id": card_id, "balance": balance}}
         
-        if 'use-coupon' in endpoint:
+        if 'redeem-coupon' in endpoint:
             balance['couponStatus'] = 'used'
-            return {"code": 200, "data": {"id": card_id, "balance": balance, "status": "used"}}
+            return {"code": 200, "data": {"id": card_id, "balance": balance, "status": "used", "couponRedeemed": True}}
         
         if 'add-visit' in endpoint:
             visits = data.get('visits', 1) if data else 1

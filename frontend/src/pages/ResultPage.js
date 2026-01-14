@@ -161,14 +161,14 @@ const CARD_TYPE_CONFIG = {
       canjear: { label: 'Canjear Visita', endpoint: 'subtract-visit' }
     }
   },
-  // Reward card (type ID 7) - Uses add-reward and receive-reward
+  // Reward card (type ID 7) - Uses add-scores to update bonusBalance
   reward: {
     name: 'Tarjeta de Recompensa',
     icon: Star,
     color: '#F040A0',
     tabs: ['Agregar', 'Canjear'],
     actions: {
-      agregar: { label: 'Agregar Recompensas', endpoint: 'add-reward' },
+      agregar: { label: 'Agregar Puntos', endpoint: 'add-scores' },
       canjear: { label: 'Canjear Recompensa', endpoint: 'receive-reward' }
     }
   },

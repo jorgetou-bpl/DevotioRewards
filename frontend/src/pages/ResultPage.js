@@ -436,6 +436,7 @@ const ResultPage = () => {
 
   const handleAction = async (comment = '', confirmPurchaseAmount = '') => {
     const action = confirmModal.action;
+    const rewardTier = confirmModal.rewardTier; // Get the reward tier if present
     setLoading(true);
     
     try {
@@ -446,12 +447,20 @@ const ResultPage = () => {
       }
 
       const endpoint = `/cards/${card.id}/${actionConfig.endpoint}`;
-      const payload = {
-        amount: actionAmount,
+      
+      // Build payload - handle reward tier ID for receive-reward endpoint
+      let payload = {
         comment: comment || undefined,
         purchaseSum: confirmPurchaseAmount ? parseFloat(confirmPurchaseAmount) : 
                      (config.requiresPurchaseAmount ? parseFloat(purchaseAmount) || 0 : undefined)
       };
+      
+      // For receive-reward endpoint, pass the tier ID as amount
+      if (rewardTier && actionConfig.endpoint === 'receive-reward') {
+        payload.amount = rewardTier.id; // The tier ID is needed for receive-reward
+      } else {
+        payload.amount = actionAmount;
+      }
 
       const response = await axios.post(`${API}${endpoint}`, payload);
       

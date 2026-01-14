@@ -670,6 +670,9 @@ const ResultPage = () => {
         if (normalizedType === 'certificate' || normalizedType === 'gift' || normalizedType === 'gift_card') {
           // Gift/certificate cards use the 'balance' field
           availableAmount = balance.balance || balance.bonusBalance || 0;
+        } else if (normalizedType === 'cashback' || normalizedType === 'cashback_card') {
+          // Cashback cards use the 'balance' field for accumulated cashback
+          availableAmount = balance.balance || 0;
         } else if (normalizedType === 'reward') {
           // Reward cards use bonusBalance for scores
           availableAmount = balance.bonusBalance || 0;
@@ -686,6 +689,8 @@ const ResultPage = () => {
       let availableLabel = 'Puntos disponibles';
       if (normalizedType === 'certificate' || normalizedType === 'gift' || normalizedType === 'gift_card') {
         availableLabel = 'Saldo disponible';
+      } else if (normalizedType === 'cashback' || normalizedType === 'cashback_card') {
+        availableLabel = 'Cashback disponible';
       } else if (normalizedType === 'reward') {
         availableLabel = 'Puntos acumulados';
       } else if (balance.numberRewardsUnused !== undefined && balance.numberRewardsUnused !== null) {

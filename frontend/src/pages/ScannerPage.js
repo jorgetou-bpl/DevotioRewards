@@ -293,7 +293,7 @@ const ScannerPage = () => {
                 <Button
                   type="submit"
                   size="sm"
-                  className="absolute right-1 top-1/2 -translate-y-1/2 bg-[#120627] text-white px-3 sm:px-4 h-9 sm:h-10 rounded-lg hover:bg-[#7B27CC] text-sm"
+                  className="absolute right-1 top-1/2 -translate-y-1/2 bg-[#120627] text-white px-3 sm:px-4 h-9 sm:h-10 rounded-lg hover:bg-[#1a0a3a] active:bg-[#ffca32] active:text-[#120627] text-sm"
                   data-testid="manual-submit"
                 >
                   Ir

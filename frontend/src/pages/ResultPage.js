@@ -1196,11 +1196,11 @@ const ResultPage = () => {
       <header className="nav-header">
         <button
           onClick={() => navigate('/')}
-          className="flex items-center gap-1 sm:gap-2 p-2 hover:bg-zinc-100 rounded-lg transition-colors"
+          className="flex items-center gap-1 sm:gap-2 p-2 hover:bg-[#ee478a] hover:text-white rounded-lg transition-colors"
           data-testid="back-button"
         >
-          <ArrowLeft className="h-5 w-5 text-[#120627]" />
-          <span className="font-medium text-[#120627] hidden sm:inline">Volver</span>
+          <ArrowLeft className="h-5 w-5" />
+          <span className="font-medium hidden sm:inline">Volver</span>
         </button>
         <img 
           src="/fonts/logo.png" 

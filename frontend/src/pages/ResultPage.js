@@ -76,14 +76,21 @@ const CARD_TYPE_CONFIG = {
     }
   },
   // Multipass card (type ID 2) - Boomerang API returns "subscription" type
+  // Has two main sections: Visits (add/redeem) and Points (redeem bonus points)
   multipass: {
     name: 'Multipase',
     icon: CreditCard,
     color: '#8A2BE2',
-    tabs: ['Agregar', 'Canjear'],
+    tabs: ['Visitas', 'Puntos'],
     actions: {
-      agregar: { label: 'Agregar Visitas', endpoint: 'add-visit' },
-      canjear: { label: 'Canjear Visitas', endpoint: 'subtract-visit' }
+      visitas: { label: 'Visitas', endpoint: null }, // Parent tab - has sub-actions
+      puntos: { label: 'Canjear Puntos', endpoint: 'subtract-point' }
+    },
+    subActions: {
+      visitas: {
+        agregar: { label: 'Agregar Visitas', endpoint: 'add-visit' },
+        canjear: { label: 'Canjear Visitas', endpoint: 'subtract-visit' }
+      }
     }
   },
   // Subscription is the Boomerang API name for Multipass cards
@@ -91,10 +98,16 @@ const CARD_TYPE_CONFIG = {
     name: 'Multipase',
     icon: CreditCard,
     color: '#8A2BE2',
-    tabs: ['Agregar', 'Canjear'],
+    tabs: ['Visitas', 'Puntos'],
     actions: {
-      agregar: { label: 'Agregar Visitas', endpoint: 'add-visit' },
-      canjear: { label: 'Canjear Visitas', endpoint: 'subtract-visit' }
+      visitas: { label: 'Visitas', endpoint: null }, // Parent tab - has sub-actions
+      puntos: { label: 'Canjear Puntos', endpoint: 'subtract-point' }
+    },
+    subActions: {
+      visitas: {
+        agregar: { label: 'Agregar Visitas', endpoint: 'add-visit' },
+        canjear: { label: 'Canjear Visitas', endpoint: 'subtract-visit' }
+      }
     }
   },
   // Coupon (type ID 3)

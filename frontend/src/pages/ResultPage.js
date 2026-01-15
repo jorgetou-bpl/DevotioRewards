@@ -530,9 +530,11 @@ const ResultPage = () => {
       // Map multipass-specific actions to their endpoints
       let endpoint;
       if (actionKey === 'agregarvisitas') {
-        endpoint = `/cards/${card.id}/add-visit`;
-      } else if (actionKey === 'canjearvisitas') {
+        // "Add visits" = SELL visits to customer = subtract-visit (decreases currentNumberOfUses, increases available)
         endpoint = `/cards/${card.id}/subtract-visit`;
+      } else if (actionKey === 'canjearvisitas') {
+        // "Redeem visit" = customer USES a visit = add-visit (increases currentNumberOfUses, decreases available)
+        endpoint = `/cards/${card.id}/add-visit`;
       } else if (actionKey === 'agregarpuntos') {
         endpoint = `/cards/${card.id}/add-scores`;
       } else if (actionKey === 'canjearpuntos') {

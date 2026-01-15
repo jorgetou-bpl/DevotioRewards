@@ -75,16 +75,26 @@ const CARD_TYPE_CONFIG = {
       canjear: { label: 'Canjear Saldo', endpoint: 'subtract-point' }
     }
   },
-  // Multipass card (type ID 2)
+  // Multipass card (type ID 2) - Boomerang API returns "subscription" type
   multipass: {
     name: 'Multipase',
     icon: CreditCard,
     color: '#8A2BE2',
-    tabs: ['Agregar', 'Canjear', 'Puntos'],
+    tabs: ['Agregar', 'Canjear'],
     actions: {
       agregar: { label: 'Agregar Visitas', endpoint: 'add-visit' },
-      canjear: { label: 'Canjear Visitas', endpoint: 'redeem-visit' },
-      puntos: { label: 'Canjear Puntos', endpoint: 'redeem-points' }
+      canjear: { label: 'Canjear Visitas', endpoint: 'subtract-visit' }
+    }
+  },
+  // Subscription is the Boomerang API name for Multipass cards
+  subscription: {
+    name: 'Multipase',
+    icon: CreditCard,
+    color: '#8A2BE2',
+    tabs: ['Agregar', 'Canjear'],
+    actions: {
+      agregar: { label: 'Agregar Visitas', endpoint: 'add-visit' },
+      canjear: { label: 'Canjear Visitas', endpoint: 'subtract-visit' }
     }
   },
   // Coupon (type ID 3)

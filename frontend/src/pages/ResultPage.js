@@ -713,8 +713,8 @@ const ResultPage = () => {
         } else if (normalizedType === 'membership') {
           // Membership cards - currentNumberOfUses tracks available visits
           availableAmount = balance.currentNumberOfUses || 0;
-        } else if (normalizedType === 'multipass') {
-          // Multipass cards use currentNumberOfUses for available visits
+        } else if (normalizedType === 'multipass' || normalizedType === 'subscription') {
+          // Multipass/Subscription cards use currentNumberOfUses for available visits
           availableAmount = balance.currentNumberOfUses || 0;
         } else if (balance.numberRewardsUnused !== undefined && balance.numberRewardsUnused !== null) {
           availableAmount = balance.numberRewardsUnused;

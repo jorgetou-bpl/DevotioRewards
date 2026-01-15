@@ -61,6 +61,23 @@ All 8 Boomerangme card types now correctly recognized and rendered:
 
 ## What's Been Implemented
 
+### Session 6 - Discount Card & UI Fixes (January 15, 2026)
+1. **Fixed Discount Card "Total acumulado" Calculation (P1)**
+   - Now correctly calculates: `points = purchaseAmount * (discountPercentage / 100)`
+   - Example: 10000 purchase at 1% = 100 points added to total
+   - API multiplies internally by 100 for cents storage
+
+2. **Updated Button Colors**
+   - Light/white buttons (btn-secondary): active state now uses pink #ee478a
+   - Dark buttons (btn-primary): active state now uses yellow #ffca32 with dark text
+
+3. **PWA Configuration for Mobile**
+   - Created manifest.json with app name "Devotio Scanner"
+   - Updated index.html title and meta tags
+   - Added apple-touch-icon and manifest link
+   - App will show as "Devotio Scanner" when saved to home screen
+   - Icon can be changed by replacing `/app/frontend/public/logo.png`
+
 ### Session 5 - Multipass/Subscription Fix (January 15, 2026)
 1. **Fixed Multipass Card Type Handling (P0)**
    - Added `subscription` type to CARD_TYPE_CONFIG (Boomerangme API returns "subscription" not "multipass")

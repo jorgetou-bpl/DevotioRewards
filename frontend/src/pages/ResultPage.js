@@ -768,7 +768,7 @@ const ResultPage = () => {
         );
       }
       
-      // Puntos tab - shows bonus points with Redeem button
+      // Puntos tab - shows bonus points with Add/Redeem buttons
       if (activeTab === 'Puntos') {
         return (
           <div className="space-y-4 sm:space-y-6">
@@ -782,10 +782,10 @@ const ResultPage = () => {
               </p>
             </div>
             
-            {/* Counter for points redemption */}
+            {/* Counter for points */}
             <div className="card-brutalist">
               <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500 block mb-2">
-                Cantidad a canjear
+                Cantidad de puntos
               </label>
               <div className="flex items-center gap-3">
                 <Button
@@ -803,10 +803,9 @@ const ResultPage = () => {
                   value={actionAmount}
                   onChange={(e) => {
                     const val = parseInt(e.target.value) || 1;
-                    setActionAmount(Math.max(1, Math.min(bonusPoints || 999999, val)));
+                    setActionAmount(Math.max(1, val));
                   }}
                   min="1"
-                  max={bonusPoints || undefined}
                   className="input-brutalist text-2xl sm:text-3xl font-mono h-12 sm:h-14 text-center flex-1"
                   data-testid="points-amount-input"
                 />

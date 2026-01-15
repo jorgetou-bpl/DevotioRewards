@@ -319,7 +319,7 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, actionType, deta
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" data-testid="confirmation-modal">
       <div className="bg-white rounded-xl shadow-2xl max-w-sm w-full p-4 sm:p-6 max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-4 sm:mb-6">
-          <h3 className="text-heading text-lg sm:text-xl">Confirmar {title}</h3>
+          <h3 className="text-heading text-lg sm:text-xl">Confirmar {formatActionTitle(title)}</h3>
           <button onClick={onClose} className="p-1 hover:bg-zinc-100 rounded-lg">
             <X className="h-5 w-5" />
           </button>

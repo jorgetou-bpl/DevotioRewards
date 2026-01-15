@@ -99,7 +99,7 @@ const LoginPage = () => {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="tu@correo.com"
+                  placeholder=""
                   className="input-brutalist pl-10 sm:pl-12 text-sm sm:text-base"
                   required
                   data-testid="email-input"
@@ -118,7 +118,7 @@ const LoginPage = () => {
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
+                  placeholder=""
                   className="input-brutalist pl-10 sm:pl-12 pr-10 sm:pr-12 text-sm sm:text-base"
                   required
                   data-testid="password-input"

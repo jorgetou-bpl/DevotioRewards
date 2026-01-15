@@ -67,13 +67,14 @@ All 8 Boomerangme card types now correctly recognized and rendered:
    - Implemented two-tab UI matching Boomerangme documentation:
      - **Visitas tab**: Shows visits balance, has "Agregar Visitas" and "Canjear Visitas" buttons
      - **Puntos tab**: Shows bonus points balance, has "Agregar Puntos" and "Canjear Puntos" buttons
-   - Mapped actions to correct endpoints:
-     - Visits: `add-visit`, `subtract-visit`
-     - Points: `add-scores`, `subtract-scores` (new endpoint added)
-   - Added `useEffect` to set initial tab based on card type (moved before early return)
-   - Added `formatActionTitle` helper for modal titles
+   - **Critical fix**: Corrected endpoint mapping (counterintuitive API naming):
+     - `add-visit` = SELL/ADD available visits (increases `currentNumberOfUses`)
+     - `subtract-visit` = USE a visit (decreases `currentNumberOfUses`)
+     - `add-scores` = ADD bonus points
+     - `subtract-scores` = REDEEM bonus points (new endpoint added)
+   - `currentNumberOfUses` = available visits (not used visits as name suggests)
    - Multipass actions no longer ask for purchase amount in confirmation modal
-   - All actions (add/redeem visits, add/redeem points) verified working
+   - All actions verified working with correct balance updates
 
 ### Session 4 - P0 Bug Fix (January 14, 2026)
 1. **Fixed Card Type Handling Bug (CRITICAL)**

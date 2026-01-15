@@ -554,16 +554,24 @@ const ResultPage = () => {
       // Check if this is a multipass action (no purchase amount needed)
       const isMultipassAction = ['agregarvisitas', 'canjearvisitas', 'agregarpuntos', 'canjearpuntos'].includes(actionKey);
       
+      // Get the purchase amount from confirmation or state
+      const finalPurchaseAmount = confirmPurchaseAmount ? parseFloat(confirmPurchaseAmount) : 
+                     (config.requiresPurchaseAmount ? parseFloat(purchaseAmount) || 0 : undefined);
+      
       // Build payload - handle reward tier ID for receive-reward endpoint
       let payload = {
         comment: comment || undefined,
-        purchaseSum: isMultipassAction ? undefined : (confirmPurchaseAmount ? parseFloat(confirmPurchaseAmount) : 
-                     (config.requiresPurchaseAmount ? parseFloat(purchaseAmount) || 0 : undefined))
+        purchaseSum: isMultipassAction ? undefined : finalPurchaseAmount
       };
       
       // For receive-reward endpoint, pass the tier ID as amount
       if (rewardTier && endpoint.includes('receive-reward')) {
         payload.amount = rewardTier.id; // The tier ID is needed for receive-reward
+      } else if (config.requiresPurchaseAmount && finalPurchaseAmount && endpoint.includes('add-point')) {
+        // For discount/cashback cards: calculate points based on percentage
+        // points = purchaseSum * (percentage / 100)
+        const percentage = balance.discountPercentage || balance.cashbackPercent || 1;
+        payload.amount = Math.round(finalPurchaseAmount * (percentage / 100));
       } else {
         payload.amount = actionAmount;
       }

@@ -64,10 +64,13 @@ All 8 Boomerangme card types now correctly recognized and rendered:
 ### Session 5 - Multipass/Subscription Fix (January 15, 2026)
 1. **Fixed Multipass Card Type Handling (P0)**
    - Added `subscription` type to CARD_TYPE_CONFIG (Boomerangme API returns "subscription" not "multipass")
-   - Mapped to "Multipase" UI with correct endpoints: `add-visit` and `subtract-visit`
-   - Updated balance display logic to handle `subscription` type (uses `currentNumberOfUses`)
-   - Fixed endpoint from `redeem-visit` to `subtract-visit`
-   - All actions (add/redeem visits) verified working
+   - Implemented two-tab UI matching Boomerangme documentation:
+     - **Visitas tab**: Shows visits balance, has "Agregar Visitas" and "Canjear Visitas" buttons
+     - **Puntos tab**: Shows bonus points balance, has "Canjear Puntos" button
+   - Mapped actions to correct endpoints: `add-visit`, `subtract-visit`, `subtract-point`
+   - Added `useEffect` to set initial tab based on card type
+   - Added `formatActionTitle` helper for modal titles
+   - All actions (add/redeem visits, redeem points) verified working
 
 ### Session 4 - P0 Bug Fix (January 14, 2026)
 1. **Fixed Card Type Handling Bug (CRITICAL)**

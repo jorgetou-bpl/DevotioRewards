@@ -665,7 +665,7 @@ const ResultPage = () => {
                 variant="outline"
                 size="icon"
                 onClick={() => setActionAmount(Math.max(1, actionAmount - 1))}
-                className="h-12 w-12 sm:h-14 sm:w-14 border-2 rounded-lg bg-white hover:bg-zinc-50 flex-shrink-0"
+                className="h-12 w-12 sm:h-14 sm:w-14 border-2 rounded-lg bg-white hover:bg-zinc-50 active:bg-[#ee478a] active:border-[#ee478a] active:text-white flex-shrink-0"
                 style={{ borderColor: '#120627', color: '#120627' }}
                 data-testid="decrease-amount"
               >
@@ -686,7 +686,7 @@ const ResultPage = () => {
                 variant="outline"
                 size="icon"
                 onClick={() => setActionAmount(actionAmount + 1)}
-                className="h-12 w-12 sm:h-14 sm:w-14 border-2 rounded-lg bg-white hover:bg-zinc-50 flex-shrink-0"
+                className="h-12 w-12 sm:h-14 sm:w-14 border-2 rounded-lg bg-white hover:bg-zinc-50 active:bg-[#ee478a] active:border-[#ee478a] active:text-white flex-shrink-0"
                 style={{ borderColor: '#120627', color: '#120627' }}
                 data-testid="increase-amount"
               >
@@ -736,7 +736,7 @@ const ResultPage = () => {
                   variant="outline"
                   size="icon"
                   onClick={() => setActionAmount(Math.max(1, actionAmount - 1))}
-                  className="h-12 w-12 sm:h-14 sm:w-14 border-2 rounded-lg bg-white hover:bg-zinc-50 flex-shrink-0"
+                  className="h-12 w-12 sm:h-14 sm:w-14 border-2 rounded-lg bg-white hover:bg-zinc-50 active:bg-[#ee478a] active:border-[#ee478a] active:text-white flex-shrink-0"
                   style={{ borderColor: '#120627', color: '#120627' }}
                   data-testid="decrease-visits"
                 >
@@ -757,7 +757,7 @@ const ResultPage = () => {
                   variant="outline"
                   size="icon"
                   onClick={() => setActionAmount(actionAmount + 1)}
-                  className="h-12 w-12 sm:h-14 sm:w-14 border-2 rounded-lg bg-white hover:bg-zinc-50 flex-shrink-0"
+                  className="h-12 w-12 sm:h-14 sm:w-14 border-2 rounded-lg bg-white hover:bg-zinc-50 active:bg-[#ee478a] active:border-[#ee478a] active:text-white flex-shrink-0"
                   style={{ borderColor: '#120627', color: '#120627' }}
                   data-testid="increase-visits"
                 >
@@ -814,7 +814,7 @@ const ResultPage = () => {
                   variant="outline"
                   size="icon"
                   onClick={() => setActionAmount(Math.max(1, actionAmount - 1))}
-                  className="h-12 w-12 sm:h-14 sm:w-14 border-2 rounded-lg bg-white hover:bg-zinc-50 flex-shrink-0"
+                  className="h-12 w-12 sm:h-14 sm:w-14 border-2 rounded-lg bg-white hover:bg-zinc-50 active:bg-[#ee478a] active:border-[#ee478a] active:text-white flex-shrink-0"
                   style={{ borderColor: '#120627', color: '#120627' }}
                   data-testid="decrease-points"
                 >
@@ -835,7 +835,7 @@ const ResultPage = () => {
                   variant="outline"
                   size="icon"
                   onClick={() => setActionAmount(actionAmount + 1)}
-                  className="h-12 w-12 sm:h-14 sm:w-14 border-2 rounded-lg bg-white hover:bg-zinc-50 flex-shrink-0"
+                  className="h-12 w-12 sm:h-14 sm:w-14 border-2 rounded-lg bg-white hover:bg-zinc-50 active:bg-[#ee478a] active:border-[#ee478a] active:text-white flex-shrink-0"
                   style={{ borderColor: '#120627', color: '#120627' }}
                   data-testid="increase-points"
                 >
@@ -1071,7 +1071,7 @@ const ResultPage = () => {
                 variant="outline"
                 size="icon"
                 onClick={() => setActionAmount(Math.max(1, actionAmount - 1))}
-                className="h-12 w-12 sm:h-14 sm:w-14 border-2 rounded-lg bg-white hover:bg-zinc-50 flex-shrink-0"
+                className="h-12 w-12 sm:h-14 sm:w-14 border-2 rounded-lg bg-white hover:bg-zinc-50 active:bg-[#ee478a] active:border-[#ee478a] active:text-white flex-shrink-0"
                 style={{ borderColor: '#120627', color: '#120627' }}
                 data-testid="decrease-redeem"
               >
@@ -1093,7 +1093,7 @@ const ResultPage = () => {
                 variant="outline"
                 size="icon"
                 onClick={() => setActionAmount(Math.min(availableAmount || 999999, actionAmount + 1))}
-                className="h-12 w-12 sm:h-14 sm:w-14 border-2 rounded-lg bg-white hover:bg-zinc-50 flex-shrink-0"
+                className="h-12 w-12 sm:h-14 sm:w-14 border-2 rounded-lg bg-white hover:bg-zinc-50 active:bg-[#ee478a] active:border-[#ee478a] active:text-white flex-shrink-0"
                 style={{ borderColor: '#120627', color: '#120627' }}
                 disabled={availableAmount > 0 && actionAmount >= availableAmount}
                 data-testid="increase-redeem"

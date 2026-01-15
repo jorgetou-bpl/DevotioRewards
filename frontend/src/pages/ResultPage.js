@@ -665,7 +665,7 @@ const ResultPage = () => {
                 variant="outline"
                 size="icon"
                 onClick={() => setActionAmount(Math.max(1, actionAmount - 1))}
-                className="h-12 w-12 sm:h-14 sm:w-14 border-2 rounded-lg bg-white hover:bg-zinc-50 active:bg-[#ee478a] active:border-[#ee478a] active:text-white flex-shrink-0"
+                className="h-12 w-12 sm:h-14 sm:w-14 border-2 rounded-lg bg-white hover:bg-[#ee478a] hover:border-[#ee478a] hover:text-white flex-shrink-0"
                 style={{ borderColor: '#120627', color: '#120627' }}
                 data-testid="decrease-amount"
               >
@@ -686,7 +686,7 @@ const ResultPage = () => {
                 variant="outline"
                 size="icon"
                 onClick={() => setActionAmount(actionAmount + 1)}
-                className="h-12 w-12 sm:h-14 sm:w-14 border-2 rounded-lg bg-white hover:bg-zinc-50 active:bg-[#ee478a] active:border-[#ee478a] active:text-white flex-shrink-0"
+                className="h-12 w-12 sm:h-14 sm:w-14 border-2 rounded-lg bg-white hover:bg-[#ee478a] hover:border-[#ee478a] hover:text-white flex-shrink-0"
                 style={{ borderColor: '#120627', color: '#120627' }}
                 data-testid="increase-amount"
               >
@@ -736,7 +736,7 @@ const ResultPage = () => {
                   variant="outline"
                   size="icon"
                   onClick={() => setActionAmount(Math.max(1, actionAmount - 1))}
-                  className="h-12 w-12 sm:h-14 sm:w-14 border-2 rounded-lg bg-white hover:bg-zinc-50 active:bg-[#ee478a] active:border-[#ee478a] active:text-white flex-shrink-0"
+                  className="h-12 w-12 sm:h-14 sm:w-14 border-2 rounded-lg bg-white hover:bg-[#ee478a] hover:border-[#ee478a] hover:text-white flex-shrink-0"
                   style={{ borderColor: '#120627', color: '#120627' }}
                   data-testid="decrease-visits"
                 >
@@ -757,7 +757,7 @@ const ResultPage = () => {
                   variant="outline"
                   size="icon"
                   onClick={() => setActionAmount(actionAmount + 1)}
-                  className="h-12 w-12 sm:h-14 sm:w-14 border-2 rounded-lg bg-white hover:bg-zinc-50 active:bg-[#ee478a] active:border-[#ee478a] active:text-white flex-shrink-0"
+                  className="h-12 w-12 sm:h-14 sm:w-14 border-2 rounded-lg bg-white hover:bg-[#ee478a] hover:border-[#ee478a] hover:text-white flex-shrink-0"
                   style={{ borderColor: '#120627', color: '#120627' }}
                   data-testid="increase-visits"
                 >
@@ -779,7 +779,7 @@ const ResultPage = () => {
               <Button
                 onClick={() => openConfirmation('CanjearVisitas')}
                 disabled={loading || actionAmount < 1 || actionAmount > availableVisits}
-                className="w-full h-12 sm:h-14 text-base sm:text-lg border-2 bg-white hover:bg-zinc-50 active:bg-[#ee478a] active:border-[#ee478a] active:text-white"
+                className="w-full h-12 sm:h-14 text-base sm:text-lg border-2 bg-white hover:bg-[#ee478a] hover:border-[#ee478a] hover:text-white"
                 style={{ borderColor: '#120627', color: '#120627' }}
                 data-testid="redeem-visits-button"
               >
@@ -814,7 +814,7 @@ const ResultPage = () => {
                   variant="outline"
                   size="icon"
                   onClick={() => setActionAmount(Math.max(1, actionAmount - 1))}
-                  className="h-12 w-12 sm:h-14 sm:w-14 border-2 rounded-lg bg-white hover:bg-zinc-50 active:bg-[#ee478a] active:border-[#ee478a] active:text-white flex-shrink-0"
+                  className="h-12 w-12 sm:h-14 sm:w-14 border-2 rounded-lg bg-white hover:bg-[#ee478a] hover:border-[#ee478a] hover:text-white flex-shrink-0"
                   style={{ borderColor: '#120627', color: '#120627' }}
                   data-testid="decrease-points"
                 >
@@ -835,7 +835,7 @@ const ResultPage = () => {
                   variant="outline"
                   size="icon"
                   onClick={() => setActionAmount(actionAmount + 1)}
-                  className="h-12 w-12 sm:h-14 sm:w-14 border-2 rounded-lg bg-white hover:bg-zinc-50 active:bg-[#ee478a] active:border-[#ee478a] active:text-white flex-shrink-0"
+                  className="h-12 w-12 sm:h-14 sm:w-14 border-2 rounded-lg bg-white hover:bg-[#ee478a] hover:border-[#ee478a] hover:text-white flex-shrink-0"
                   style={{ borderColor: '#120627', color: '#120627' }}
                   data-testid="increase-points"
                 >
@@ -857,7 +857,7 @@ const ResultPage = () => {
               <Button
                 onClick={() => openConfirmation('CanjearPuntos')}
                 disabled={loading || bonusPoints <= 0 || actionAmount > bonusPoints || actionAmount < 1}
-                className="w-full h-12 sm:h-14 text-base sm:text-lg border-2 bg-white hover:bg-zinc-50 active:bg-[#ee478a] active:border-[#ee478a] active:text-white"
+                className="w-full h-12 sm:h-14 text-base sm:text-lg border-2 bg-white hover:bg-[#ee478a] hover:border-[#ee478a] hover:text-white"
                 style={{ borderColor: '#120627', color: '#120627' }}
                 data-testid="redeem-points-button"
               >
@@ -1071,7 +1071,7 @@ const ResultPage = () => {
                 variant="outline"
                 size="icon"
                 onClick={() => setActionAmount(Math.max(1, actionAmount - 1))}
-                className="h-12 w-12 sm:h-14 sm:w-14 border-2 rounded-lg bg-white hover:bg-zinc-50 active:bg-[#ee478a] active:border-[#ee478a] active:text-white flex-shrink-0"
+                className="h-12 w-12 sm:h-14 sm:w-14 border-2 rounded-lg bg-white hover:bg-[#ee478a] hover:border-[#ee478a] hover:text-white flex-shrink-0"
                 style={{ borderColor: '#120627', color: '#120627' }}
                 data-testid="decrease-redeem"
               >
@@ -1093,7 +1093,7 @@ const ResultPage = () => {
                 variant="outline"
                 size="icon"
                 onClick={() => setActionAmount(Math.min(availableAmount || 999999, actionAmount + 1))}
-                className="h-12 w-12 sm:h-14 sm:w-14 border-2 rounded-lg bg-white hover:bg-zinc-50 active:bg-[#ee478a] active:border-[#ee478a] active:text-white flex-shrink-0"
+                className="h-12 w-12 sm:h-14 sm:w-14 border-2 rounded-lg bg-white hover:bg-[#ee478a] hover:border-[#ee478a] hover:text-white flex-shrink-0"
                 style={{ borderColor: '#120627', color: '#120627' }}
                 disabled={availableAmount > 0 && actionAmount >= availableAmount}
                 data-testid="increase-redeem"
@@ -1259,8 +1259,8 @@ const ResultPage = () => {
               }}
               className={`flex-1 py-2.5 sm:py-3 text-xs sm:text-sm font-semibold uppercase tracking-wider transition-colors ${
                 activeTab === tab
-                  ? 'bg-[#120627] text-white active:bg-[#ffca32] active:text-[#120627]'
-                  : 'bg-white text-[#120627] hover:bg-zinc-50 active:bg-[#ee478a] active:text-white'
+                  ? 'bg-[#120627] text-white hover:bg-[#ffca32] hover:text-[#120627]'
+                  : 'bg-white text-[#120627] hover:bg-[#ee478a] hover:text-white'
               }`}
               data-testid={`tab-${tab.toLowerCase()}`}
             >

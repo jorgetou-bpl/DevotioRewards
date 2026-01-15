@@ -530,14 +530,14 @@ async def redeem_visit(card_id: str, action_data: CardActionRequest, current_use
 
 @api_router.post("/cards/{card_id}/subtract-visit")
 async def subtract_visit(card_id: str, action_data: CardActionRequest, current_user: dict = Depends(get_current_user)):
-    """Subtract visits (SELL/ADD available visits to customer) - decreases redeemed count, increases available"""
+    """Subtract visit = customer USES a visit (decreases currentNumberOfUses/available visits)"""
     payload = {"visits": action_data.amount or 1}
     if action_data.comment:
         payload["comment"] = action_data.comment
     response = await call_boomerang_api('POST', f'/cards/{card_id}/subtract-visit', payload)
     await db.scan_logs.insert_one({"user_id": current_user['id'], "card_id": card_id, 
                                     "timestamp": datetime.now(timezone.utc).isoformat(), "action": "subtract_visit", "amount": action_data.amount})
-    return {"success": True, "card": mask_pii(response.get('data', {})), "message": "Visitas agregadas exitosamente"}
+    return {"success": True, "card": mask_pii(response.get('data', {})), "message": "Visita utilizada exitosamente"}
 
 @api_router.post("/cards/{card_id}/add-reward")
 async def add_reward(card_id: str, action_data: CardActionRequest, current_user: dict = Depends(get_current_user)):

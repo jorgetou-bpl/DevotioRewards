@@ -511,14 +511,14 @@ async def use_coupon(card_id: str, action_data: CardActionRequest, current_user:
 
 @api_router.post("/cards/{card_id}/add-visit")
 async def add_visit(card_id: str, action_data: CardActionRequest, current_user: dict = Depends(get_current_user)):
-    """Add visit (customer USES a visit) - increases redeemed count, decreases available"""
+    """Add visit = SELL/ADD available visits to customer (increases currentNumberOfUses)"""
     payload = {"visits": action_data.amount or 1}
     if action_data.comment:
         payload["comment"] = action_data.comment
     response = await call_boomerang_api('POST', f'/cards/{card_id}/add-visit', payload)
     await db.scan_logs.insert_one({"user_id": current_user['id'], "card_id": card_id, 
                                     "timestamp": datetime.now(timezone.utc).isoformat(), "action": "add_visit", "amount": action_data.amount})
-    return {"success": True, "card": mask_pii(response.get('data', {})), "message": "Visita utilizada exitosamente"}
+    return {"success": True, "card": mask_pii(response.get('data', {})), "message": "Visitas agregadas exitosamente"}
 
 @api_router.post("/cards/{card_id}/redeem-visit")
 async def redeem_visit(card_id: str, action_data: CardActionRequest, current_user: dict = Depends(get_current_user)):

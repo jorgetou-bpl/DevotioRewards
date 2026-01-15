@@ -109,7 +109,8 @@ code, .mono {
     }
 
     .btn-primary:active {
-        background: #8A2BE2;
+        background: #ffca32;
+        color: #120627;
     }
 
     .btn-secondary {
@@ -125,8 +126,8 @@ code, .mono {
     }
 
     .btn-secondary:active {
-        background: #8A2BE2;
-        border-color: #8A2BE2;
+        background: #ee478a;
+        border-color: #ee478a;
         color: white;
     }
 

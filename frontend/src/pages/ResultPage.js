@@ -282,6 +282,22 @@ const StampGrid = ({ current, total }) => {
 };
 
 // Confirmation Modal with detailed info
+// Helper to format action title nicely
+const formatActionTitle = (action) => {
+  if (!action) return '';
+  const titleMap = {
+    'agregarvisitas': 'Agregar Visitas',
+    'canjearvisitas': 'Canjear Visitas',
+    'canjearpuntos': 'Canjear Puntos',
+    'agregar': 'Agregar',
+    'canjear': 'Canjear',
+    'usar': 'Usar Cupón',
+    'visitas': 'Visitas',
+    'puntos': 'Puntos'
+  };
+  return titleMap[action.toLowerCase()] || action;
+};
+
 const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, actionType, details, card, config, loading, purchaseAmountFromParent, formatCurrency }) => {
   const [comment, setComment] = useState('');
   const [commentError, setCommentError] = useState(false);

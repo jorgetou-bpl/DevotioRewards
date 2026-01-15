@@ -1259,8 +1259,8 @@ const ResultPage = () => {
               }}
               className={`flex-1 py-2.5 sm:py-3 text-xs sm:text-sm font-semibold uppercase tracking-wider transition-colors ${
                 activeTab === tab
-                  ? 'bg-[#120627] text-white'
-                  : 'bg-white text-[#120627] hover:bg-zinc-50'
+                  ? 'bg-[#120627] text-white active:bg-[#ffca32] active:text-[#120627]'
+                  : 'bg-white text-[#120627] hover:bg-zinc-50 active:bg-[#ee478a] active:text-white'
               }`}
               data-testid={`tab-${tab.toLowerCase()}`}
             >

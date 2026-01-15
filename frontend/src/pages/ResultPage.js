@@ -735,7 +735,7 @@ const ResultPage = () => {
         availableLabel = 'Puntos acumulados';
       } else if (normalizedType === 'membership') {
         availableLabel = 'Visitas disponibles';
-      } else if (normalizedType === 'multipass') {
+      } else if (normalizedType === 'multipass' || normalizedType === 'subscription') {
         availableLabel = 'Visitas disponibles';
       } else if (balance.numberRewardsUnused !== undefined && balance.numberRewardsUnused !== null) {
         availableLabel = 'Recompensas disponibles';

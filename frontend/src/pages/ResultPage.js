@@ -439,6 +439,17 @@ const ResultPage = () => {
 
   const currencyInfo = getCurrencyInfo();
 
+  // Get card type and config (needed for useEffect)
+  const cardType = card ? normalizeCardType(card.type) : null;
+  const config = cardType ? (CARD_TYPE_CONFIG[cardType] || CARD_TYPE_CONFIG.stamp) : null;
+
+  // Set initial tab based on card type when card changes - must be before early return
+  useEffect(() => {
+    if (config && config.tabs && config.tabs.length > 0) {
+      setActiveTab(config.tabs[0]);
+    }
+  }, [cardType, config]);
+
   if (!card) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center p-4 sm:p-6">
@@ -458,17 +469,8 @@ const ResultPage = () => {
     );
   }
 
-  const cardType = normalizeCardType(card.type);
-  const config = CARD_TYPE_CONFIG[cardType] || CARD_TYPE_CONFIG.stamp;
   const balance = card.balance || {};
   const CardIcon = config.icon;
-
-  // Set initial tab based on card type when card changes
-  useEffect(() => {
-    if (config && config.tabs && config.tabs.length > 0) {
-      setActiveTab(config.tabs[0]);
-    }
-  }, [cardType, config]);
 
   const openConfirmation = (action, rewardTier = null) => {
     const details = [];

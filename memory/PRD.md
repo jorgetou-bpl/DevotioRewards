@@ -48,16 +48,16 @@ Build a custom scanner app for "Devotio Rewards" SaaS whitelabel service connect
    - ✅ 14 supported currencies (CRC, USD, EUR, MXN, COP, PEN, ARS, CLP, GTQ, HNL, NIO, PAB, DOP, BRL)
    - ✅ Currency persists per user
 
-### Card Types Supported (P0 Bug Fixed - January 14, 2026)
+### Card Types Supported (All P0 Bugs Fixed - January 15, 2026)
 All 8 Boomerangme card types now correctly recognized and rendered:
-- ✅ **Stamp** (type ID 0) - Shows stamp grid, Agregar/Canjear tabs
-- ✅ **Cashback** (type ID 1) - Shows cashback %, purchase amount input
-- ✅ **Multipass** (type ID 2) - Shows 3 tabs: Agregar/Canjear/Puntos
-- ✅ **Coupon** (type ID 3) - Shows single "Usar" tab
-- ✅ **Discount** (type ID 4) - Shows discount %, purchase amount input
-- ✅ **Gift** (type ID 5) - Shows balance, Agregar/Canjear tabs
-- ✅ **Membership** (type ID 6) - Shows points, Agregar/Canjear tabs
-- ✅ **Reward** (type ID 7) - Shows reward status
+- ✅ **Stamp** (type ID 0) - Shows stamp grid, Agregar/Canjear tabs, subtract-reward endpoint
+- ✅ **Cashback** (type ID 1) - Shows cashback %, purchase amount input, subtract-point endpoint
+- ✅ **Multipass/Subscription** (type ID 2) - Shows Agregar/Canjear tabs, add-visit/subtract-visit endpoints
+- ✅ **Coupon** (type ID 3) - Shows single "Usar" tab, redeem-coupon endpoint
+- ✅ **Discount** (type ID 4) - Shows discount %, purchase amount input, add-point endpoint
+- ✅ **Gift/Certificate** (type ID 5) - Shows balance, Agregar/Canjear tabs, add-point/subtract-point endpoints
+- ✅ **Membership** (type ID 6) - Shows visits, Agregar/Canjear tabs, add-visit/subtract-visit endpoints
+- ✅ **Reward** (type ID 7) - Shows reward tiers, add-scores/receive-reward endpoints
 
 ## What's Been Implemented
 

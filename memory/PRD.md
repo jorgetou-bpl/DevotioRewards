@@ -61,6 +61,14 @@ All 8 Boomerangme card types now correctly recognized and rendered:
 
 ## What's Been Implemented
 
+### Session 5 - Multipass/Subscription Fix (January 15, 2026)
+1. **Fixed Multipass Card Type Handling (P0)**
+   - Added `subscription` type to CARD_TYPE_CONFIG (Boomerangme API returns "subscription" not "multipass")
+   - Mapped to "Multipase" UI with correct endpoints: `add-visit` and `subtract-visit`
+   - Updated balance display logic to handle `subscription` type (uses `currentNumberOfUses`)
+   - Fixed endpoint from `redeem-visit` to `subtract-visit`
+   - All actions (add/redeem visits) verified working
+
 ### Session 4 - P0 Bug Fix (January 14, 2026)
 1. **Fixed Card Type Handling Bug (CRITICAL)**
    - Added `normalizeCardType()` function in ResultPage.js

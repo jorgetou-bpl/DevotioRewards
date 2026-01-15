@@ -173,10 +173,28 @@ code, .mono {
     align-items: center;
     justify-content: space-between;
     padding: 0 1rem;
+    padding-top: env(safe-area-inset-top, 0px);
+    height: calc(60px + env(safe-area-inset-top, 0px));
     background: white;
     position: sticky;
     top: 0;
     z-index: 50;
+}
+
+/* iOS safe area support */
+@supports (padding-top: env(safe-area-inset-top)) {
+    .nav-header {
+        padding-top: env(safe-area-inset-top);
+        height: calc(60px + env(safe-area-inset-top));
+    }
+    
+    .safe-area-top {
+        padding-top: env(safe-area-inset-top);
+    }
+    
+    .safe-area-bottom {
+        padding-bottom: env(safe-area-inset-bottom);
+    }
 }
 
 /* Sidebar menu */

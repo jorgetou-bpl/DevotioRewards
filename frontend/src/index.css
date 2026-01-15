@@ -97,7 +97,7 @@ code, .mono {
 /* Custom utility classes */
 @layer utilities {
     .btn-primary {
-        @apply text-white hover:opacity-90 rounded-lg font-semibold tracking-wide h-12 
+        @apply text-white rounded-lg font-semibold tracking-wide h-12 
                shadow-lg active:translate-y-[1px] active:shadow-md 
                transition-all duration-200;
         background: #120627;
@@ -105,10 +105,6 @@ code, .mono {
     }
 
     .btn-primary:hover {
-        background: #1a0a3a;
-    }
-
-    .btn-primary:active {
         background: #ffca32;
         color: #120627;
     }
@@ -122,10 +118,6 @@ code, .mono {
     }
 
     .btn-secondary:hover {
-        background: #f4f4f5;
-    }
-
-    .btn-secondary:active {
         background: #ee478a;
         border-color: #ee478a;
         color: white;

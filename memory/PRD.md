@@ -161,10 +161,8 @@ BOOMERANG_API_KEY="542bcbc61866b65b2e63851267128679"  # UAT key
 - ⏳ Production API key (replace UAT key when ready)
 
 ## Next Steps
-1. **P1: Discount Card UI Refresh Bug**: Fix real-time balance update for "Total acumulado"
-2. **P1: Customer Search Verification**: Get user feedback on current search behavior
-3. **P2: API Auth Status Codes**: Fix 403 → 401 for unauthorized responses
-4. **Final UAT Testing**: Test all 8 card types with real Boomerangme cards
+1. **P2: API Auth Status Codes**: Fix 403 → 401 for unauthorized responses
+2. **Final UAT Testing**: Test all 8 card types with real Boomerangme cards
 
 ## Test Cards for Verification
 - **Multipass/Subscription**: `638920-251-210`
@@ -175,6 +173,12 @@ BOOMERANG_API_KEY="542bcbc61866b65b2e63851267128679"  # UAT key
 - **Stamp**: `353530-676-963`
 - **Membership**: `314919-560-256`
 - **Cashback**: `591682-351-613`
+
+## PWA Configuration
+- App title: "Devotio Scanner" (for home screen shortcut)
+- manifest.json configured for standalone PWA
+- Apple touch icon configured (uses logo.png)
+- To change the icon: replace `/app/frontend/public/logo.png` with your custom icon (recommended 512x512 PNG)
 
 ## Backlog (P2)
 - Fix HTTP status codes (403 → 401 for unauthorized)

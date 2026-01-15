@@ -779,7 +779,7 @@ const ResultPage = () => {
               <Button
                 onClick={() => openConfirmation('CanjearVisitas')}
                 disabled={loading || actionAmount < 1 || actionAmount > availableVisits}
-                className="w-full h-12 sm:h-14 text-base sm:text-lg border-2 bg-white hover:bg-zinc-50"
+                className="w-full h-12 sm:h-14 text-base sm:text-lg border-2 bg-white hover:bg-zinc-50 active:bg-[#ee478a] active:border-[#ee478a] active:text-white"
                 style={{ borderColor: '#120627', color: '#120627' }}
                 data-testid="redeem-visits-button"
               >
@@ -857,7 +857,7 @@ const ResultPage = () => {
               <Button
                 onClick={() => openConfirmation('CanjearPuntos')}
                 disabled={loading || bonusPoints <= 0 || actionAmount > bonusPoints || actionAmount < 1}
-                className="w-full h-12 sm:h-14 text-base sm:text-lg border-2 bg-white hover:bg-zinc-50"
+                className="w-full h-12 sm:h-14 text-base sm:text-lg border-2 bg-white hover:bg-zinc-50 active:bg-[#ee478a] active:border-[#ee478a] active:text-white"
                 style={{ borderColor: '#120627', color: '#120627' }}
                 data-testid="redeem-points-button"
               >

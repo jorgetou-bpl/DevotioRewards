@@ -497,6 +497,9 @@ const ResultPage = () => {
     } else if (actionLower === 'canjearvisitas') {
       // Multipass: Redeem visits
       details.push({ label: 'Visitas a Canjear', value: actionAmount });
+    } else if (actionLower === 'agregarpuntos') {
+      // Multipass: Add bonus points
+      details.push({ label: 'Puntos a Agregar', value: actionAmount });
     } else if (actionLower === 'canjearpuntos') {
       // Multipass: Redeem bonus points
       details.push({ label: 'Puntos a Canjear', value: actionAmount });

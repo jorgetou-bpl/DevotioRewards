@@ -466,6 +466,15 @@ const ResultPage = () => {
       } else {
         details.push({ label: 'Cantidad a Canjear', value: actionAmount });
       }
+    } else if (actionLower === 'agregarvisitas') {
+      // Multipass: Add visits
+      details.push({ label: 'Visitas a Agregar', value: actionAmount });
+    } else if (actionLower === 'canjearvisitas') {
+      // Multipass: Redeem visits
+      details.push({ label: 'Visitas a Canjear', value: actionAmount });
+    } else if (actionLower === 'canjearpuntos') {
+      // Multipass: Redeem bonus points
+      details.push({ label: 'Puntos a Canjear', value: actionAmount });
     }
     
     if (actionLower === 'usar') {

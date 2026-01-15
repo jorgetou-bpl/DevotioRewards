@@ -184,7 +184,7 @@ const ScannerPage = () => {
         />
         <button 
           onClick={() => setMenuOpen(true)} 
-          className="p-2 hover:bg-zinc-100 rounded-lg transition-colors"
+          className="p-2 hover:bg-[#ee478a] hover:text-white rounded-lg transition-colors"
           data-testid="menu-button"
           aria-label="Abrir menú"
         >

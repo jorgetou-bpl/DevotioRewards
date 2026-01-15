@@ -497,12 +497,23 @@ const ResultPage = () => {
     
     try {
       const actionKey = action.toLowerCase();
-      const actionConfig = config.actions[actionKey];
-      if (!actionConfig) {
-        throw new Error('Acción desconocida');
+      
+      // Map multipass-specific actions to their endpoints
+      let endpoint;
+      if (actionKey === 'agregarvisitas') {
+        endpoint = `/cards/${card.id}/add-visit`;
+      } else if (actionKey === 'canjearvisitas') {
+        endpoint = `/cards/${card.id}/subtract-visit`;
+      } else if (actionKey === 'canjearpuntos') {
+        endpoint = `/cards/${card.id}/subtract-point`;
+      } else {
+        // Use config-based endpoint lookup for other actions
+        const actionConfig = config.actions[actionKey];
+        if (!actionConfig || !actionConfig.endpoint) {
+          throw new Error('Acción desconocida');
+        }
+        endpoint = `/cards/${card.id}/${actionConfig.endpoint}`;
       }
-
-      const endpoint = `/cards/${card.id}/${actionConfig.endpoint}`;
       
       // Build payload - handle reward tier ID for receive-reward endpoint
       let payload = {
@@ -512,7 +523,7 @@ const ResultPage = () => {
       };
       
       // For receive-reward endpoint, pass the tier ID as amount
-      if (rewardTier && actionConfig.endpoint === 'receive-reward') {
+      if (rewardTier && endpoint.includes('receive-reward')) {
         payload.amount = rewardTier.id; // The tier ID is needed for receive-reward
       } else {
         payload.amount = actionAmount;

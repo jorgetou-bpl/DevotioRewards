@@ -447,6 +447,13 @@ const ResultPage = () => {
   const balance = card.balance || {};
   const CardIcon = config.icon;
 
+  // Set initial tab based on card type when card changes
+  useEffect(() => {
+    if (config && config.tabs && config.tabs.length > 0) {
+      setActiveTab(config.tabs[0]);
+    }
+  }, [cardType, config]);
+
   const openConfirmation = (action, rewardTier = null) => {
     const details = [];
     const actionLower = action.toLowerCase();

@@ -288,6 +288,7 @@ const formatActionTitle = (action) => {
   const titleMap = {
     'agregarvisitas': 'Agregar Visitas',
     'canjearvisitas': 'Canjear Visitas',
+    'agregarpuntos': 'Agregar Puntos',
     'canjearpuntos': 'Canjear Puntos',
     'agregar': 'Agregar',
     'canjear': 'Canjear',

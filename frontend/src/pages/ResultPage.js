@@ -813,10 +813,9 @@ const ResultPage = () => {
                 <Button
                   variant="outline"
                   size="icon"
-                  onClick={() => setActionAmount(Math.min(bonusPoints || 999999, actionAmount + 1))}
+                  onClick={() => setActionAmount(actionAmount + 1)}
                   className="h-12 w-12 sm:h-14 sm:w-14 border-2 rounded-lg bg-white hover:bg-zinc-50 flex-shrink-0"
                   style={{ borderColor: '#120627', color: '#120627' }}
-                  disabled={bonusPoints > 0 && actionAmount >= bonusPoints}
                   data-testid="increase-points"
                 >
                   <Plus className="h-5 w-5 sm:h-6 sm:w-6" />
@@ -824,15 +823,26 @@ const ResultPage = () => {
               </div>
             </div>
             
-            {/* Redeem points button */}
-            <Button
-              onClick={() => openConfirmation('CanjearPuntos')}
-              disabled={loading || bonusPoints <= 0 || actionAmount > bonusPoints || actionAmount < 1}
-              className="w-full h-12 sm:h-14 text-base sm:text-lg btn-primary disabled:opacity-50"
-              data-testid="redeem-points-button"
-            >
-              {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Canjear Puntos'}
-            </Button>
+            {/* Two action buttons: Add points and Redeem points */}
+            <div className="space-y-3">
+              <Button
+                onClick={() => openConfirmation('AgregarPuntos')}
+                disabled={loading || actionAmount < 1}
+                className="w-full h-12 sm:h-14 text-base sm:text-lg btn-primary"
+                data-testid="add-points-button"
+              >
+                {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Agregar Puntos'}
+              </Button>
+              <Button
+                onClick={() => openConfirmation('CanjearPuntos')}
+                disabled={loading || bonusPoints <= 0 || actionAmount > bonusPoints || actionAmount < 1}
+                className="w-full h-12 sm:h-14 text-base sm:text-lg border-2 bg-white hover:bg-zinc-50"
+                style={{ borderColor: '#120627', color: '#120627' }}
+                data-testid="redeem-points-button"
+              >
+                {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Canjear Puntos'}
+              </Button>
+            </div>
           </div>
         );
       }

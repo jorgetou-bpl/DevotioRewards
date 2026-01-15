@@ -640,6 +640,159 @@ const ResultPage = () => {
       );
     }
 
+    // For Multipass/Subscription cards - special two-tab UI with Visits and Points
+    if ((normalizedType === 'multipass' || normalizedType === 'subscription')) {
+      const availableVisits = balance.currentNumberOfUses || 0;
+      const bonusPoints = balance.bonusBalance || 0;
+      
+      // Visitas tab - shows visits balance with Add/Redeem buttons
+      if (activeTab === 'Visitas') {
+        return (
+          <div className="space-y-4 sm:space-y-6">
+            {/* Visits balance display */}
+            <div className="text-center p-4 sm:p-6 bg-zinc-50 rounded-xl">
+              <span className="text-4xl sm:text-5xl font-mono font-bold gradient-text">
+                {availableVisits}
+              </span>
+              <p className="text-xs sm:text-sm text-zinc-500 mt-2">
+                Visitas disponibles
+              </p>
+            </div>
+            
+            {/* Counter */}
+            <div className="card-brutalist">
+              <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500 block mb-2">
+                Cantidad de visitas
+              </label>
+              <div className="flex items-center gap-3">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setActionAmount(Math.max(1, actionAmount - 1))}
+                  className="h-12 w-12 sm:h-14 sm:w-14 border-2 rounded-lg bg-white hover:bg-zinc-50 flex-shrink-0"
+                  style={{ borderColor: '#120627', color: '#120627' }}
+                  data-testid="decrease-visits"
+                >
+                  <Minus className="h-5 w-5 sm:h-6 sm:w-6" />
+                </Button>
+                <Input
+                  type="number"
+                  value={actionAmount}
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value) || 1;
+                    setActionAmount(Math.max(1, val));
+                  }}
+                  min="1"
+                  className="input-brutalist text-2xl sm:text-3xl font-mono h-12 sm:h-14 text-center flex-1"
+                  data-testid="visits-amount-input"
+                />
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setActionAmount(actionAmount + 1)}
+                  className="h-12 w-12 sm:h-14 sm:w-14 border-2 rounded-lg bg-white hover:bg-zinc-50 flex-shrink-0"
+                  style={{ borderColor: '#120627', color: '#120627' }}
+                  data-testid="increase-visits"
+                >
+                  <Plus className="h-5 w-5 sm:h-6 sm:w-6" />
+                </Button>
+              </div>
+            </div>
+            
+            {/* Two action buttons: Add visits and Redeem visits */}
+            <div className="space-y-3">
+              <Button
+                onClick={() => openConfirmation('AgregarVisitas')}
+                disabled={loading || actionAmount < 1}
+                className="w-full h-12 sm:h-14 text-base sm:text-lg btn-primary"
+                data-testid="add-visits-button"
+              >
+                {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Agregar Visitas'}
+              </Button>
+              <Button
+                onClick={() => openConfirmation('CanjearVisitas')}
+                disabled={loading || actionAmount < 1 || actionAmount > availableVisits}
+                className="w-full h-12 sm:h-14 text-base sm:text-lg border-2 bg-white hover:bg-zinc-50"
+                style={{ borderColor: '#120627', color: '#120627' }}
+                data-testid="redeem-visits-button"
+              >
+                {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Canjear Visitas'}
+              </Button>
+            </div>
+          </div>
+        );
+      }
+      
+      // Puntos tab - shows bonus points with Redeem button
+      if (activeTab === 'Puntos') {
+        return (
+          <div className="space-y-4 sm:space-y-6">
+            {/* Points balance display */}
+            <div className="text-center p-4 sm:p-6 bg-zinc-50 rounded-xl">
+              <span className="text-4xl sm:text-5xl font-mono font-bold gradient-text">
+                {bonusPoints}
+              </span>
+              <p className="text-xs sm:text-sm text-zinc-500 mt-2">
+                Puntos acumulados
+              </p>
+            </div>
+            
+            {/* Counter for points redemption */}
+            <div className="card-brutalist">
+              <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500 block mb-2">
+                Cantidad a canjear
+              </label>
+              <div className="flex items-center gap-3">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setActionAmount(Math.max(1, actionAmount - 1))}
+                  className="h-12 w-12 sm:h-14 sm:w-14 border-2 rounded-lg bg-white hover:bg-zinc-50 flex-shrink-0"
+                  style={{ borderColor: '#120627', color: '#120627' }}
+                  data-testid="decrease-points"
+                >
+                  <Minus className="h-5 w-5 sm:h-6 sm:w-6" />
+                </Button>
+                <Input
+                  type="number"
+                  value={actionAmount}
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value) || 1;
+                    setActionAmount(Math.max(1, Math.min(bonusPoints || 999999, val)));
+                  }}
+                  min="1"
+                  max={bonusPoints || undefined}
+                  className="input-brutalist text-2xl sm:text-3xl font-mono h-12 sm:h-14 text-center flex-1"
+                  data-testid="points-amount-input"
+                />
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setActionAmount(Math.min(bonusPoints || 999999, actionAmount + 1))}
+                  className="h-12 w-12 sm:h-14 sm:w-14 border-2 rounded-lg bg-white hover:bg-zinc-50 flex-shrink-0"
+                  style={{ borderColor: '#120627', color: '#120627' }}
+                  disabled={bonusPoints > 0 && actionAmount >= bonusPoints}
+                  data-testid="increase-points"
+                >
+                  <Plus className="h-5 w-5 sm:h-6 sm:w-6" />
+                </Button>
+              </div>
+            </div>
+            
+            {/* Redeem points button */}
+            <Button
+              onClick={() => openConfirmation('CanjearPuntos')}
+              disabled={loading || bonusPoints <= 0 || actionAmount > bonusPoints || actionAmount < 1}
+              className="w-full h-12 sm:h-14 text-base sm:text-lg btn-primary disabled:opacity-50"
+              data-testid="redeem-points-button"
+            >
+              {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Canjear Puntos'}
+            </Button>
+          </div>
+        );
+      }
+    }
+
     // For discount/cashback cards with purchase amount
     if (config.requiresPurchaseAmount && activeTab === 'Agregar') {
       // Get discount/cashback info from balance - handle different API field names

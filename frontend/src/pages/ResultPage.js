@@ -532,8 +532,10 @@ const ResultPage = () => {
         endpoint = `/cards/${card.id}/add-visit`;
       } else if (actionKey === 'canjearvisitas') {
         endpoint = `/cards/${card.id}/subtract-visit`;
+      } else if (actionKey === 'agregarpuntos') {
+        endpoint = `/cards/${card.id}/add-scores`;
       } else if (actionKey === 'canjearpuntos') {
-        endpoint = `/cards/${card.id}/subtract-point`;
+        endpoint = `/cards/${card.id}/subtract-scores`;
       } else {
         // Use config-based endpoint lookup for other actions
         const actionConfig = config.actions[actionKey];
@@ -543,11 +545,14 @@ const ResultPage = () => {
         endpoint = `/cards/${card.id}/${actionConfig.endpoint}`;
       }
       
+      // Check if this is a multipass action (no purchase amount needed)
+      const isMultipassAction = ['agregarvisitas', 'canjearvisitas', 'agregarpuntos', 'canjearpuntos'].includes(actionKey);
+      
       // Build payload - handle reward tier ID for receive-reward endpoint
       let payload = {
         comment: comment || undefined,
-        purchaseSum: confirmPurchaseAmount ? parseFloat(confirmPurchaseAmount) : 
-                     (config.requiresPurchaseAmount ? parseFloat(purchaseAmount) || 0 : undefined)
+        purchaseSum: isMultipassAction ? undefined : (confirmPurchaseAmount ? parseFloat(confirmPurchaseAmount) : 
+                     (config.requiresPurchaseAmount ? parseFloat(purchaseAmount) || 0 : undefined))
       };
       
       // For receive-reward endpoint, pass the tier ID as amount

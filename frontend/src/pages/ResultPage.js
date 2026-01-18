@@ -625,21 +625,26 @@ const ResultPage = () => {
 
     // For stamp cards, show stamp grid
     if ((normalizedType === 'stamp') && activeTab === 'Agregar') {
-      // Get stamps from balance - handle both API formats
-      const currentStamps = balance.currentNumberOfUses ?? balance.stamps ?? 0;
-      const totalStamps = balance.numberStampsTotal ?? balance.totalStamps ?? 10;
-      const stampsToReward = balance.stampsBeforeReward ?? (totalStamps - currentStamps);
+      // Calculate active stamps towards next reward
+      // stampsBeforeReward tells us how many stamps until next reward
+      // If stampsBeforeReward = 2 and reward is at 10 stamps, then activeStamps = 10 - 2 = 8
+      const stampsBeforeReward = balance.stampsBeforeReward ?? 10;
+      const stampsPerReward = 10; // Default to 10, will fetch from API if available
+      const activeStamps = Math.max(0, stampsPerReward - stampsBeforeReward);
       
       return (
         <div className="space-y-4 sm:space-y-6">
           <StampGrid 
-            current={currentStamps} 
-            total={totalStamps} 
+            activeStamps={activeStamps} 
+            stampsUntilReward={stampsBeforeReward}
+            totalStampsForReward={stampsPerReward}
           />
           
           <div className="text-center">
             <p className="text-xs sm:text-sm text-zinc-500">
-              {stampsToReward} sellos hasta la próxima recompensa
+              {stampsBeforeReward > 0 
+                ? `${stampsBeforeReward} sellos hasta la próxima recompensa`
+                : '¡Recompensa disponible!'}
             </p>
           </div>
           

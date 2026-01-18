@@ -1357,14 +1357,14 @@ const ResultPage = () => {
           {showCardInfo && (
             <div className="border-t border-zinc-200 divide-y divide-zinc-100">
               {/* Stamp card - show only current active stamps (not historical total) */}
-              {(normalizedType === 'stamp' || normalizedType === 'stamp_card') && (balance.currentNumberOfUses !== undefined && balance.currentNumberOfUses !== null) && (
+              {(cardType === 'stamp' || cardType === 'stamp_card') && (balance.currentNumberOfUses !== undefined && balance.currentNumberOfUses !== null) && (
                 <div className="flex justify-between p-3 sm:p-4">
                   <span className="text-zinc-500 text-sm">Sellos activos</span>
                   <span className="font-medium text-sm">{balance.currentNumberOfUses}</span>
                 </div>
               )}
               {/* Non-stamp cards using currentNumberOfUses (visits, etc.) */}
-              {(normalizedType !== 'stamp' && normalizedType !== 'stamp_card') && (balance.currentNumberOfUses !== undefined && balance.currentNumberOfUses !== null) && (
+              {(cardType !== 'stamp' && cardType !== 'stamp_card') && (balance.currentNumberOfUses !== undefined && balance.currentNumberOfUses !== null) && (
                 <div className="flex justify-between p-3 sm:p-4">
                   <span className="text-zinc-500 text-sm">Visitas disponibles</span>
                   <span className="font-medium text-sm">{balance.currentNumberOfUses}</span>

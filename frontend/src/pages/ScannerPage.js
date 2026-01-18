@@ -210,7 +210,7 @@ const ScannerPage = () => {
             {user?.email || '***@***.***'}
           </p>
           <p className="text-zinc-400 text-xs sm:text-sm mt-2 px-4">
-            Presiona el botón "Escanear" para escanear un código de barras o QR
+            Presiona el botón &quot;Escanear&quot; para escanear un código de barras o QR
           </p>
         </div>
 

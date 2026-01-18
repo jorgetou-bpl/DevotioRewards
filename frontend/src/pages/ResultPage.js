@@ -433,7 +433,7 @@ const ResultPage = () => {
   const [showCustomerInfo, setShowCustomerInfo] = useState(false);
   const [showCardInfo, setShowCardInfo] = useState(false);
   const [confirmModal, setConfirmModal] = useState({ open: false, action: null, details: [], purchaseAmount: '' });
-  const [successModal, setSuccessModal] = useState({ open: false, message: '', details: [] });
+  const [successModal, setSuccessModal] = useState({ open: false, message: '' });
 
   const currencyInfo = getCurrencyInfo();
 

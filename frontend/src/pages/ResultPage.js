@@ -1458,9 +1458,11 @@ const ResultPage = () => {
       {/* Success Modal */}
       <SuccessModal
         isOpen={successModal.open}
-        onClose={() => setSuccessModal({ open: false, message: '', details: [] })}
+        onClose={() => {
+          setSuccessModal({ open: false, message: '' });
+          navigate('/'); // Return to scanner home after transaction
+        }}
         message={successModal.message}
-        details={successModal.details}
       />
     </div>
   );

@@ -387,8 +387,8 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, actionType, deta
   );
 };
 
-// Success Modal
-const SuccessModal = ({ isOpen, onClose, message, details }) => {
+// Success Modal - Simplified
+const SuccessModal = ({ isOpen, onClose, message }) => {
   if (!isOpen) return null;
   
   return (
@@ -398,18 +398,7 @@ const SuccessModal = ({ isOpen, onClose, message, details }) => {
           <Check className="h-7 w-7 sm:h-8 sm:w-8 text-white" />
         </div>
         <h3 className="text-heading text-lg sm:text-xl mb-2">Transacción Exitosa</h3>
-        <p className="text-zinc-500 text-sm mb-4">{message}</p>
-        
-        {details && details.length > 0 && (
-          <div className="bg-zinc-50 rounded-lg p-3 sm:p-4 mb-4 text-left">
-            {details.map((detail, idx) => (
-              <div key={idx} className="flex justify-between text-xs sm:text-sm py-1">
-                <span className="text-zinc-500">{detail.label}</span>
-                <span className="font-medium">{detail.value}</span>
-              </div>
-            ))}
-          </div>
-        )}
+        <p className="text-zinc-500 text-sm mb-6">{message}</p>
         
         <Button 
           onClick={onClose} 

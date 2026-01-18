@@ -37,9 +37,11 @@ api_router = APIRouter(prefix="/api")
 
 # Custom HTTPBearer that returns 401 instead of 403
 class CustomHTTPBearer(HTTPBearer):
-    async def __call__(self, request):
+    async def __call__(self, request) -> HTTPAuthorizationCredentials:
+        from starlette.requests import Request
         try:
-            return await super().__call__(request)
+            credentials = await super().__call__(request)
+            return credentials
         except HTTPException as e:
             if e.status_code == 403:
                 raise HTTPException(status_code=401, detail="Not authenticated")

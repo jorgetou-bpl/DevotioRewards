@@ -23,6 +23,388 @@ import { StampGrid } from '../components/cards';
 import { ConfirmationModal, SuccessModal } from '../components/modals';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
+// Boomerang API card types: stamp(0), cashback(1), multipass(2), coupon(3), discount(4), gift(5), membership(6), reward(7)
+const CARD_TYPE_CONFIG = {
+  // Stamp card (type ID 0)
+  stamp: {
+    name: 'Tarjeta de Sellos',
+    icon: Stamp,
+    color: '#8A2BE2',
+    tabs: ['Agregar', 'Canjear'],
+    actions: {
+      agregar: { label: 'Agregar Sellos', endpoint: 'add-stamp' },
+      canjear: { label: 'Canjear Recompensa', endpoint: 'subtract-reward' }
+    }
+  },
+  stamp_card: { // Alias for demo cards
+    name: 'Tarjeta de Sellos',
+    icon: Stamp,
+    color: '#8A2BE2',
+    tabs: ['Agregar', 'Canjear'],
+    actions: {
+      agregar: { label: 'Agregar Sellos', endpoint: 'add-stamp' },
+      canjear: { label: 'Canjear Recompensa', endpoint: 'subtract-reward' }
+    }
+  },
+  // Cashback card (type ID 1)
+  cashback: {
+    name: 'Tarjeta Cashback',
+    icon: Wallet,
+    color: '#F040A0',
+    tabs: ['Agregar', 'Canjear'],
+    requiresPurchaseAmount: true,
+    actions: {
+      agregar: { label: 'Agregar Cashback', endpoint: 'add-point', amountLabel: 'Ingrese monto de compra' },
+      canjear: { label: 'Canjear Saldo', endpoint: 'subtract-point' }
+    }
+  },
+  cashback_card: { // Alias for demo cards
+    name: 'Tarjeta Cashback',
+    icon: Wallet,
+    color: '#F040A0',
+    tabs: ['Agregar', 'Canjear'],
+    requiresPurchaseAmount: true,
+    actions: {
+      agregar: { label: 'Agregar Cashback', endpoint: 'add-point', amountLabel: 'Ingrese monto de compra' },
+      canjear: { label: 'Canjear Saldo', endpoint: 'subtract-point' }
+    }
+  },
+  // Multipass card (type ID 2) - Boomerang API returns "subscription" type
+  // Has two main sections: Visits (add/redeem) and Points (redeem bonus points)
+  multipass: {
+    name: 'Multipase',
+    icon: CreditCard,
+    color: '#8A2BE2',
+    tabs: ['Visitas', 'Puntos'],
+    actions: {
+      visitas: { label: 'Visitas', endpoint: null }, // Parent tab - has sub-actions
+      puntos: { label: 'Canjear Puntos', endpoint: 'subtract-point' }
+    },
+    subActions: {
+      visitas: {
+        agregar: { label: 'Agregar Visitas', endpoint: 'add-visit' },
+        canjear: { label: 'Canjear Visitas', endpoint: 'subtract-visit' }
+      }
+    }
+  },
+  // Subscription is the Boomerang API name for Multipass cards
+  subscription: {
+    name: 'Multipase',
+    icon: CreditCard,
+    color: '#8A2BE2',
+    tabs: ['Visitas', 'Puntos'],
+    actions: {
+      visitas: { label: 'Visitas', endpoint: null }, // Parent tab - has sub-actions
+      puntos: { label: 'Canjear Puntos', endpoint: 'subtract-point' }
+    },
+    subActions: {
+      visitas: {
+        agregar: { label: 'Agregar Visitas', endpoint: 'add-visit' },
+        canjear: { label: 'Canjear Visitas', endpoint: 'subtract-visit' }
+      }
+    }
+  },
+  // Coupon (type ID 3)
+  coupon: {
+    name: 'Cupón',
+    icon: Ticket,
+    color: '#F040A0',
+    tabs: ['Usar'],
+    singleUse: true,
+    actions: {
+      usar: { label: 'Usar Cupón', endpoint: 'use-coupon' }
+    }
+  },
+  // Discount card (type ID 4)
+  discount: {
+    name: 'Tarjeta de Descuento',
+    icon: Percent,
+    color: '#F040A0',
+    tabs: ['Agregar'],
+    requiresPurchaseAmount: true,
+    actions: {
+      agregar: { label: 'Agregar Puntos', endpoint: 'add-point', amountLabel: 'Ingrese monto de compra' }
+    }
+  },
+  discount_card: { // Alias for demo cards
+    name: 'Tarjeta de Descuento',
+    icon: Percent,
+    color: '#F040A0',
+    tabs: ['Agregar'],
+    requiresPurchaseAmount: true,
+    actions: {
+      agregar: { label: 'Agregar Puntos', endpoint: 'add-point', amountLabel: 'Ingrese monto de compra' }
+    }
+  },
+  // Gift card (type ID 5) - Boomerang API returns "certificate" type
+  gift: {
+    name: 'Tarjeta de Regalo',
+    icon: Gift,
+    color: '#8A2BE2',
+    tabs: ['Agregar', 'Canjear'],
+    actions: {
+      agregar: { label: 'Agregar Saldo', endpoint: 'add-point' },
+      canjear: { label: 'Canjear Saldo', endpoint: 'subtract-point' }
+    }
+  },
+  certificate: { // Boomerang API name for gift cards
+    name: 'Tarjeta de Regalo',
+    icon: Gift,
+    color: '#8A2BE2',
+    tabs: ['Agregar', 'Canjear'],
+    actions: {
+      agregar: { label: 'Agregar Saldo', endpoint: 'add-point' },
+      canjear: { label: 'Canjear Saldo', endpoint: 'subtract-point' }
+    }
+  },
+  gift_card: { // Alias for demo cards
+    name: 'Tarjeta de Regalo',
+    icon: Gift,
+    color: '#8A2BE2',
+    tabs: ['Agregar', 'Canjear'],
+    actions: {
+      agregar: { label: 'Agregar Saldo', endpoint: 'add-point' },
+      canjear: { label: 'Canjear Saldo', endpoint: 'subtract-point' }
+    }
+  },
+  // Membership card (type ID 6) - Uses visits or points based on config
+  membership: {
+    name: 'Membresía',
+    icon: User,
+    color: '#8A2BE2',
+    tabs: ['Agregar', 'Canjear'],
+    actions: {
+      agregar: { label: 'Agregar Visitas', endpoint: 'add-visit' },
+      canjear: { label: 'Canjear Visita', endpoint: 'subtract-visit' }
+    }
+  },
+  // Reward card (type ID 7) - Uses add-scores to update bonusBalance
+  reward: {
+    name: 'Tarjeta de Recompensa',
+    icon: Star,
+    color: '#F040A0',
+    tabs: ['Agregar', 'Canjear'],
+    actions: {
+      agregar: { label: 'Agregar Puntos', endpoint: 'add-scores' },
+      canjear: { label: 'Canjear Recompensa', endpoint: 'receive-reward' }
+    }
+  },
+  // Points card (legacy/demo)
+  points_card: {
+    name: 'Tarjeta de Puntos',
+    icon: Star,
+    color: '#F040A0',
+    tabs: ['Agregar', 'Canjear'],
+    actions: {
+      agregar: { label: 'Agregar Puntos', endpoint: 'add-point' },
+      canjear: { label: 'Canjear Recompensa', endpoint: 'redeem-reward' }
+    }
+  },
+  // VIP card (legacy/demo)
+  vip_card: {
+    name: 'Tarjeta VIP',
+    icon: Star,
+    color: '#8A2BE2',
+    tabs: ['Agregar', 'Canjear'],
+    actions: {
+      agregar: { label: 'Agregar Puntos', endpoint: 'add-point' },
+      canjear: { label: 'Canjear Recompensa', endpoint: 'redeem-reward' }
+    }
+  }
+};
+
+// Helper to normalize card type from API response
+const normalizeCardType = (type) => {
+  if (!type) return 'stamp';
+  // Handle object type (legacy format)
+  if (typeof type === 'object' && type.id !== undefined) {
+    const typeMap = { 0: 'stamp', 1: 'cashback', 2: 'multipass', 3: 'coupon', 4: 'discount', 5: 'gift', 6: 'membership', 7: 'reward' };
+    return typeMap[type.id] || 'stamp';
+  }
+  // Already a string - return as-is (works for both 'stamp' and 'stamp_card')
+  return type.toLowerCase();
+};
+
+// Stamp visual component
+// Stamp Grid Component - Shows 10 stars by default
+// Stars fill progressively based on stamps towards next reward
+const StampGrid = ({ activeStamps, stampsUntilReward, totalStampsForReward = 10 }) => {
+  // Always show 10 stars
+  const displayTotal = 10;
+  // Calculate how many to fill based on stamps earned towards the current reward
+  // If stampsUntilReward is known, activeStamps = totalStampsForReward - stampsUntilReward
+  const fillCount = Math.min(activeStamps, displayTotal);
+  
+  const stamps = [];
+  for (let i = 0; i < displayTotal; i++) {
+    stamps.push(
+      <div
+        key={i}
+        className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full border-2 flex items-center justify-center transition-all ${
+          i < fillCount
+            ? 'bg-[#120627] border-transparent'
+            : 'bg-white border-zinc-300'
+        }`}
+      >
+        <Star
+          className={`h-4 w-4 sm:h-5 sm:w-5 ${i < fillCount ? 'text-white fill-white' : 'text-zinc-300'}`}
+        />
+      </div>
+    );
+  }
+  
+  return (
+    <div className="space-y-3">
+      <div className="grid grid-cols-5 gap-2 sm:gap-3 justify-items-center" data-testid="stamp-grid">
+        {stamps}
+      </div>
+      {/* Show only active stamp count - no "2/12" format */}
+      <div className="text-center">
+        <span className="text-3xl sm:text-4xl font-mono font-bold text-[#120627]">{fillCount}</span>
+        <span className="text-lg text-zinc-400 ml-2">sellos activos</span>
+      </div>
+    </div>
+  );
+};
+
+// Confirmation Modal with detailed info
+// Helper to format action title nicely
+const formatActionTitle = (action) => {
+  if (!action) return '';
+  const titleMap = {
+    'agregarvisitas': 'Agregar Visitas',
+    'canjearvisitas': 'Canjear Visitas',
+    'agregarpuntos': 'Agregar Puntos',
+    'canjearpuntos': 'Canjear Puntos',
+    'agregar': 'Agregar',
+    'canjear': 'Canjear',
+    'usar': 'Usar Cupón',
+    'visitas': 'Visitas',
+    'puntos': 'Puntos'
+  };
+  return titleMap[action.toLowerCase()] || action;
+};
+
+const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, actionType, details, card, config, loading, purchaseAmountFromParent, formatCurrency, requireComments = true }) => {
+  const [comment, setComment] = useState('');
+  const [commentError, setCommentError] = useState(false);
+  
+  if (!isOpen) return null;
+
+  const handleConfirm = () => {
+    // Validate comment only if required
+    if (requireComments && !comment.trim()) {
+      setCommentError(true);
+      toast.error('El comentario es obligatorio');
+      return;
+    }
+    setCommentError(false);
+    onConfirm(comment, purchaseAmountFromParent);
+    // Reset comment after successful confirm
+    setComment('');
+  };
+  
+  const handleClose = () => {
+    setComment('');
+    setCommentError(false);
+    onClose();
+  };
+  
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" data-testid="confirmation-modal">
+      <div className="bg-white rounded-xl shadow-2xl max-w-sm w-full p-4 sm:p-6 max-h-[90vh] overflow-y-auto">
+        <div className="flex justify-between items-center mb-4 sm:mb-6">
+          <h3 className="text-heading text-lg sm:text-xl">Confirmar {formatActionTitle(title)}</h3>
+          <button onClick={handleClose} className="p-1 hover:bg-zinc-100 rounded-lg">
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+        
+        {/* Card Type Header */}
+        <div className="bg-[#120627] text-white rounded-lg p-3 sm:p-4 mb-4">
+          <p className="text-xs font-semibold uppercase tracking-wider text-white/70 mb-1">Tipo de Tarjeta</p>
+          <p className="font-medium text-sm sm:text-base">{config?.name || 'Tarjeta'}</p>
+        </div>
+
+        {/* Simplified Transaction Details - Only essential info */}
+        <div className="space-y-2 sm:space-y-3 mb-4">
+          {details.map((detail, idx) => (
+            <div key={idx} className="flex justify-between text-xs sm:text-sm border-b border-zinc-100 pb-2">
+              <span className="text-zinc-500">{detail.label}</span>
+              <span className="font-medium text-right">{detail.value}</span>
+            </div>
+          ))}
+        </div>
+        
+        {/* Comment - conditionally mandatory */}
+        <div className="mb-4 sm:mb-6">
+          <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500 block mb-2">
+            Comentario {requireComments && <span className="text-red-500">*</span>}
+          </label>
+          <Input
+            value={comment}
+            onChange={(e) => {
+              setComment(e.target.value);
+              if (e.target.value.trim()) setCommentError(false);
+            }}
+            placeholder={requireComments ? "Nota interna obligatoria..." : "Nota interna (opcional)..."}
+            className={`input-brutalist text-sm ${commentError ? 'border-red-500 focus:ring-red-500' : ''}`}
+            data-testid="confirmation-comment"
+          />
+          {commentError && (
+            <p className="text-xs text-red-500 mt-1">* Campo obligatorio</p>
+          )}
+        </div>
+        
+        <div className="flex gap-2 sm:gap-3">
+          <Button
+            variant="outline"
+            onClick={handleClose}
+            className="flex-1 h-10 sm:h-12 btn-secondary text-sm"
+            disabled={loading}
+            data-testid="cancel-action"
+          >
+            Cancelar
+          </Button>
+          <Button
+            onClick={handleConfirm}
+            disabled={loading}
+            className="flex-1 h-10 sm:h-12 btn-primary text-sm"
+            data-testid="confirm-action"
+          >
+            {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Confirmar'}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Success Modal - Simplified
+const SuccessModal = ({ isOpen, onClose, message }) => {
+  if (!isOpen) return null;
+  
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" data-testid="success-modal">
+      <div className="bg-white rounded-xl shadow-2xl max-w-sm w-full p-4 sm:p-6 text-center">
+        <div className="w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-br from-[#00C853] to-[#00E676] rounded-full flex items-center justify-center mx-auto mb-4">
+          <Check className="h-7 w-7 sm:h-8 sm:w-8 text-white" />
+        </div>
+        <h3 className="text-heading text-lg sm:text-xl mb-2">Transacción Exitosa</h3>
+        <p className="text-zinc-500 text-sm mb-6">{message}</p>
+        
+        <Button 
+          onClick={onClose} 
+          className="w-full h-10 sm:h-12 btn-primary" 
+          data-testid="done-button"
+        >
+          Listo
+        </Button>
+      </div>
+    </div>
+  );
+};
+
 const ResultPage = () => {
   const location = useLocation();
   const navigate = useNavigate();

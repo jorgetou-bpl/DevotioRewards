@@ -1207,26 +1207,16 @@ const ResultPage = () => {
       </header>
 
       <main className="max-w-md mx-auto p-4 sm:p-6 pb-20 sm:pb-24">
-        {/* Customer ID - Visible on Top */}
-        <div className="customer-id-banner mb-3 sm:mb-4" data-testid="customer-id-banner">
-          <div className="flex items-center justify-between">
-            <div className="min-w-0 flex-1">
-              <p className="text-xs font-semibold uppercase tracking-wider text-white/70">ID de Cliente</p>
-              <p className="text-mono text-sm sm:text-lg font-medium truncate">{card.customer?.id || card.customerId || '-'}</p>
-            </div>
-            <button
-              onClick={handleCopyId}
-              className="p-2 hover:bg-white/10 rounded-lg transition-colors flex-shrink-0 ml-2"
-              data-testid="copy-customer-id"
-              aria-label="Copiar ID"
-            >
-              <Copy className="h-5 w-5" />
-            </button>
+        {/* Card Type Header - Replaces Client ID */}
+        <div className="customer-id-banner mb-3 sm:mb-4" data-testid="card-type-banner">
+          <div className="flex items-center justify-center gap-2">
+            <CardIcon className="h-5 w-5 sm:h-6 sm:w-6" />
+            <p className="font-semibold text-sm sm:text-lg uppercase tracking-wider">{config.name}</p>
           </div>
         </div>
 
         {/* Customer Name (VISIBLE - not masked) */}
-        <div className="text-center mb-3 sm:mb-4">
+        <div className="text-center mb-4 sm:mb-6">
           <p className="text-xs sm:text-sm text-zinc-500">Cliente:</p>
           <h2 className="text-heading text-xl sm:text-2xl" data-testid="customer-display-name">
             {card.customer?.firstName || 'N/A'} {card.customer?.surname || ''}

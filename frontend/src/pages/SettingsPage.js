@@ -68,6 +68,13 @@ const SettingsPage = () => {
       description: 'Copiar ID de tarjeta después de escanear',
       icon: Clipboard,
       testId: 'setting-copy-clipboard'
+    },
+    {
+      key: 'require_comments',
+      label: 'Comentarios obligatorios',
+      description: 'Requerir comentario en cada transacción',
+      icon: MessageSquare,
+      testId: 'setting-require-comments'
     }
   ];
 

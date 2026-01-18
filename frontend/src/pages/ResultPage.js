@@ -700,6 +700,80 @@ const ResultPage = () => {
       );
     }
 
+    // Stamp card "Canjear" tab - show available rewards to redeem
+    if ((normalizedType === 'stamp') && activeTab === 'Canjear') {
+      const numberRewardsUnused = balance.numberRewardsUnused ?? 0;
+      const availableRewardTiers = card.availableRewardTiers || [];
+      
+      return (
+        <div className="space-y-4 sm:space-y-6">
+          {/* Available rewards display */}
+          <div className="text-center p-4 sm:p-6 bg-zinc-50 rounded-xl">
+            <span className="text-4xl sm:text-5xl font-mono font-bold gradient-text">
+              {numberRewardsUnused}
+            </span>
+            <p className="text-xs sm:text-sm text-zinc-500 mt-2">
+              Recompensas disponibles
+            </p>
+          </div>
+          
+          {/* Multi-reward selection (if available) */}
+          {availableRewardTiers.length > 0 ? (
+            <div className="space-y-3">
+              <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500 block">
+                Seleccionar recompensa
+              </label>
+              {availableRewardTiers.map((tier, index) => (
+                <button
+                  key={tier.id || index}
+                  onClick={() => {
+                    setActionAmount(tier.id || index + 1);
+                    openConfirmation('Canjear', tier);
+                  }}
+                  disabled={loading || numberRewardsUnused < 1}
+                  className="w-full p-4 border-2 rounded-xl text-left hover:border-[#120627] hover:bg-zinc-50 transition-all disabled:opacity-50"
+                  style={{ borderColor: actionAmount === (tier.id || index + 1) ? '#120627' : '#e4e4e7' }}
+                  data-testid={`reward-tier-${index}`}
+                >
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <p className="font-medium text-sm sm:text-base">{tier.name || `Recompensa ${index + 1}`}</p>
+                      <p className="text-xs text-zinc-500 mt-1">
+                        A los {tier.threshold || ((index + 1) * 10)} sellos
+                      </p>
+                    </div>
+                    <div className="text-[#120627]">
+                      <Gift className="h-6 w-6" />
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          ) : numberRewardsUnused > 0 ? (
+            // Single reward redemption (no tiers configured)
+            <Button
+              onClick={() => openConfirmation('Canjear')}
+              disabled={loading}
+              className="w-full h-12 sm:h-14 text-base sm:text-lg btn-primary"
+              data-testid="redeem-reward-button"
+            >
+              {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Canjear Recompensa'}
+            </Button>
+          ) : (
+            <div className="text-center p-6 bg-zinc-50 rounded-xl">
+              <Gift className="h-10 w-10 mx-auto text-zinc-300 mb-3" />
+              <p className="text-zinc-500 text-sm">
+                No hay recompensas disponibles para canjear.
+              </p>
+              <p className="text-zinc-400 text-xs mt-2">
+                Sigue acumulando sellos para ganar recompensas.
+              </p>
+            </div>
+          )}
+        </div>
+      );
+    }
+
     // For Multipass/Subscription cards - special two-tab UI with Visits and Points
     if ((normalizedType === 'multipass' || normalizedType === 'subscription')) {
       const availableVisits = balance.currentNumberOfUses || 0;

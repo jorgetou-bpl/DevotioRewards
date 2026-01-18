@@ -294,16 +294,6 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, actionType, deta
   const [comment, setComment] = useState('');
   const [commentError, setCommentError] = useState(false);
   
-  // Reset comment when modal closes (using a ref to track previous state)
-  const prevIsOpen = useRef(isOpen);
-  if (isOpen && !prevIsOpen.current) {
-    // Modal just opened - reset fields
-    if (comment !== '' || commentError !== false) {
-      // Will trigger re-render with clean state
-    }
-  }
-  prevIsOpen.current = isOpen;
-  
   if (!isOpen) return null;
 
   const handleConfirm = () => {

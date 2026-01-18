@@ -1017,7 +1017,7 @@ const ResultPage = () => {
       // Determine the label for available amount
       let availableLabel = 'Puntos disponibles';
       if (normalizedType === 'certificate' || normalizedType === 'gift' || normalizedType === 'gift_card') {
-        availableLabel = 'Saldo disponible';
+        availableLabel = 'Balance Total';
       } else if (normalizedType === 'cashback' || normalizedType === 'cashback_card') {
         availableLabel = 'Cashback disponible';
       } else if (normalizedType === 'reward') {

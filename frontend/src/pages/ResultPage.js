@@ -1193,6 +1193,16 @@ const ResultPage = () => {
     // Default: simple counter with action (keyboard input enabled)
     return (
       <div className="space-y-4 sm:space-y-6">
+        {/* Gift card balance display - show current balance */}
+        {(normalizedType === 'certificate' || normalizedType === 'gift' || normalizedType === 'gift_card') && (
+          <div className="text-center p-4 sm:p-6 bg-zinc-50 rounded-xl">
+            <span className="text-4xl sm:text-5xl font-mono font-bold gradient-text">
+              {formatCurrency(balance.balance || 0)}
+            </span>
+            <p className="text-xs sm:text-sm text-zinc-500 mt-2">Balance Total</p>
+          </div>
+        )}
+        
         <div className="card-brutalist">
           <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500 block mb-2">
             Cantidad

@@ -1123,10 +1123,10 @@ const ResultPage = () => {
                 <span className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-zinc-400 text-lg sm:text-xl">{currencyInfo.symbol}</span>
                 <Input
                   type="number"
-                  value={actionAmount}
+                  value={actionAmount || ''}
                   onChange={(e) => {
-                    const val = parseInt(e.target.value) || 0;
-                    setActionAmount(Math.max(0, Math.min(availableAmount || 999999, val)));
+                    const val = e.target.value === '' ? '' : parseInt(e.target.value) || 0;
+                    setActionAmount(val === '' ? '' : Math.max(0, Math.min(availableAmount || 999999, val)));
                   }}
                   placeholder="0"
                   min="0"

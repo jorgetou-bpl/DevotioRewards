@@ -465,7 +465,6 @@ const ResultPage = () => {
     const actionLower = action.toLowerCase();
     
     details.push({ label: 'ID de Tarjeta', value: card.id });
-    details.push({ label: 'Tipo de Tarjeta', value: config.name });
     
     if (actionLower === 'agregar' && config.requiresPurchaseAmount) {
       details.push({ label: 'Monto de Compra', value: formatCurrency(parseFloat(purchaseAmount) || 0) });

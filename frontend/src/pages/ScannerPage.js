@@ -216,13 +216,14 @@ const ScannerPage = () => {
 
         {/* Scanner Viewport */}
         <div className="w-full max-w-md">
-          <div className="scanner-viewport mb-4 sm:mb-6 relative rounded-xl overflow-hidden" style={{ aspectRatio: '4/3' }} data-testid="scanner-viewport">
+          <div className="scanner-viewport mb-4 sm:mb-6 relative rounded-xl overflow-hidden bg-black" style={{ aspectRatio: '1/1', maxHeight: '400px' }} data-testid="scanner-viewport">
             {scanning ? (
               <>
                 <div 
                   id="barcode-scanner" 
                   ref={scannerRef}
                   className="w-full h-full"
+                  style={{ minHeight: '300px' }}
                   data-testid="barcode-scanner"
                 />
                 <button
@@ -233,6 +234,13 @@ const ScannerPage = () => {
                 >
                   <X className="h-5 w-5 text-[#120627]" />
                 </button>
+                {/* Scanning indicator */}
+                <div className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-white/90 backdrop-blur-sm px-4 py-2 rounded-full shadow-lg z-20">
+                  <p className="text-xs font-medium text-[#120627] flex items-center gap-2">
+                    <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                    Escaneando...
+                  </p>
+                </div>
               </>
             ) : (
               <div className="w-full h-full flex items-center justify-center bg-[#120627]">

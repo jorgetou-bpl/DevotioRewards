@@ -870,8 +870,27 @@ const ResultPage = () => {
               />
             </div>
           </div>
+        ) : normalizedType === 'reward' ? (
+          // Reward card - clean number input (no +/- buttons) for adding points
+          <div className="card-brutalist">
+            <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500 block mb-2">
+              Cantidad de puntos
+            </label>
+            <Input
+              type="number"
+              value={actionAmount || ''}
+              onChange={(e) => {
+                const val = e.target.value === '' ? '' : parseInt(e.target.value) || 0;
+                setActionAmount(val === '' ? '' : Math.max(0, val));
+              }}
+              placeholder="0"
+              min="0"
+              className="input-brutalist text-2xl sm:text-3xl font-mono h-14 sm:h-16 text-center"
+              data-testid="default-amount-input"
+            />
+          </div>
         ) : (
-          // Counter style for stamps, rewards, etc.
+          // Counter style for stamps only (small numbers 1-10)
           <div className="card-brutalist">
             <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500 block mb-2">
               Cantidad

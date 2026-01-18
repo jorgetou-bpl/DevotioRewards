@@ -1500,6 +1500,7 @@ const ResultPage = () => {
         loading={loading}
         purchaseAmountFromParent={confirmModal.purchaseAmount}
         formatCurrency={formatCurrency}
+        requireComments={settings.require_comments !== false}
       />
 
       {/* Success Modal */}

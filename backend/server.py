@@ -34,7 +34,18 @@ JWT_EXPIRATION_HOURS = 24
 
 app = FastAPI(title="Devotio Rewards Scanner API")
 api_router = APIRouter(prefix="/api")
-security = HTTPBearer()
+
+# Custom HTTPBearer that returns 401 instead of 403
+class CustomHTTPBearer(HTTPBearer):
+    async def __call__(self, request):
+        try:
+            return await super().__call__(request)
+        except HTTPException as e:
+            if e.status_code == 403:
+                raise HTTPException(status_code=401, detail="Not authenticated")
+            raise e
+
+security = CustomHTTPBearer()
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)

@@ -593,15 +593,10 @@ const ResultPage = () => {
         { label: 'ID de Tarjeta', value: card.id }
       ];
       
-      if (confirmPurchaseAmount) {
-        successDetails.push({ label: 'Monto de Compra', value: formatCurrency(parseFloat(confirmPurchaseAmount)) });
-      }
-      
       setConfirmModal({ open: false, action: null, details: [], purchaseAmount: '' });
       setSuccessModal({ 
         open: true, 
-        message: response.data.message || '¡Transacción completada exitosamente!',
-        details: successDetails
+        message: response.data.message || '¡Transacción completada exitosamente!'
       });
       
       // Reset inputs

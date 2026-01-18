@@ -12,7 +12,6 @@ import {
   Plus,
   Minus,
   Check,
-  Copy,
   Loader2,
   AlertCircle,
   Star,

@@ -40,6 +40,7 @@ Build a custom scanner app for "Devotio Rewards" SaaS whitelabel service connect
 
 6. **Cashback Cards**:
    - ✅ Show balance in currency (not percentage) in Agregar view
+   - ✅ Show balance in currency in Canjear view (fixed January 18, 2026)
    - ✅ Button renamed from "Agregar puntos" to "Agregar Cashback"
    - ✅ Transaction confirmation display
 

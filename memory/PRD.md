@@ -75,6 +75,13 @@ All 8 Boomerangme card types now correctly recognized and rendered:
 
 ## What's Been Implemented
 
+### Session 7 - Cashback Currency Fix (January 18, 2026)
+1. **Fixed Cashback Card Currency Display in Canjear Tab (P0)**
+   - The "Canjear" (Redeem) tab now correctly displays the balance with the currency symbol (e.g., "₡1" instead of "1")
+   - Applied `formatCurrency()` helper to cashback and gift card balance displays
+   - Updated `/app/frontend/src/pages/ResultPage.js` lines 1104-1108 with conditional formatting
+   - Verified working with test card `591682-351-613`
+
 ### Session 6 - Discount Card & UI Fixes (January 15, 2026)
 1. **Fixed Discount Card "Total acumulado" Calculation (P1)**
    - Now correctly calculates: `points = purchaseAmount * (discountPercentage / 100)`

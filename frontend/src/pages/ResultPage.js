@@ -294,13 +294,15 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, actionType, deta
   const [comment, setComment] = useState('');
   const [commentError, setCommentError] = useState(false);
   
-  // Reset comment when modal opens
-  useEffect(() => {
-    if (isOpen) {
-      setComment('');
-      setCommentError(false);
+  // Reset comment when modal closes (using a ref to track previous state)
+  const prevIsOpen = useRef(isOpen);
+  if (isOpen && !prevIsOpen.current) {
+    // Modal just opened - reset fields
+    if (comment !== '' || commentError !== false) {
+      // Will trigger re-render with clean state
     }
-  }, [isOpen]);
+  }
+  prevIsOpen.current = isOpen;
   
   if (!isOpen) return null;
 
@@ -313,6 +315,14 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, actionType, deta
     }
     setCommentError(false);
     onConfirm(comment, purchaseAmountFromParent);
+    // Reset comment after successful confirm
+    setComment('');
+  };
+  
+  const handleClose = () => {
+    setComment('');
+    setCommentError(false);
+    onClose();
   };
   
   return (

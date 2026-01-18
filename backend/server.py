@@ -65,6 +65,7 @@ class SettingsUpdate(BaseModel):
     show_result: Optional[bool] = None
     copy_to_clipboard: Optional[bool] = None
     currency: Optional[str] = None
+    require_comments: Optional[bool] = None
 
 class SettingsResponse(BaseModel):
     vibration: bool = False
@@ -72,6 +73,7 @@ class SettingsResponse(BaseModel):
     show_result: bool = True
     copy_to_clipboard: bool = True
     currency: str = "CRC"
+    require_comments: bool = True
 
 class CardActionRequest(BaseModel):
     amount: Optional[int] = 1

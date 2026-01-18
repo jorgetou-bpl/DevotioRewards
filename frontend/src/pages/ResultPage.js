@@ -290,15 +290,15 @@ const formatActionTitle = (action) => {
   return titleMap[action.toLowerCase()] || action;
 };
 
-const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, actionType, details, card, config, loading, purchaseAmountFromParent, formatCurrency }) => {
+const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, actionType, details, card, config, loading, purchaseAmountFromParent, formatCurrency, requireComments = true }) => {
   const [comment, setComment] = useState('');
   const [commentError, setCommentError] = useState(false);
   
   if (!isOpen) return null;
 
   const handleConfirm = () => {
-    // Validate comment is required
-    if (!comment.trim()) {
+    // Validate comment only if required
+    if (requireComments && !comment.trim()) {
       setCommentError(true);
       toast.error('El comentario es obligatorio');
       return;
@@ -341,10 +341,10 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, actionType, deta
           ))}
         </div>
         
-        {/* Comment - MANDATORY */}
+        {/* Comment - conditionally mandatory */}
         <div className="mb-4 sm:mb-6">
           <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500 block mb-2">
-            Comentario <span className="text-red-500">*</span>
+            Comentario {requireComments && <span className="text-red-500">*</span>}
           </label>
           <Input
             value={comment}
@@ -352,7 +352,7 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, actionType, deta
               setComment(e.target.value);
               if (e.target.value.trim()) setCommentError(false);
             }}
-            placeholder="Nota interna obligatoria..."
+            placeholder={requireComments ? "Nota interna obligatoria..." : "Nota interna (opcional)..."}
             className={`input-brutalist text-sm ${commentError ? 'border-red-500 focus:ring-red-500' : ''}`}
             data-testid="confirmation-comment"
           />

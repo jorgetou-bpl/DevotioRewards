@@ -1102,7 +1102,10 @@ const ResultPage = () => {
           {/* Available balance display */}
           <div className="text-center p-4 sm:p-6 bg-zinc-50 rounded-xl">
             <span className="text-4xl sm:text-5xl font-mono font-bold gradient-text">
-              {availableAmount}
+              {(normalizedType === 'cashback' || normalizedType === 'cashback_card' || 
+                normalizedType === 'certificate' || normalizedType === 'gift' || normalizedType === 'gift_card')
+                ? formatCurrency(availableAmount / 100)
+                : availableAmount}
             </span>
             <p className="text-xs sm:text-sm text-zinc-500 mt-2">
               {availableLabel}

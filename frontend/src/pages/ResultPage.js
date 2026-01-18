@@ -7,27 +7,22 @@ import { toast } from 'sonner';
 import axios from 'axios';
 import {
   ArrowLeft,
-  Stamp,
-  Gift,
   Plus,
   Minus,
   Check,
   Loader2,
   AlertCircle,
   Star,
-  CreditCard,
-  Percent,
-  Ticket,
-  Wallet,
-  X,
   ChevronDown,
-  ChevronUp,
-  User
+  ChevronUp
 } from 'lucide-react';
 
-const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
+// Import extracted components
+import { CARD_TYPE_CONFIG, normalizeCardType, formatActionTitle } from '../config/cardTypes';
+import { StampGrid } from '../components/cards';
+import { ConfirmationModal, SuccessModal } from '../components/modals';
 
-// Card type configurations - Spanish
+const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 // Boomerang API card types: stamp(0), cashback(1), multipass(2), coupon(3), discount(4), gift(5), membership(6), reward(7)
 const CARD_TYPE_CONFIG = {
   // Stamp card (type ID 0)

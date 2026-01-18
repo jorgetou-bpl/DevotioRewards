@@ -1,0 +1,113 @@
+import React, { useState } from 'react';
+import { X, Loader2 } from 'lucide-react';
+import { Button } from '../ui/button';
+import { Input } from '../ui/input';
+import { toast } from 'sonner';
+import { formatActionTitle } from '../../config/cardTypes';
+
+const ConfirmationModal = ({ 
+  isOpen, 
+  onClose, 
+  onConfirm, 
+  title, 
+  details, 
+  config, 
+  loading, 
+  purchaseAmountFromParent, 
+  requireComments = true 
+}) => {
+  const [comment, setComment] = useState('');
+  const [commentError, setCommentError] = useState(false);
+  
+  if (!isOpen) return null;
+
+  const handleConfirm = () => {
+    // Validate comment only if required
+    if (requireComments && !comment.trim()) {
+      setCommentError(true);
+      toast.error('El comentario es obligatorio');
+      return;
+    }
+    setCommentError(false);
+    onConfirm(comment, purchaseAmountFromParent);
+    // Reset comment after successful confirm
+    setComment('');
+  };
+  
+  const handleClose = () => {
+    setComment('');
+    setCommentError(false);
+    onClose();
+  };
+  
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" data-testid="confirmation-modal">
+      <div className="bg-white rounded-xl shadow-2xl max-w-sm w-full p-4 sm:p-6 max-h-[90vh] overflow-y-auto">
+        <div className="flex justify-between items-center mb-4 sm:mb-6">
+          <h3 className="text-heading text-lg sm:text-xl">Confirmar {formatActionTitle(title)}</h3>
+          <button onClick={handleClose} className="p-1 hover:bg-zinc-100 rounded-lg">
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+        
+        {/* Card Type Header */}
+        <div className="bg-[#120627] text-white rounded-lg p-3 sm:p-4 mb-4">
+          <p className="text-xs font-semibold uppercase tracking-wider text-white/70 mb-1">Tipo de Tarjeta</p>
+          <p className="font-medium text-sm sm:text-base">{config?.name || 'Tarjeta'}</p>
+        </div>
+
+        {/* Simplified Transaction Details - Only essential info */}
+        <div className="space-y-2 sm:space-y-3 mb-4">
+          {details.map((detail, idx) => (
+            <div key={idx} className="flex justify-between text-xs sm:text-sm border-b border-zinc-100 pb-2">
+              <span className="text-zinc-500">{detail.label}</span>
+              <span className="font-medium text-right">{detail.value}</span>
+            </div>
+          ))}
+        </div>
+        
+        {/* Comment - conditionally mandatory */}
+        <div className="mb-4 sm:mb-6">
+          <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500 block mb-2">
+            Comentario {requireComments && <span className="text-red-500">*</span>}
+          </label>
+          <Input
+            value={comment}
+            onChange={(e) => {
+              setComment(e.target.value);
+              if (e.target.value.trim()) setCommentError(false);
+            }}
+            placeholder={requireComments ? "Nota interna obligatoria..." : "Nota interna (opcional)..."}
+            className={`input-brutalist text-sm ${commentError ? 'border-red-500 focus:ring-red-500' : ''}`}
+            data-testid="confirmation-comment"
+          />
+          {commentError && (
+            <p className="text-xs text-red-500 mt-1">* Campo obligatorio</p>
+          )}
+        </div>
+        
+        <div className="flex gap-2 sm:gap-3">
+          <Button
+            variant="outline"
+            onClick={handleClose}
+            className="flex-1 h-10 sm:h-12 btn-secondary text-sm"
+            disabled={loading}
+            data-testid="cancel-action"
+          >
+            Cancelar
+          </Button>
+          <Button
+            onClick={handleConfirm}
+            disabled={loading}
+            className="flex-1 h-10 sm:h-12 btn-primary text-sm"
+            data-testid="confirm-action"
+          >
+            {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Confirmar'}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default ConfirmationModal;

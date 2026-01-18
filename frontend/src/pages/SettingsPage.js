@@ -12,7 +12,8 @@ import {
   Loader2, 
   DollarSign,
   ChevronDown,
-  Check
+  Check,
+  MessageSquare
 } from 'lucide-react';
 
 const SettingsPage = () => {

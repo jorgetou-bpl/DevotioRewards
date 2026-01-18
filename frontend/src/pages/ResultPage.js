@@ -900,16 +900,6 @@ const ResultPage = () => {
             </div>
           )}
           
-          {/* Cashback level display */}
-          {cashbackPercent !== null && !discountLevel && (
-            <div className="text-center">
-              <span className="text-5xl sm:text-6xl font-mono font-bold gradient-text">
-                {cashbackPercent}%
-              </span>
-              <p className="text-xs sm:text-sm text-zinc-500 mt-1">Tasa de cashback</p>
-            </div>
-          )}
-          
           {/* Purchase amount input */}
           <div className="card-brutalist">
             <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500 block mb-2">

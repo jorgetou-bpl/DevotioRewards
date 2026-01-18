@@ -413,7 +413,7 @@ const SuccessModal = ({ isOpen, onClose, message }) => {
 const ResultPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { triggerVibration, triggerBeep, copyToClipboard, formatCurrency, getCurrencyInfo } = useSettings();
+  const { triggerVibration, triggerBeep, copyToClipboard, formatCurrency, getCurrencyInfo, settings } = useSettings();
   
   const [card, setCard] = useState(location.state?.card || null);
   const [loading, setLoading] = useState(false);

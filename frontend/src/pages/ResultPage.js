@@ -606,13 +606,6 @@ const ResultPage = () => {
     }
   };
 
-  const handleCopyId = async () => {
-    const success = await copyToClipboard(card.id);
-    if (success) {
-      toast.success('¡ID de tarjeta copiado!');
-    }
-  };
-
   const renderActionTab = () => {
     const tabLower = activeTab.toLowerCase();
     const actionConfig = config.actions[tabLower];

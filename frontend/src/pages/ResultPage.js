@@ -1111,47 +1111,77 @@ const ResultPage = () => {
             </p>
           </div>
           
-          {/* Amount input - allows keyboard entry */}
-          <div className="card-brutalist">
-            <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500 block mb-2">
-              Cantidad a canjear
-            </label>
-            <div className="flex items-center gap-3">
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => setActionAmount(Math.max(1, actionAmount - 1))}
-                className="h-12 w-12 sm:h-14 sm:w-14 border-2 rounded-lg bg-white hover:bg-[#ee478a] hover:border-[#ee478a] hover:text-white flex-shrink-0"
-                style={{ borderColor: '#120627', color: '#120627' }}
-                data-testid="decrease-redeem"
-              >
-                <Minus className="h-5 w-5 sm:h-6 sm:w-6" />
-              </Button>
-              <Input
-                type="number"
-                value={actionAmount}
-                onChange={(e) => {
-                  const val = parseInt(e.target.value) || 1;
-                  setActionAmount(Math.max(1, Math.min(availableAmount || 999999, val)));
-                }}
-                min="1"
-                max={availableAmount || 999999}
-                className="input-brutalist text-2xl sm:text-3xl font-mono h-12 sm:h-14 text-center flex-1"
-                data-testid="redeem-amount-input"
-              />
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => setActionAmount(Math.min(availableAmount || 999999, actionAmount + 1))}
-                className="h-12 w-12 sm:h-14 sm:w-14 border-2 rounded-lg bg-white hover:bg-[#ee478a] hover:border-[#ee478a] hover:text-white flex-shrink-0"
-                style={{ borderColor: '#120627', color: '#120627' }}
-                disabled={availableAmount > 0 && actionAmount >= availableAmount}
-                data-testid="increase-redeem"
-              >
-                <Plus className="h-5 w-5 sm:h-6 sm:w-6" />
-              </Button>
+          {/* Amount input - currency style for cashback/gift, counter style for others */}
+          {(normalizedType === 'cashback' || normalizedType === 'cashback_card' ||
+            normalizedType === 'certificate' || normalizedType === 'gift' || normalizedType === 'gift_card') ? (
+            // Currency input style - no +/- buttons, just a clean input with currency symbol
+            <div className="card-brutalist">
+              <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500 block mb-2">
+                Monto a canjear ({currencyInfo.code})
+              </label>
+              <div className="relative">
+                <span className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-zinc-400 text-lg sm:text-xl">{currencyInfo.symbol}</span>
+                <Input
+                  type="number"
+                  value={actionAmount}
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value) || 0;
+                    setActionAmount(Math.max(0, Math.min(availableAmount || 999999, val)));
+                  }}
+                  placeholder="0"
+                  min="0"
+                  max={availableAmount || 999999}
+                  className="input-brutalist pl-10 sm:pl-12 text-2xl sm:text-3xl font-mono h-14 sm:h-16 text-center"
+                  data-testid="redeem-amount-input"
+                />
+              </div>
+              <p className="text-xs text-zinc-400 mt-2 text-center">
+                Máximo disponible: {formatCurrency(availableAmount)}
+              </p>
             </div>
-          </div>
+          ) : (
+            // Counter style for stamps, rewards, visits, etc.
+            <div className="card-brutalist">
+              <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500 block mb-2">
+                Cantidad a canjear
+              </label>
+              <div className="flex items-center gap-3">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setActionAmount(Math.max(1, actionAmount - 1))}
+                  className="h-12 w-12 sm:h-14 sm:w-14 border-2 rounded-lg bg-white hover:bg-[#ee478a] hover:border-[#ee478a] hover:text-white flex-shrink-0"
+                  style={{ borderColor: '#120627', color: '#120627' }}
+                  data-testid="decrease-redeem"
+                >
+                  <Minus className="h-5 w-5 sm:h-6 sm:w-6" />
+                </Button>
+                <Input
+                  type="number"
+                  value={actionAmount}
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value) || 1;
+                    setActionAmount(Math.max(1, Math.min(availableAmount || 999999, val)));
+                  }}
+                  min="1"
+                  max={availableAmount || 999999}
+                  className="input-brutalist text-2xl sm:text-3xl font-mono h-12 sm:h-14 text-center flex-1"
+                  data-testid="redeem-amount-input"
+                />
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setActionAmount(Math.min(availableAmount || 999999, actionAmount + 1))}
+                  className="h-12 w-12 sm:h-14 sm:w-14 border-2 rounded-lg bg-white hover:bg-[#ee478a] hover:border-[#ee478a] hover:text-white flex-shrink-0"
+                  style={{ borderColor: '#120627', color: '#120627' }}
+                  disabled={availableAmount > 0 && actionAmount >= availableAmount}
+                  data-testid="increase-redeem"
+                >
+                  <Plus className="h-5 w-5 sm:h-6 sm:w-6" />
+                </Button>
+              </div>
+            </div>
+          )}
           
           <Button
             onClick={() => openConfirmation(activeTab)}

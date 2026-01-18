@@ -1356,11 +1356,17 @@ const ResultPage = () => {
           
           {showCardInfo && (
             <div className="border-t border-zinc-200 divide-y divide-zinc-100">
-              {/* Stamp card - show only current active stamps (not historical total) */}
-              {(cardType === 'stamp' || cardType === 'stamp_card') && (balance.currentNumberOfUses !== undefined && balance.currentNumberOfUses !== null) && (
+              {/* Stamp card - calculate active stamps using stampsBeforeReward */}
+              {(cardType === 'stamp' || cardType === 'stamp_card') && (
                 <div className="flex justify-between p-3 sm:p-4">
                   <span className="text-zinc-500 text-sm">Sellos activos</span>
-                  <span className="font-medium text-sm">{balance.currentNumberOfUses}</span>
+                  <span className="font-medium text-sm">
+                    {(() => {
+                      const stampsPerReward = 10;
+                      const stampsBeforeReward = balance.stampsBeforeReward ?? 10;
+                      return Math.max(0, stampsPerReward - stampsBeforeReward);
+                    })()}
+                  </span>
                 </div>
               )}
               {/* Non-stamp cards using currentNumberOfUses (visits, etc.) */}

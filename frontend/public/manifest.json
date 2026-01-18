@@ -1,6 +1,6 @@
 {
-  "short_name": "Devotio Scanner",
-  "name": "Devotio Scanner",
+  "short_name": "Scanner App",
+  "name": "Scanner App",
   "description": "Escáner de tarjetas de fidelidad Devotio Rewards",
   "icons": [
     {
@@ -19,6 +19,6 @@
   "start_url": "/",
   "display": "standalone",
   "theme_color": "#120627",
-  "background_color": "#ffffff",
+  "background_color": "#120627",
   "orientation": "portrait"
 }

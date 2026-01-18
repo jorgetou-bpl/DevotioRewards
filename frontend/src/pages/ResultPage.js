@@ -14,7 +14,10 @@ import {
   AlertCircle,
   Star,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Gift,
+  User,
+  CreditCard
 } from 'lucide-react';
 
 // Import extracted components

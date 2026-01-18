@@ -35,19 +35,13 @@ JWT_EXPIRATION_HOURS = 24
 app = FastAPI(title="Devotio Rewards Scanner API")
 api_router = APIRouter(prefix="/api")
 
-# Custom HTTPBearer that returns 401 instead of 403
-class CustomHTTPBearer(HTTPBearer):
-    async def __call__(self, request) -> HTTPAuthorizationCredentials:
-        from starlette.requests import Request
-        try:
-            credentials = await super().__call__(request)
-            return credentials
-        except HTTPException as e:
-            if e.status_code == 403:
-                raise HTTPException(status_code=401, detail="Not authenticated")
-            raise e
+# HTTPBearer with auto_error=False so we can return 401 instead of 403
+security = HTTPBearer(auto_error=False)
 
-security = CustomHTTPBearer()
+async def get_credentials(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    if credentials is None:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    return credentials
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)

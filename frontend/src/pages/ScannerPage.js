@@ -56,30 +56,37 @@ const ScannerPage = () => {
       const html5QrCode = new Html5Qrcode("barcode-scanner");
       html5QrCodeRef.current = html5QrCode;
 
+      // Get screen dimensions for responsive qrbox
+      const screenWidth = window.innerWidth;
+      const scannerWidth = Math.min(screenWidth - 32, 400); // Account for padding
+      const qrboxWidth = Math.floor(scannerWidth * 0.8);
+      const qrboxHeight = Math.floor(qrboxWidth * 0.5);
+
       const config = {
-        fps: 10,
-        qrbox: { width: 280, height: 140 },
-        aspectRatio: 1.777,
+        fps: 15, // Increased for better detection
+        qrbox: { width: qrboxWidth, height: qrboxHeight },
+        aspectRatio: 1.0, // Square aspect for better mobile compatibility
+        disableFlip: false, // Allow flipped codes
+        experimentalFeatures: {
+          useBarCodeDetectorIfSupported: true // Use native barcode API if available
+        },
         formatsToSupport: [
-          // QR Code
+          // QR Code - prioritize
           0,  // QR_CODE
-          // Barcode formats
-          1,  // AZTEC
-          2,  // CODABAR
-          3,  // CODE_39
-          4,  // CODE_93
+          // Most common barcode formats
           5,  // CODE_128
-          6,  // DATA_MATRIX
-          7,  // MAXICODE
-          8,  // ITF
           9,  // EAN_13
           10, // EAN_8
-          11, // PDF_417
-          12, // RSS_14
-          13, // RSS_EXPANDED
+          3,  // CODE_39
           14, // UPC_A
           15, // UPC_E
-          16, // UPC_EAN_EXTENSION
+          // Other formats
+          1,  // AZTEC
+          2,  // CODABAR
+          4,  // CODE_93
+          6,  // DATA_MATRIX
+          8,  // ITF
+          11, // PDF_417
         ]
       };
 

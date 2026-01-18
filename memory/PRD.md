@@ -16,18 +16,31 @@ Build a custom scanner app for "Devotio Rewards" SaaS whitelabel service connect
    - ✅ Phone: **MASKED** (***-***-****)
 
 2. **Data Display**:
-   - ✅ Card ID, Customer ID, loyalty status (stamps, points, rewards)
+   - ✅ Card ID, loyalty status (stamps, points, rewards)
+   - ✅ Card type shown in header (e.g., "Tarjeta de Sellos")
    - ✅ Multi-currency support (14 Latin American currencies)
 
 3. **Scanning**:
    - ✅ Barcode scanning support
    - ✅ QR code scanning support
    - ✅ Manual card ID entry
+   - ✅ No client search on scanner home (scanner-focused)
 
 4. **Transaction Flow**:
    - ✅ Add stamps/points, redeem rewards, apply discounts
-   - ✅ Confirmation modal with read-only purchase amount
+   - ✅ Simplified confirmation modal (card type, action, comment only)
    - ✅ **Mandatory comment field** with asterisk indicator
+   - ✅ Post-transaction: return to scanner home after "Listo"
+
+5. **Stamp Cards**:
+   - ✅ 10 stars displayed by default
+   - ✅ Stars fill progressively based on active stamps
+   - ✅ Show only "X sellos activos" (no confusing "2/12" format)
+   - ✅ Multi-reward support via dropdown/buttons in Canjear tab
+
+6. **Cashback Cards**:
+   - ✅ Show balance in currency (not percentage) in Agregar view
+   - ✅ Button renamed from "Agregar puntos" to "Agregar Cashback"
    - ✅ Transaction confirmation display
 
 5. **Language**:

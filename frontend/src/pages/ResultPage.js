@@ -303,6 +303,14 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, actionType, deta
   const [comment, setComment] = useState('');
   const [commentError, setCommentError] = useState(false);
   
+  // Reset comment when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setComment('');
+      setCommentError(false);
+    }
+  }, [isOpen]);
+  
   if (!isOpen) return null;
 
   const handleConfirm = () => {
@@ -326,13 +334,13 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, actionType, deta
           </button>
         </div>
         
-        {/* Customer ID */}
+        {/* Card Type Header */}
         <div className="bg-[#120627] text-white rounded-lg p-3 sm:p-4 mb-4">
-          <p className="text-xs font-semibold uppercase tracking-wider text-white/70 mb-1">ID de Cliente</p>
-          <p className="text-mono font-medium text-sm sm:text-base break-all">{card?.customer?.id || card?.customerId || '-'}</p>
+          <p className="text-xs font-semibold uppercase tracking-wider text-white/70 mb-1">Tipo de Tarjeta</p>
+          <p className="font-medium text-sm sm:text-base">{config?.name || 'Tarjeta'}</p>
         </div>
 
-        {/* Transaction Details - Read Only */}
+        {/* Simplified Transaction Details - Only essential info */}
         <div className="space-y-2 sm:space-y-3 mb-4">
           {details.map((detail, idx) => (
             <div key={idx} className="flex justify-between text-xs sm:text-sm border-b border-zinc-100 pb-2">
@@ -357,7 +365,6 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, actionType, deta
             className={`input-brutalist text-sm ${commentError ? 'border-red-500 focus:ring-red-500' : ''}`}
             data-testid="confirmation-comment"
           />
-          <p className="text-xs text-zinc-400 mt-1">Este comentario no será visible para el cliente</p>
           {commentError && (
             <p className="text-xs text-red-500 mt-1">* Campo obligatorio</p>
           )}

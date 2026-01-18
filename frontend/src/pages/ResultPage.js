@@ -60,7 +60,7 @@ const CARD_TYPE_CONFIG = {
     tabs: ['Agregar', 'Canjear'],
     requiresPurchaseAmount: true,
     actions: {
-      agregar: { label: 'Agregar Puntos', endpoint: 'add-point', amountLabel: 'Ingrese monto de compra' },
+      agregar: { label: 'Agregar Cashback', endpoint: 'add-point', amountLabel: 'Ingrese monto de compra' },
       canjear: { label: 'Canjear Saldo', endpoint: 'subtract-point' }
     }
   },
@@ -71,7 +71,7 @@ const CARD_TYPE_CONFIG = {
     tabs: ['Agregar', 'Canjear'],
     requiresPurchaseAmount: true,
     actions: {
-      agregar: { label: 'Agregar Puntos', endpoint: 'add-point', amountLabel: 'Ingrese monto de compra' },
+      agregar: { label: 'Agregar Cashback', endpoint: 'add-point', amountLabel: 'Ingrese monto de compra' },
       canjear: { label: 'Canjear Saldo', endpoint: 'subtract-point' }
     }
   },

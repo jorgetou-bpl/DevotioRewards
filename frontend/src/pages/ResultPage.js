@@ -232,51 +232,43 @@ const normalizeCardType = (type) => {
 };
 
 // Stamp visual component
-const StampGrid = ({ current, total }) => {
-  // For cards with many stamps (>12), show a simplified progress view
-  if (total > 12) {
-    const percentage = Math.min(100, Math.round((current / total) * 100));
-    return (
-      <div className="space-y-3" data-testid="stamp-grid">
-        <div className="flex justify-between items-end">
-          <div className="flex items-center gap-2">
-            <Star className="h-6 w-6 text-[#120627] fill-[#120627]" />
-            <span className="text-3xl font-mono font-bold text-[#120627]">{current}</span>
-            <span className="text-lg text-zinc-400">/ {total}</span>
-          </div>
-          <span className="text-sm text-zinc-500">{percentage}%</span>
-        </div>
-        <div className="w-full h-3 bg-zinc-200 rounded-full overflow-hidden">
-          <div 
-            className="h-full bg-gradient-to-r from-[#120627] to-[#F040A0] transition-all duration-500"
-            style={{ width: `${percentage}%` }}
-          />
-        </div>
-      </div>
-    );
-  }
+// Stamp Grid Component - Shows 10 stars by default
+// Stars fill progressively based on stamps towards next reward
+const StampGrid = ({ activeStamps, stampsUntilReward, totalStampsForReward = 10 }) => {
+  // Always show 10 stars
+  const displayTotal = 10;
+  // Calculate how many to fill based on stamps earned towards the current reward
+  // If stampsUntilReward is known, activeStamps = totalStampsForReward - stampsUntilReward
+  const fillCount = Math.min(activeStamps, displayTotal);
   
-  // For standard stamp cards (≤12 stamps), show individual stars
   const stamps = [];
-  for (let i = 0; i < total; i++) {
+  for (let i = 0; i < displayTotal; i++) {
     stamps.push(
       <div
         key={i}
         className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full border-2 flex items-center justify-center transition-all ${
-          i < current
+          i < fillCount
             ? 'bg-[#120627] border-transparent'
             : 'bg-white border-zinc-300'
         }`}
       >
         <Star
-          className={`h-4 w-4 sm:h-5 sm:w-5 ${i < current ? 'text-white fill-white' : 'text-zinc-300'}`}
+          className={`h-4 w-4 sm:h-5 sm:w-5 ${i < fillCount ? 'text-white fill-white' : 'text-zinc-300'}`}
         />
       </div>
     );
   }
+  
   return (
-    <div className="grid grid-cols-5 gap-2 sm:gap-3 justify-items-center" data-testid="stamp-grid">
-      {stamps}
+    <div className="space-y-3">
+      <div className="grid grid-cols-5 gap-2 sm:gap-3 justify-items-center" data-testid="stamp-grid">
+        {stamps}
+      </div>
+      {/* Show only active stamp count - no "2/12" format */}
+      <div className="text-center">
+        <span className="text-3xl sm:text-4xl font-mono font-bold text-[#120627]">{fillCount}</span>
+        <span className="text-lg text-zinc-400 ml-2">sellos activos</span>
+      </div>
     </div>
   );
 };

@@ -587,12 +587,6 @@ const ResultPage = () => {
         }));
       }
       
-      // Build success details
-      const successDetails = [
-        { label: 'ID de Cliente', value: card.customer?.id || card.customerId || '-' },
-        { label: 'ID de Tarjeta', value: card.id }
-      ];
-      
       setConfirmModal({ open: false, action: null, details: [], purchaseAmount: '' });
       setSuccessModal({ 
         open: true, 

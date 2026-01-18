@@ -75,6 +75,35 @@ All 8 Boomerangme card types now correctly recognized and rendered:
 
 ## What's Been Implemented
 
+### Session 8 - P2 Fix & Refactoring (January 18, 2026)
+1. **Fixed API Auth Status Codes (P2)**
+   - Unauthenticated requests now return 401 instead of 403
+   - Invalid tokens now return 401 instead of 403
+   - Implemented custom HTTPBearer with auto_error=False
+
+2. **Mandatory Comments Toggle Feature**
+   - Added setting "Comentarios obligatorios" in Settings page
+   - Toggle ON (default): Comment field shows asterisk, required validation
+   - Toggle OFF: Comment field is optional
+   - Persisted in backend settings
+
+3. **Gift Card Consistency**
+   - Both Agregar/Canjear tabs show same format with "Balance Total" label
+   - Clean currency input (no +/- buttons)
+
+4. **Currency Input UX Improvement**
+   - Replaced +/- counter with clean currency input for cashback/gift cards
+   - Better for entering large amounts (10000+)
+   - Kept +/- counter for stamps/rewards (small numbers)
+
+5. **Code Refactoring - ResultPage.js**
+   - Reduced from 1583 to 1199 lines (~25% reduction)
+   - Extracted CARD_TYPE_CONFIG to `/app/frontend/src/config/cardTypes.js`
+   - Extracted StampGrid to `/app/frontend/src/components/cards/StampGrid.jsx`
+   - Extracted ConfirmationModal to `/app/frontend/src/components/modals/ConfirmationModal.jsx`
+   - Extracted SuccessModal to `/app/frontend/src/components/modals/SuccessModal.jsx`
+   - Created index files for easy imports
+
 ### Session 7 - Cashback Currency Fix (January 18, 2026)
 1. **Fixed Cashback Card Balance Display (P0)**
    - The balance was incorrectly divided by 100 (showing ₡1 instead of ₡104)

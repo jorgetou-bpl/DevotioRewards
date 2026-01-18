@@ -376,7 +376,7 @@ async def register(user_data: UserCreate):
     user_doc = {"id": user_id, "email": user_data.email, "name": user_data.name, 
                 "password": hash_password(user_data.password), "created_at": datetime.now(timezone.utc).isoformat()}
     await db.users.insert_one(user_doc)
-    await db.settings.insert_one({"user_id": user_id, "vibration": False, "beep": False, "show_result": True, "copy_to_clipboard": True, "currency": "CRC"})
+    await db.settings.insert_one({"user_id": user_id, "vibration": False, "beep": False, "show_result": True, "copy_to_clipboard": True, "currency": "CRC", "require_comments": True})
     
     return {"token": create_token(user_id), "user": {"id": user_id, "email": user_data.email, "name": user_data.name}}
 

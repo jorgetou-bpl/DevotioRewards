@@ -927,13 +927,13 @@ const ResultPage = () => {
       
       return (
         <div className="space-y-4 sm:space-y-6">
-          {/* Cashback balance display - show current balance in currency instead of percentage */}
+          {/* Cashback balance display - show current balance in currency */}
           {(normalizedType === 'cashback' || normalizedType === 'cashback_card') && (
             <div className="text-center">
               <span className="text-4xl sm:text-5xl font-mono font-bold gradient-text">
                 {formatCurrency((balance.balance || 0) / 100)}
               </span>
-              <p className="text-xs sm:text-sm text-zinc-500 mt-1">Saldo actual</p>
+              <p className="text-xs sm:text-sm text-zinc-500 mt-1">Saldo disponible</p>
             </div>
           )}
           

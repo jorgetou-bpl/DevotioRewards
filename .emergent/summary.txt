@@ -1,198 +1,173 @@
 <analysis>**original_problem_statement:**
-The user wants to build a custom scanner app for a SaaS whitelabel service, Devotio Rewards. This app needs to connect to the Boomerangme API. The primary requirement is to prevent the display of Personally Identifiable Information (PII) like email and phone number when a loyalty card is scanned. The app should display non-sensitive data such as customer name, ID, transaction status, and loyalty points.
+The user wants to build a custom scanner web app for a SaaS whitelabel service, Devotio Rewards, which connects to the Boomerangme API. The primary requirement is to prevent the display of Personally Identifiable Information (PII) like email and phone number when a loyalty card is scanned.
 
 **PRODUCT REQUIREMENTS:**
--   **PII Masking:** Hide customer's email and phone number on the scan result screen. Customer's full name should be visible.
--   **Data Display:** Show Card ID, Customer ID, and loyalty status (stamps, points, rewards).
--   **Core Functionality:**
-    -   Scan loyalty card barcodes and QR codes.
-    -   Fetch card and customer details from the Boomerangme API.
-    -   Process loyalty actions for all 8 card types (Stamp, Cashback, Discount, Coupon, Gift, Multipass, Membership, Reward).
-    -   Display a transaction confirmation modal where the purchase amount is read-only and comments are mandatory.
-    -   Allow searching for customers by name, email, or phone.
--   **Branding:** The app must be branded for the client Devotio Rewards, using their logo, colors (), and  typography.
--   **Localization & Currency:** The app must be in Spanish and allow users to select their currency from a list in the settings.
--   **Mobile-First Design:** The web app must be fully responsive and optimized for mobile and tablet devices.
+-   **Core Functionality:** Scan loyalty cards, fetch data from the Boomerangme API, and process transactions for all 8 card types (Stamp, Cashback, Discount, Coupon, Gift, Multipass, Membership, Reward).
+-   **PII Masking:** Hide customer's email and phone number. Display full name.
+-   **Branding & UI (Updated):**
+    -   The app must be branded for Devotio Rewards with their logo, primary color (), and specific hover colors for buttons (pink  and yellow ).
+    -   The PWA (Progressive Web App) home screen icon should be the Devotio logo, and the app name should be Scanner App.
+-   **Localization & Currency:** The UI must be in Spanish, with user-selectable currency.
+-   **Mobile-First Design:** Fully responsive, with support for iOS safe areas (notch).
+-   **Specific UX/UI Refinements (Pre-P1 Requirements):**
+    -   **Scanner Page:** Remove the customer search feature to focus solely on scanning.
+    -   **Card Header:** Replace the Client ID with the card's type (e.g., Tarjeta de Sellos).
+    -   **Stamp Cards:** Redesign the UI to show 10 stars by default, display only the count of *active* stamps, and support a selection UI for multi-tier rewards.
+    -   **Cashback Cards:** Display the current balance in local currency instead of a percentage. Rename the Add Points button to Add Cashback.
+    -   **Confirmation & Success Modals:** Simplify to show only essential information.
+    -   **Post-Transaction Flow:** After a transaction, automatically return the user to the main scanner page.
+    -   **Comments:** The transaction comment field must be reset after every action.
+    -   **Login Page:** Remove placeholder text from input fields.
 
-**User's preferred language**: English (The user communicates in English, but has explicitly requested the application's UI and all text be in Spanish).
+**User's preferred language**: English (The user communicates in English, but the application's UI and all displayed text must be in Spanish).
 
 **what currently exists?**
-A full-stack application with a React frontend and a FastAPI backend. The application is fully branded for Devotio Rewards, translated into Spanish, and is mobile-responsive. It's connected to the Boomerangme UAT API.
+A full-stack application with a React frontend and a FastAPI backend. The app is fully branded for Devotio Rewards, with a Spanish UI, and is mobile-responsive. All 8 Boomerangme card types have been implemented and debugged.
 
-Functionality for almost all card types (Stamp, Cashback, Discount, Coupon, Gift, Membership, Reward) has been fixed and verified by the user. The agent has systematically debugged and corrected the API endpoints and frontend logic for each card type as the user reported issues. The app now handles different balance structures, API endpoints (, , , etc.), and UI requirements for each type. The customer search functionality has also been improved to handle exact matches and general queries.
+A major UI/UX overhaul was just completed based on the user's Pre-P1 requirements. This includes a simplified scanner page, redesigned stamp and cashback card views, streamlined confirmation modals, an automatic post-transaction return-to-home flow, and updated PWA branding (name and icon). The button hover colors and iOS safe-area display issues have also been fixed.
 
 **Last working item**:
-- **Last item agent was working:** The agent was investigating a bug with the Multipass card. The user reported an Irrelevant card type error. The agent discovered that Boomerangme's API refers to this card type as subscription, not multipass. The agent confirmed that the correct API endpoints (, ) work for the subscription card type but has not yet implemented the frontend fix to map the API response to the correct UI.
+- **Last item agent was working:** The agent was fixing the UI for the Cashback card. After ensuring the Agregar (Add) tab correctly showed the balance in currency, the agent noticed that the Canjear (Redeem) tab was showing the balance as a plain number without the currency symbol (e.g., 104 instead of ₡104). The agent was about to fix this formatting inconsistency.
 - **Status:** IN PROGRESS
 - **Agent Testing Done:** N
-- **Which testing method agent to use?** both. The backend logic is likely correct, but the agent needs to implement the frontend change and then test the end-to-end flow. A screenshot test after manually scanning a multipass/subscription card would be sufficient.
+- **Which testing method agent to use?** Frontend testing agent. A screenshot of the Canjear tab on the Cashback card after the fix will be sufficient to verify the currency symbol is present.
 - **User Testing Done:** N
 
 **All Pending/In progress Issue list**:
-- **Issue 1:** Fix Multipass Card Type Handling (P0)
-- **Issue 2:** Discount Card Balance UI Not Updating in Real-Time (P1)
-- **Issue 3:** Customer Search Always Returns 4 Cards (P1 - Needs User Verification)
-- **Issue 4:** API Authentication Returns Incorrect Status Codes (P2)
+- **Issue 1:** Inconsistent Currency Display on Cashback Card (P0)
+- **Issue 2:** Customer Search Needs Verification (P1)
+- **Issue 3:** Incorrect API Authentication Status Codes (P2)
 
 **Issues Detail:**
 - **Issue 1:**
-    - **Description**: When scanning a Multipass card, the user receives a  error. The agent's investigation revealed that the Boomerangme API identifies this card type as , not . The frontend is not configured to handle the  type.
-    - **Attempted fixes**: The agent identified the correct card type name from the API and verified that the  and  endpoints work correctly for this card type via direct API calls.
+    - **Description**: On the Cashback card's Canjear (Redeem) tab, the available balance is displayed as a number without the configured currency symbol, which is inconsistent with the Agregar (Add) tab and other parts of the app.
+    - **Attempted fixes**: The agent identified the issue via screenshot but has not yet implemented a code change.
     - **Next debug checklist**:
-        1.  **Frontend ():**
-            -   In the  object, add an entry for the  card type, aliasing it to the Multipase UI. This configuration should use the  and  actions.
-            -   Ensure the balance display logic for this card type correctly reads the available visits.
-        2.  **Testing:** Manually scan a multipass/subscription card and verify the UI displays correctly and actions (add/redeem visit) work without errors.
-    - **Why fix this issue and what will be achieved with the fix?** This is the last remaining card type that is completely broken. Fixing it will complete the core functionality of the app, making it fully testable for the user.
+        1.  In , locate the rendering logic for the Canjear tab for cashback cards.
+        2.  Find where the  is displayed.
+        3.  Wrap the balance value with the  helper function, which is already used elsewhere in the component.
+    - **Why fix this issue and what will be achieved with the fix?** To ensure a consistent and clear user experience by displaying monetary values in the correct format across the entire application.
     - **Status:** IN PROGRESS
     - **Is recurring issue?** N
-    - **Should Test frontend/backend/both after fix?** both
+    - **Should Test frontend/backend/both after fix?** Frontend
     - **Blocked on other issue:** None
 
 - **Issue 2:**
-    - **Description**: The user reported that on the Discount card, the Total acumulado (accumulated amount) does not update on the UI in real-time after adding points, although the backend confirms the value is updated.
-    - **Attempted fixes**: The agent confirmed via API calls that the  value is correctly updated on the backend. They also reviewed the frontend state update logic in  which appeared correct. The issue seems to be a UI refresh problem.
-    - **Next debug checklist**:
-        1.  **Frontend ():**
-            -   Trace the state update flow in the  function. Ensure the  call successfully merges the updated  object from the API response into the component's state, triggering a re-render.
-            -   Add  statements before and after the  call to verify the old and new card state.
-    - **Why fix this issue and what will be achieved with the fix?** It provides incorrect feedback to the user, making them think the action failed. Fixing it improves user confidence and usability.
-    - **Status:** NOT STARTED
-    - **Is recurring issue?** N
-    - **Should Test frontend/backend/both after fix?** Frontend
-    - **Blocked on other issue:** None
-
-- **Issue 3:**
-    - **Description**: The user reported that the customer search always returned the same 4 results. The agent found that the backend was not using the  or  query parameters and that the Boomerang API does not support a general text search, only exact matches on  and .
-    - **Attempted fixes**: The agent updated the backend () to pass  and  parameters to the Boomerang API. For general queries, the agent implemented a client-side filter that searches all customers returned from the API.
-    - **Next debug checklist**: User needs to verify if the current search behavior (exact match for phone/email, broader client-side search for general text) meets their needs. The UI could be improved to clarify this behavior.
-    - **Why fix this issue and what will be achieved with the fix?** Makes the customer search feature usable as intended.
+    - **Description**: The user initially reported that the customer search always returned the same 4 results. The agent implemented a fix to correctly pass search parameters to the backend and filter results on the client side. However, the user then prioritized a major UI overhaul, and this fix was never verified by them. The search UI has since been removed from the main scanner page but may still exist elsewhere or be re-introduced later.
     - **Status:** USER VERIFICATION PENDING
     - **Is recurring issue?** N
-    - **Should Test frontend/backend/both after fix?** Frontend
-    - **Blocked on other issue:** None
 
-- **Issue 4:**
-    - **Description**: Some authentication endpoints return  instead of the more appropriate  on failure. This is a lingering issue from a previous session.
-    - **Attempted fixes**: None in this session.
-    - **Next debug checklist**: Review auth logic in . Ensure failed auth attempts raise an  with .
-    - **Why fix this issue and what will be achieved with the fix?** Using correct HTTP status codes is an API design best practice and helps frontend clients handle errors reliably.
+- **Issue 3:**
+    - **Description**: Some backend authentication endpoints return a  status code on failure instead of the more semantically correct .
     - **Status:** NOT STARTED
     - **Is recurring issue?** Y
-    - **Should Test frontend/backend/both after fix?** Backend
-    - **Blocked on other issue:** None
 
 **In progress Task List**:
-- None, all work is captured in the pending issues.
+- None.
 
 **Upcoming and Future Tasks**
 - **Upcoming Tasks:**
-    - **P1: Final User Acceptance Testing (UAT):** Assist the user in a final, comprehensive test of all 8 card types once the Multipass card is fixed.
+    - **P1: Final User Acceptance Testing (UAT):** A full review of all recent UI/UX changes across all 8 card types.
 - **Future Tasks:**
-    - **P2: Implement Multi-Tenant Architecture:** Build an admin panel for managing multiple clients.
-    - **P2: Build Analytics Dashboard:** Create a dashboard for viewing usage statistics.
-    - **P2: Integrate Webhooks:** Set up listeners for real-time events from Boomerang.
-    - **P2: App Store Publishing:** Assist with packaging the web app for mobile app stores.
+    - **P2: Multi-Tenant Admin Panel:** For managing multiple clients.
+    - **P2: Analytics Dashboard:** For viewing usage statistics.
+    - **P2: Webhook Integration:** For real-time events from Boomerangme.
+    - **P2: App Store Publishing:** Package the web app for mobile app stores.
 
 **Completed work in this session**
-- **P0 Bug Fixes (All Card Types):** Systematically debugged and fixed API endpoint usage and frontend rendering for multiple card types.
-    - **Coupon Card:** Fixed redemption by changing endpoint from  to .
-    - **Gift Card:** Fixed by mapping API type  to Gift Card UI and using  for redemption. Enabled keyboard input for amounts.
-    - **Reward Card:** Fixed balance updates by switching from  to . Fixed redemption by implementing a UI for selecting available reward tiers and passing the tier ID to the  endpoint.
-    - **Cashback Card:** Fixed 404 error by changing redemption endpoint from  to  and corrected balance display.
-    - **Stamp Card:** Fixed redemption error by changing endpoint to . Improved stamp display to show a progress bar for cards with >12 total stamps.
-    - **Membership Card:** Fixed balance display by reading from the correct API field (). Clarified that the 8-visit limit is expected behavior from the card's configuration.
-
-**Earlier issues found/mentioned but not fixed**
-- **Issue 1: API Authentication Status Codes:** (Now listed in All Pending/In progress Issue list as Issue 4).
+- **Multipass Card Functionality (Fixed):** Fully implemented the complex logic for the Multipass card, including its two sub-balances (Visits and Points) and the counter-intuitive API endpoints for adding/redeeming them ( to sell,  to use).
+- **Major UI/UX Overhaul (Implemented):**
+    - **Scanner Page Simplification:** Removed the customer search feature ().
+    - **Simplified Modals & Flow:** Redesigned confirmation/success modals and implemented an auto-return to the scanner page after transactions ().
+    - **Card Header Redesign:** Replaced Customer ID with the card type name ().
+    - **Stamp Card Redesign:** Updated the UI to show 10 stars and a clear active stamps count ().
+    - **Cashback Card Redesign:** Updated UI to show currency balance and changed button text ().
+- **PWA and Branding:**
+    - **App Name & Icon:** Set the PWA name to Scanner App and updated the icon to the user-provided Devotio Rewards logo (, ).
+    - **Login Page:** Removed placeholder text from inputs ().
+- **General Bug Fixes & Polish:**
+    - **Discount Card Calculation:** Fixed the logic to correctly add the calculated discount percentage to the accumulated total ().
+    - **Button Hover States:** Updated all buttons to use the correct brand colors on hover (, , ).
+    - **iOS Safe Area:** Added padding to headers to prevent content from being obscured by the device notch ().
+    - **React & CSS Fixes:** Resolved a conditional  hook error and a CSS syntax error.
 
 **Known issue recurrence from previous fork**
-- N/A
+- **API Authentication Status Codes:** The issue of endpoints returning  instead of  was present in the previous session and remains unresolved.
+- **Recurrence count:** 1
+- **Status:** NOT STARTED
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
--   **Frontend:** React, React Router, Tailwind CSS, Shadcn UI, , .
--   **Backend:** FastAPI, Pydantic,  for JWT, .
--   **Database:** MongoDB (for user storage).
--   **Architecture:** Backend acts as a PII-masking proxy to the Boomerang API.
+-   **Frontend:** React, React Router, Tailwind CSS, Shadcn UI, , 
+-   **Backend:** FastAPI, Pydantic, 
+-   **PWA:** , viewport meta tags, and CSS safe-area insets for mobile home screen app experience.
+-   **API:** Boomerangme API
 
 **key DB schema**
--   **users:** 
-
-**changes in tech stack**
-- None.
+-   **users:**  (Unchanged)
 
 **All files of reference**
--   : The primary backend file. Was modified to add multiple new API endpoints (, , , etc.) and fix the customer search logic.
--   : The main frontend file. Heavily modified to handle the unique UI, balance logic, and API actions for 7 of the 8 card types. This includes dynamic rendering, keyboard input for amounts, and reward tier selection.
--   : Updated to reflect the completed work.
+-   : Heavily modified to implement the major UI/UX overhaul for all card types, modals, and headers.
+-   : Modified to remove the customer search UI.
+-   : Modified to remove input placeholders.
+-   : Modified for new button hover styles and iOS safe-area padding.
+-   : Newly created to configure the PWA name, icon, and appearance.
+-   : The user-provided logo file for the PWA icon and in-app branding.
+-   : Modified to link the manifest and PWA icons.
+-   : Modified to add a  endpoint for Multipass cards and update API success messages.
 
 **Areas that need refactoring**:
-- : This file has become extremely large and complex (over 800 lines) with nested conditional logic for each card type. It should be broken down into smaller components, one for each card type's specific display and action logic.
-- : Still contains all API logic in one file. Action endpoints for different card types could be separated into different modules/routers for better organization.
+-   : This component has grown to over 1500 lines and contains complex conditional logic for all 8 card types. It is now critically difficult to maintain and should be broken down into smaller, card-specific components.
+-   : Remains a single monolithic file containing all API logic. Could be split into routers for better organization.
 
 **key api endpoints**
--   **Actions (New/Fixed):**
-    -    (Coupon)
-    -    (Reward)
-    -    (Reward Tier)
-    -    (Gift/Cashback)
-    -    (Stamp)
-    -    (Multipass/Membership)
-    -    (Multipass/Membership)
--   **Data:**
-    -    (Fixed to use  and  filters)
+-   **New Endpoint:**
+    -   : For redeeming bonus points on Multipass cards.
+-   **Behavior Corrected:**
+    -   : Now correctly mapped to *adding/selling* visits for a Multipass card.
+    -   : Now correctly mapped to *using/redeeming* a visit from a Multipass card.
 
 **Critical Info for New Agent**
--   **Card Type Mapping is Key:** The Boomerangme API uses different internal names for card types than what a user might expect (e.g., certificate for Gift Cards, subscription for Multipass). Always verify the  field from a direct API call when debugging a card.
--   **Fix One Card at a Time:** The current successful strategy is to isolate and fix one card type completely based on user feedback before moving to the next.
--   **The Next Blocker is Multipass:** The immediate task is to fix the Multipass card by mapping the  API type to the Multipass UI in .
+-   **Multipass API is Counter-Intuitive:** The Boomerangme API uses  to increase a card's available visits and  to decrease them (i.e., when a customer uses a visit). The logic in  and  now reflects this correctly.
+-   **PWA Caching:** Advise the user that they may need to clear their browser cache or remove and re-add the app to their home screen to see the latest PWA name and icon changes.
+-   ** Refactor Needed:** This file is extremely large and complex. Be cautious when making changes and consider proposing a refactor to break it into smaller components if the user agrees.
 
 **documents and test reports created in this job**
 -   
 -   
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  **User (Request):** Multipass card is not working and shows an Irrelevant card type error. Provided a link to the Boomerangme documentation. (IN PROGRESS)
-2.  **User (Feedback):** Discount card balance doesn't seem to update on the UI. Also, customer search always returns 4 cards. (Partially Addressed)
-3.  **User (Feedback):** Stamp card stars should display active stamps towards the next reward, not lifetime stamps. (Completed)
-4.  **User (Feedback):** The membership card visit balance doesn't update on the UI after redeeming a visit. (Completed)
-5.  **User (Feedback):** Membership card add/redeem works, but seems to have a limit of 8 visits and the balance shows 0. (Completed/Clarified)
-6.  **User (Feedback):** Stamp card redemption is not possible and gives an error. (Completed)
-7.  **User (Feedback):** Cashback card redemption gives a 404 error. (Completed)
-8.  **User (Feedback):** Reward card redemption gives a Reward not found error. (Completed)
-9.  **User (Feedback):** Adding rewards to a reward card succeeds, but the balance doesn't change. (Completed)
-10. **User (Feedback):** Gift card shows the wrong UI (stamp card) and gives an Irrelevant card type error. (Completed)
+1.  **Request:** Fix Cashback label saldo total vs total balance and ensure currency is displayed. (IN PROGRESS)
+2.  **Feedback:** The PWA icon is incorrect, please use the attached logo. (COMPLETED)
+3.  **Feedback:** The shared link doesn't have the logo, and the app name should be Scanner App. (COMPLETED)
+4.  **Request:** A comprehensive list of 8 final UI/UX requirements to be implemented before P1. (COMPLETED)
+5.  **Confirmation:** Provided direction on how to implement the multi-reward stamp card UI. (COMPLETED)
+6.  **Request:** Remove placeholder text from the login page inputs. (COMPLETED)
+7.  **Query:** What's next on the backlog? (ADDRESSED)
+8.  **Feedback:** CSS syntax error is showing in the preview. (COMPLETED)
+9.  **Feedback:** Button color changes should be on , not . Also, header elements are not clickable on iPhone (safe area issue). (COMPLETED)
+10. **Feedback:** The button colors are not updated in the preview. (COMPLETED)
 
 **Project Health Check:**
--   **Broken:** The Multipass card functionality is broken. The discount card has a minor UI refresh bug.
+-   **Broken:** The Cashback card's Canjear (Redeem) view has incorrect currency formatting (missing the symbol).
 -   **Mocked:** Only fallback logic for  cards is mocked.
 
 **3rd Party Integrations**
--   **Boomerangme API:** Live integration using an API key ( header) via .
+-   **Boomerangme API:** Live integration via .
 
 **Testing status**
--   **Testing agent used after significant changes:** YES, used early on to verify backend endpoints.
+-   **Testing agent used after significant changes:** NO. Agent performed extensive manual testing via screenshots.
 -   **Troubleshoot agent used after agent stuck in loop:** NO
--   **Test files created:** []
--   **Known regressions:** None. The agent has been progressively fixing issues without introducing new regressions.
+-   **Test files created:** None.
+-   **Known regressions:** None.
 
 **Credentials to test flow:**
 -   **Login:**  / 
--   **UAT API Key:**  (in )
+-   **UAT API Key:** Available in 
 -   **Test Cards:**
-    -   **Multipass/Subscription:** 
-    -   **Discount:** 
-    -   **Coupon:** 
-    -   **Gift/Certificate:** 
-    -   **Reward:** 
+    -   **Cashback:**  (for fixing the currency display issue)
     -   **Stamp:** 
-    -   **Membership:** 
-    -   **Cashback:** 
-
-**What agent forgot to execute**
-- The agent has not yet implemented the fix for the Multipass card, which was the last reported issue.
-- The agent has not resolved the long-standing  vs.  status code issue in the authentication endpoints.
-- The agent has not addressed the potential UI refresh issue on the discount card.</analysis>
+    -   **Multipass/Subscription:** 
+    -   **Discount:** </analysis>

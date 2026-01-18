@@ -9,7 +9,6 @@ import axios from 'axios';
 import { Html5Qrcode } from 'html5-qrcode';
 import { 
   Scan, 
-  Search, 
   Menu, 
   X, 
   Home, 

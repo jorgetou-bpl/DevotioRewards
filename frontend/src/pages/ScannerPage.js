@@ -267,19 +267,8 @@ const ScannerPage = () => {
             )}
           </div>
 
-          {/* Manual Input / Search */}
+          {/* Manual Input Only - Search removed */}
           <form onSubmit={handleManualSubmit} className="space-y-3 sm:space-y-4">
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full btn-secondary text-sm sm:text-base"
-              onClick={() => navigate('/search')}
-              data-testid="search-customers-button"
-            >
-              <Search className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
-              Buscar clientes
-            </Button>
-
             <div className="relative">
               <Input
                 type="text"

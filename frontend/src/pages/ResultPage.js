@@ -1232,46 +1232,71 @@ const ResultPage = () => {
           </div>
         )}
         
-        <div className="card-brutalist">
-          <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500 block mb-2">
-            Cantidad
-          </label>
-          <div className="flex items-center gap-3">
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => setActionAmount(Math.max(1, actionAmount - 1))}
-              className="h-12 w-12 sm:h-14 sm:w-14 border-2 rounded-lg bg-white hover:bg-zinc-50 flex-shrink-0"
-              style={{ borderColor: '#120627', color: '#120627' }}
-            >
-              <Minus className="h-5 w-5 sm:h-6 sm:w-6" />
-            </Button>
-            <Input
-              type="number"
-              value={actionAmount}
-              onChange={(e) => {
-                const val = parseInt(e.target.value) || 1;
-                setActionAmount(Math.max(1, val));
-              }}
-              min="1"
-              className="input-brutalist text-2xl sm:text-3xl font-mono h-12 sm:h-14 text-center flex-1"
-              data-testid="default-amount-input"
-            />
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => setActionAmount(actionAmount + 1)}
-              className="h-12 w-12 sm:h-14 sm:w-14 border-2 rounded-lg bg-white hover:bg-zinc-50 flex-shrink-0"
-              style={{ borderColor: '#120627', color: '#120627' }}
-            >
-              <Plus className="h-5 w-5 sm:h-6 sm:w-6" />
-            </Button>
+        {/* Gift card - currency input style (no +/- buttons) */}
+        {(normalizedType === 'certificate' || normalizedType === 'gift' || normalizedType === 'gift_card') ? (
+          <div className="card-brutalist">
+            <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500 block mb-2">
+              Monto a agregar ({currencyInfo.code})
+            </label>
+            <div className="relative">
+              <span className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-zinc-400 text-lg sm:text-xl">{currencyInfo.symbol}</span>
+              <Input
+                type="number"
+                value={actionAmount || ''}
+                onChange={(e) => {
+                  const val = e.target.value === '' ? '' : parseInt(e.target.value) || 0;
+                  setActionAmount(val === '' ? '' : Math.max(0, val));
+                }}
+                placeholder="0"
+                min="0"
+                className="input-brutalist pl-10 sm:pl-12 text-2xl sm:text-3xl font-mono h-14 sm:h-16 text-center"
+                data-testid="default-amount-input"
+              />
+            </div>
           </div>
-        </div>
+        ) : (
+          // Counter style for stamps, rewards, etc.
+          <div className="card-brutalist">
+            <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500 block mb-2">
+              Cantidad
+            </label>
+            <div className="flex items-center gap-3">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setActionAmount(Math.max(1, actionAmount - 1))}
+                className="h-12 w-12 sm:h-14 sm:w-14 border-2 rounded-lg bg-white hover:bg-zinc-50 flex-shrink-0"
+                style={{ borderColor: '#120627', color: '#120627' }}
+              >
+                <Minus className="h-5 w-5 sm:h-6 sm:w-6" />
+              </Button>
+              <Input
+                type="number"
+                value={actionAmount}
+                onChange={(e) => {
+                  const val = parseInt(e.target.value) || 1;
+                  setActionAmount(Math.max(1, val));
+                }}
+                min="1"
+                className="input-brutalist text-2xl sm:text-3xl font-mono h-12 sm:h-14 text-center flex-1"
+                data-testid="default-amount-input"
+              />
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setActionAmount(actionAmount + 1)}
+                className="h-12 w-12 sm:h-14 sm:w-14 border-2 rounded-lg bg-white hover:bg-zinc-50 flex-shrink-0"
+                style={{ borderColor: '#120627', color: '#120627' }}
+              >
+                <Plus className="h-5 w-5 sm:h-6 sm:w-6" />
+              </Button>
+            </div>
+          </div>
+        )}
         
         <Button
           onClick={() => openConfirmation(activeTab)}
-          disabled={loading || actionAmount < 1}
+          disabled={loading || !actionAmount || actionAmount < 1}
           className="w-full h-12 sm:h-14 text-base sm:text-lg btn-primary"
         >
           {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : actionConfig.label}

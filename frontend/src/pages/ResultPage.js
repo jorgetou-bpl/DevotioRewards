@@ -1223,17 +1223,6 @@ const ResultPage = () => {
           </h2>
         </div>
 
-        {/* Card Type Badge */}
-        <div className="flex justify-center mb-4 sm:mb-6">
-          <div 
-            className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full"
-            style={{ backgroundColor: `${config.color}20`, color: config.color }}
-          >
-            <CardIcon className="h-4 w-4 sm:h-5 sm:w-5" />
-            <span className="font-semibold text-xs sm:text-sm uppercase tracking-wider">{config.name}</span>
-          </div>
-        </div>
-
         {/* Tabs */}
         <div className="flex border rounded-xl mb-4 sm:mb-6 overflow-hidden" style={{ borderColor: '#120627' }}>
           {config.tabs.map((tab) => (

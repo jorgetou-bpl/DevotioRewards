@@ -92,15 +92,15 @@ const LoginPage = () => {
               <Label htmlFor="email" className="text-xs sm:text-sm font-medium uppercase tracking-wider">
                 Correo Electrónico
               </Label>
-              <div className="relative">
-                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-400 pointer-events-none" />
+              <div className="relative flex items-center">
+                <Mail className="absolute left-4 h-5 w-5 text-zinc-400 pointer-events-none" />
                 <Input
                   id="email"
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder=""
-                  className="input-brutalist pl-12 text-sm sm:text-base"
+                  className="input-brutalist pl-14 text-sm sm:text-base w-full"
                   required
                   data-testid="email-input"
                 />
@@ -111,22 +111,22 @@ const LoginPage = () => {
               <Label htmlFor="password" className="text-xs sm:text-sm font-medium uppercase tracking-wider">
                 Contraseña
               </Label>
-              <div className="relative">
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-400 pointer-events-none" />
+              <div className="relative flex items-center">
+                <Lock className="absolute left-4 h-5 w-5 text-zinc-400 pointer-events-none" />
                 <Input
                   id="password"
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder=""
-                  className="input-brutalist pl-12 pr-12 text-sm sm:text-base"
+                  className="input-brutalist pl-14 pr-14 text-sm sm:text-base w-full"
                   required
                   data-testid="password-input"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 transition-colors"
+                  className="absolute right-4 text-zinc-400 hover:text-zinc-600 transition-colors"
                   data-testid="toggle-password"
                 >
                   {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}

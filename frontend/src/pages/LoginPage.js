@@ -93,14 +93,14 @@ const LoginPage = () => {
                 Correo Electrónico
               </Label>
               <div className="relative">
-                <Mail className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
+                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-400 pointer-events-none" />
                 <Input
                   id="email"
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder=""
-                  className="input-brutalist pl-10 sm:pl-12 text-sm sm:text-base"
+                  className="input-brutalist pl-12 text-sm sm:text-base"
                   required
                   data-testid="email-input"
                 />
@@ -112,24 +112,24 @@ const LoginPage = () => {
                 Contraseña
               </Label>
               <div className="relative">
-                <Lock className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
+                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-400 pointer-events-none" />
                 <Input
                   id="password"
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder=""
-                  className="input-brutalist pl-10 sm:pl-12 pr-10 sm:pr-12 text-sm sm:text-base"
+                  className="input-brutalist pl-12 pr-12 text-sm sm:text-base"
                   required
                   data-testid="password-input"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 transition-colors"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 transition-colors"
                   data-testid="toggle-password"
                 >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                 </button>
               </div>
             </div>

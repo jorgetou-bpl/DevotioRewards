@@ -249,22 +249,27 @@ const ResultPage = () => {
     // For stamp cards, show stamp grid
     if ((normalizedType === 'stamp') && activeTab === 'Agregar') {
       // Calculate active stamps towards next reward
-      // numberStampsTotal = total stamps needed for a reward (e.g., 10)
-      // stampsBeforeReward = how many MORE stamps needed until next reward
-      // activeStamps = numberStampsTotal - stampsBeforeReward
-      // Example: If card needs 10 stamps and stampsBeforeReward = 10, activeStamps = 0 (new card)
-      // Example: If stampsBeforeReward = 2, activeStamps = 8 (8 stamps collected)
-      const numberStampsTotal = balance.numberStampsTotal || 10;
-      const stampsBeforeReward = balance.stampsBeforeReward ?? numberStampsTotal;
-      const activeStamps = Math.max(0, numberStampsTotal - stampsBeforeReward);
+      // stampsBeforeReward = how many MORE stamps needed until next reward (from API)
+      // rewardThreshold = stamps needed per reward (default 10, but could come from card config)
+      // activeStamps = rewardThreshold - stampsBeforeReward
+      // Example: If threshold is 10 and stampsBeforeReward = 10, activeStamps = 0 (new card/just redeemed)
+      // Example: If stampsBeforeReward = 2, activeStamps = 8 (8 stamps collected towards next reward)
+      
+      // The reward threshold - default is 10 but check card's available reward tiers if present
+      const rewardThreshold = (card.availableRewardTiers && card.availableRewardTiers.length > 0 
+        ? card.availableRewardTiers[0].threshold 
+        : null) || 10;
+      
+      const stampsBeforeReward = balance.stampsBeforeReward ?? rewardThreshold;
+      const activeStamps = Math.max(0, rewardThreshold - stampsBeforeReward);
       
       return (
         <div className="space-y-4 sm:space-y-6">
           <StampGrid 
             activeStamps={activeStamps} 
             stampsUntilReward={stampsBeforeReward}
-            totalStampsForReward={numberStampsTotal}
-            numberStampsTotal={numberStampsTotal}
+            totalStampsForReward={rewardThreshold}
+            numberStampsTotal={rewardThreshold}
           />
           
           <div className="text-center">

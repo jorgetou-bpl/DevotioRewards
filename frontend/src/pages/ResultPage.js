@@ -144,6 +144,7 @@ const ResultPage = () => {
   const handleAction = async (comment = '', confirmPurchaseAmount = '') => {
     const action = confirmModal.action;
     const rewardTier = confirmModal.rewardTier; // Get the reward tier if present
+    const normalizedType = cardType ? cardType.replace('_card', '') : '';
     setLoading(true);
     
     try {
@@ -173,17 +174,23 @@ const ResultPage = () => {
         endpoint = `/cards/${card.id}/${actionConfig.endpoint}`;
       }
       
-      // Check if this is a multipass action (no purchase amount needed)
-      const isMultipassAction = ['agregarvisitas', 'canjearvisitas', 'agregarpuntos', 'canjearpuntos'].includes(actionKey);
+      // Check if this is a multipass bonus points action (no purchase amount needed for points)
+      const isMultipassPointsAction = ['agregarpuntos', 'canjearpuntos'].includes(actionKey);
       
-      // Get the purchase amount from confirmation or state
+      // Get the purchase amount from confirmation modal or state
+      // Include purchaseSum for: stamp cards, discount/cashback cards, coupon cards, multipass visits
+      const shouldIncludePurchaseSum = config.requiresPurchaseAmount || 
+                                        normalizedType === 'stamp' || 
+                                        normalizedType === 'coupon' ||
+                                        ['agregarvisitas', 'canjearvisitas'].includes(actionKey);
+      
       const finalPurchaseAmount = confirmPurchaseAmount ? parseFloat(confirmPurchaseAmount) : 
-                     (config.requiresPurchaseAmount ? parseFloat(purchaseAmount) || 0 : undefined);
+                                  (shouldIncludePurchaseSum ? parseFloat(purchaseAmount) || undefined : undefined);
       
       // Build payload - handle reward tier ID for receive-reward endpoint
       let payload = {
         comment: comment || undefined,
-        purchaseSum: isMultipassAction ? undefined : finalPurchaseAmount
+        purchaseSum: isMultipassPointsAction ? undefined : finalPurchaseAmount
       };
       
       // For receive-reward endpoint, pass the tier ID as amount

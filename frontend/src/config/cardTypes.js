@@ -159,8 +159,20 @@ export const CARD_TYPE_CONFIG = {
     icon: User,
     color: '#8A2BE2',
     tabs: ['Agregar', 'Canjear'],
+    requiresPurchaseAmount: true,
     actions: {
-      agregar: { label: 'Agregar Visitas', endpoint: 'add-visit' },
+      agregar: { label: 'Agregar Visitas', endpoint: 'add-visit', amountLabel: 'Monto de compra' },
+      canjear: { label: 'Canjear Visita', endpoint: 'subtract-visit' }
+    }
+  },
+  membership_card: {
+    name: 'Membresía',
+    icon: User,
+    color: '#8A2BE2',
+    tabs: ['Agregar', 'Canjear'],
+    requiresPurchaseAmount: true,
+    actions: {
+      agregar: { label: 'Agregar Visitas', endpoint: 'add-visit', amountLabel: 'Monto de compra' },
       canjear: { label: 'Canjear Visita', endpoint: 'subtract-visit' }
     }
   },

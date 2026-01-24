@@ -152,28 +152,8 @@ const LoginPage = () => {
             </Button>
           </form>
 
-          <div className="mt-4 sm:mt-6 text-center">
-            <button
-              type="button"
-              onClick={() => setIsLogin(!isLogin)}
-              className="text-xs sm:text-sm text-zinc-500 hover:text-[#120627] transition-colors underline"
-              data-testid="toggle-mode"
-            >
-              {isLogin ? '¿No tienes cuenta? Regístrate' : '¿Ya tienes cuenta? Inicia sesión'}
-            </button>
-          </div>
-
-          {isLogin && (
-            <div className="mt-3 sm:mt-4 text-center">
-              <button
-                type="button"
-                className="text-xs sm:text-sm font-semibold text-[#120627] hover:underline"
-                data-testid="forgot-password"
-              >
-                ¿Olvidaste tu contraseña?
-              </button>
-            </div>
-          )}
+{/* Register and Forgot Password options removed per client request - 
+             Users are managed directly in Boomerangme admin panel */}
         </div>
 
         {/* Footer */}

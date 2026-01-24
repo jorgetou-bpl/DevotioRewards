@@ -209,9 +209,7 @@ const ScannerPage = () => {
           <p className="text-zinc-500 text-xs sm:text-sm masked-data" data-testid="user-email">
             {user?.email || '***@***.***'}
           </p>
-          <p className="text-zinc-400 text-xs sm:text-sm mt-2 px-4">
-            Presiona el botón &quot;Escanear&quot; para escanear un código de barras o QR
-          </p>
+{/* Instruction text removed per client request */}
         </div>
 
         {/* Scanner Viewport */}
@@ -267,7 +265,7 @@ const ScannerPage = () => {
                   data-testid="scan-button"
                 >
                   <Scan className="mr-2 h-5 w-5 sm:h-6 sm:w-6" />
-                  Escanear
+                  Click aquí para Escanear Tarjeta
                 </Button>
               </div>
             )}

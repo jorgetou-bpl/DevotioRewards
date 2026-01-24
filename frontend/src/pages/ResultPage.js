@@ -943,41 +943,58 @@ const ResultPage = () => {
 
     // For coupon use
     if (activeTab === 'Usar') {
+      // Check if coupon is already redeemed
+      const isCouponRedeemed = card.couponRedeemed === true;
+      
       return (
         <div className="space-y-4 sm:space-y-6">
           <div className="text-center p-4 sm:p-6 bg-zinc-50 rounded-xl">
-            <div className="status-badge success mx-auto mb-4">
-              <Check className="h-4 w-4" />
-              <span>Activo</span>
-            </div>
-            <p className="text-xs sm:text-sm text-zinc-500">Este cupón está listo para usar</p>
+            {isCouponRedeemed ? (
+              <>
+                <div className="status-badge mx-auto mb-4" style={{ backgroundColor: '#6B7280', color: 'white' }}>
+                  <X className="h-4 w-4" />
+                  <span>Ya Canjeado</span>
+                </div>
+                <p className="text-xs sm:text-sm text-zinc-500">Este cupón ya fue utilizado</p>
+              </>
+            ) : (
+              <>
+                <div className="status-badge success mx-auto mb-4">
+                  <Check className="h-4 w-4" />
+                  <span>Activo</span>
+                </div>
+                <p className="text-xs sm:text-sm text-zinc-500">Este cupón está listo para usar</p>
+              </>
+            )}
           </div>
           
-          {/* Purchase amount input for coupon redemption */}
-          <div className="card-brutalist">
-            <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500 block mb-2">
-              Monto de compra ({currencyInfo.code})
-            </label>
-            <div className="relative">
-              <span className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-zinc-400 text-lg sm:text-xl">{currencyInfo.symbol}</span>
-              <Input
-                type="number"
-                value={purchaseAmount}
-                onChange={(e) => setPurchaseAmount(e.target.value)}
-                placeholder="0"
-                className="input-brutalist pl-10 sm:pl-12 text-2xl sm:text-3xl font-mono h-14 sm:h-16 text-center"
-                data-testid="coupon-purchase-amount"
-              />
+          {/* Purchase amount input for coupon redemption - only show if not redeemed */}
+          {!isCouponRedeemed && (
+            <div className="card-brutalist">
+              <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500 block mb-2">
+                Monto de compra ({currencyInfo.code})
+              </label>
+              <div className="relative">
+                <span className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-zinc-400 text-lg sm:text-xl">{currencyInfo.symbol}</span>
+                <Input
+                  type="number"
+                  value={purchaseAmount}
+                  onChange={(e) => setPurchaseAmount(e.target.value)}
+                  placeholder="0"
+                  className="input-brutalist pl-10 sm:pl-12 text-2xl sm:text-3xl font-mono h-14 sm:h-16 text-center"
+                  data-testid="coupon-purchase-amount"
+                />
+              </div>
             </div>
-          </div>
+          )}
           
           <Button
             onClick={() => openConfirmation('Usar')}
-            disabled={loading}
-            className="w-full h-12 sm:h-14 text-base sm:text-lg btn-primary"
+            disabled={loading || isCouponRedeemed}
+            className={`w-full h-12 sm:h-14 text-base sm:text-lg ${isCouponRedeemed ? 'bg-gray-400 cursor-not-allowed' : 'btn-primary'}`}
             data-testid="use-coupon-button"
           >
-            {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : actionConfig.label}
+            {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : (isCouponRedeemed ? 'Cupón Ya Utilizado' : actionConfig.label)}
           </Button>
         </div>
       );

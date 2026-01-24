@@ -468,9 +468,15 @@ async def subtract_reward(card_id: str, action_data: CardActionRequest, current_
 
 @api_router.post("/cards/{card_id}/add-point")
 async def add_points(card_id: str, action_data: CardActionRequest, current_user: dict = Depends(get_current_user)):
-    payload = {"points": float(action_data.amount or 1)}
+    amount = float(action_data.amount or 1)
+    payload = {"points": amount}
+    # For gift cards, purchaseSum should equal the amount being added
+    # For discount/cashback cards, purchaseSum is the purchase amount
     if action_data.purchaseSum:
         payload["purchaseSum"] = action_data.purchaseSum
+    else:
+        # Default purchaseSum to equal the points amount for gift cards
+        payload["purchaseSum"] = amount
     response = await call_boomerang_api('POST', f'/cards/{card_id}/add-point', payload)
     await db.scan_logs.insert_one({"user_id": current_user['id'], "card_id": card_id, 
                                     "timestamp": datetime.now(timezone.utc).isoformat(), "action": "add_point", "amount": action_data.amount})
@@ -482,6 +488,8 @@ async def add_points(card_id: str, action_data: CardActionRequest, current_user:
         message = "Descuento aplicado correctamente"
     elif 'cashback' in card_type or card_type == 'cashback_card':
         message = "Cashback agregado exitosamente"
+    elif 'gift' in card_type or 'certificate' in card_type:
+        message = "Saldo agregado exitosamente"
     else:
         message = "Puntos agregados exitosamente"
     

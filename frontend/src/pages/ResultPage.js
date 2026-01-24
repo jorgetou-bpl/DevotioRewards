@@ -248,19 +248,25 @@ const ResultPage = () => {
 
     // For stamp cards, show stamp grid
     if ((normalizedType === 'stamp') && activeTab === 'Agregar') {
-      // Calculate active stamps towards next reward
-      // stampsBeforeReward = how many MORE stamps needed until next reward (from API)
-      // rewardThreshold = stamps needed per reward (default 10, but could come from card config)
-      // activeStamps = rewardThreshold - stampsBeforeReward
-      // Example: If threshold is 10 and stampsBeforeReward = 10, activeStamps = 0 (new card/just redeemed)
-      // Example: If stampsBeforeReward = 2, activeStamps = 8 (8 stamps collected towards next reward)
+      // Stamp card calculation:
+      // - stampsBeforeReward = stamps needed until next reward (NOT total stamps per reward)
+      // - numberStampsTotal = total stamps ever collected
+      // - For a new card with 0 stamps: stampsBeforeReward equals the reward threshold
+      // - As stamps are added, stampsBeforeReward decreases
+      // - When stampsBeforeReward reaches 0, a reward is earned and it resets
       
-      // The reward threshold - default is 10 but check card's available reward tiers if present
+      // Get the reward threshold from available tiers, or use stampsBeforeReward as fallback
+      // If numberStampsTotal is 0 and stampsBeforeReward > 0, then stampsBeforeReward IS the threshold
       const rewardThreshold = (card.availableRewardTiers && card.availableRewardTiers.length > 0 
         ? card.availableRewardTiers[0].threshold 
-        : null) || 10;
+        : null) || balance.stampsBeforeReward || 10;
       
       const stampsBeforeReward = balance.stampsBeforeReward ?? rewardThreshold;
+      
+      // Calculate active stamps: threshold - stampsBeforeReward
+      // Example: threshold=10, stampsBeforeReward=10 → activeStamps=0 (new card)
+      // Example: threshold=10, stampsBeforeReward=8 → activeStamps=2
+      // Example: threshold=2, stampsBeforeReward=2 → activeStamps=0 (new card with 2-stamp threshold)
       const activeStamps = Math.max(0, rewardThreshold - stampsBeforeReward);
       
       return (

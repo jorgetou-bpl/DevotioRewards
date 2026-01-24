@@ -274,6 +274,9 @@ const ResultPage = () => {
           
           <div className="text-center">
             <p className="text-xs sm:text-sm text-zinc-500">
+              Sellos activos: {activeStamps} / {rewardThreshold}
+            </p>
+            <p className="text-xs sm:text-sm text-zinc-500 mt-1">
               {stampsBeforeReward > 0 
                 ? `${stampsBeforeReward} sellos hasta la próxima recompensa`
                 : '¡Recompensa disponible!'}

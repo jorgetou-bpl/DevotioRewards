@@ -170,8 +170,20 @@ export const CARD_TYPE_CONFIG = {
     icon: Star,
     color: '#F040A0',
     tabs: ['Agregar', 'Canjear'],
+    requiresPurchaseAmount: true,
     actions: {
-      agregar: { label: 'Agregar Puntos', endpoint: 'add-scores' },
+      agregar: { label: 'Agregar Puntos', endpoint: 'add-scores', amountLabel: 'Monto de compra' },
+      canjear: { label: 'Canjear Recompensa', endpoint: 'receive-reward' }
+    }
+  },
+  reward_card: {
+    name: 'Tarjeta de Recompensa',
+    icon: Star,
+    color: '#F040A0',
+    tabs: ['Agregar', 'Canjear'],
+    requiresPurchaseAmount: true,
+    actions: {
+      agregar: { label: 'Agregar Puntos', endpoint: 'add-scores', amountLabel: 'Monto de compra' },
       canjear: { label: 'Canjear Recompensa', endpoint: 'receive-reward' }
     }
   },

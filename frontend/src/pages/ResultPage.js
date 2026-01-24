@@ -644,12 +644,21 @@ const ResultPage = () => {
     }
 
     // For discount/cashback cards with purchase amount
-    if (config.requiresPurchaseAmount && activeTab === 'Agregar') {
+    if (config.requiresPurchaseAmount && (activeTab === 'Agregar' || activeTab === 'Aplicar')) {
       // Get discount/cashback info from balance - handle different API field names
       const discountLevel = balance.discountLevel ?? balance.discountPercentage ?? null;
       const cashbackPercent = balance.cashbackPercent ?? balance.cashbackPercentage ?? null;
       const discountAmount = balance.discountAmount ?? 0;
       const totalTransactions = balance.transactionsAmount ?? discountAmount;
+      
+      // Determine tier status based on discount percentage
+      const getTierStatus = (percentage) => {
+        if (!percentage) return null;
+        if (percentage >= 10) return { name: 'Oro', color: '#FFD700' };
+        if (percentage >= 5) return { name: 'Plata', color: '#C0C0C0' };
+        return { name: 'Bronce', color: '#CD7F32' };
+      };
+      const tierStatus = getTierStatus(discountLevel);
       
       return (
         <div className="space-y-4 sm:space-y-6">
@@ -665,11 +674,21 @@ const ResultPage = () => {
           
           {/* Discount level display - only for discount cards */}
           {discountLevel && normalizedType !== 'cashback' && normalizedType !== 'cashback_card' && (
-            <div className="text-center">
+            <div className="text-center p-4 sm:p-6 bg-zinc-50 rounded-xl">
               <span className="text-5xl sm:text-6xl font-mono font-bold gradient-text">
                 {discountLevel}%
               </span>
               <p className="text-xs sm:text-sm text-zinc-500 mt-1">Nivel de descuento</p>
+              {tierStatus && (
+                <div className="mt-2">
+                  <span 
+                    className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold text-white"
+                    style={{ backgroundColor: tierStatus.color }}
+                  >
+                    Estado: {tierStatus.name}
+                  </span>
+                </div>
+              )}
               {totalTransactions > 0 && (
                 <p className="text-xs text-zinc-400 mt-2">
                   Total acumulado: {formatCurrency(totalTransactions / 100)}
@@ -681,7 +700,7 @@ const ResultPage = () => {
           {/* Purchase amount input */}
           <div className="card-brutalist">
             <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500 block mb-2">
-              {actionConfig.amountLabel || 'Ingrese monto de compra'} ({currencyInfo.code})
+              Ingrese el monto de compra ({currencyInfo.code})
             </label>
             <div className="relative">
               <span className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-zinc-400 text-lg sm:text-xl">{currencyInfo.symbol}</span>
@@ -697,7 +716,7 @@ const ResultPage = () => {
           </div>
           
           <Button
-            onClick={() => openConfirmation('Agregar')}
+            onClick={() => openConfirmation(activeTab)}
             disabled={loading || !purchaseAmount}
             className="w-full h-12 sm:h-14 text-base sm:text-lg btn-primary disabled:opacity-50"
             data-testid="add-points-button"

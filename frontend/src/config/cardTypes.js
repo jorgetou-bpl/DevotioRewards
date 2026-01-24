@@ -96,8 +96,9 @@ export const CARD_TYPE_CONFIG = {
     color: '#F040A0',
     tabs: ['Usar'],
     singleUse: true,
+    requiresPurchaseAmount: true,
     actions: {
-      usar: { label: 'Usar Cupón', endpoint: 'use-coupon' }
+      usar: { label: 'Usar Cupón', endpoint: 'use-coupon', amountLabel: 'Monto de compra' }
     }
   },
   // Discount card (type ID 4)

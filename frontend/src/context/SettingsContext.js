@@ -102,9 +102,23 @@ export const SettingsProvider = ({ children }) => {
     return false;
   };
 
-  // Currency formatting helper
+  // Currency formatting helper - uses period as thousand separator for Latin American currencies
   const formatCurrency = (amount) => {
     const currencyConfig = CURRENCIES.find(c => c.code === settings.currency) || CURRENCIES[0];
+    
+    // For Latin American currencies (CRC, COP, CLP, ARS, etc.), use period as thousand separator
+    // Format: ₡10.000 instead of ₡10,000 or ₡10 000
+    const latinAmericanCurrencies = ['CRC', 'COP', 'CLP', 'ARS', 'PEN', 'GTQ', 'HNL', 'NIO', 'PAB', 'DOP'];
+    
+    if (latinAmericanCurrencies.includes(currencyConfig.code)) {
+      // Manual formatting for Latin American style: 10.000
+      const formattedNumber = Math.round(amount)
+        .toString()
+        .replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+      return `${currencyConfig.symbol}${formattedNumber}`;
+    }
+    
+    // For USD, EUR, MXN, BRL use standard Intl formatting
     return new Intl.NumberFormat(currencyConfig.locale, {
       style: 'currency',
       currency: currencyConfig.code,

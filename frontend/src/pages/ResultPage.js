@@ -893,6 +893,24 @@ const ResultPage = () => {
             <p className="text-xs sm:text-sm text-zinc-500">Este cupón está listo para usar</p>
           </div>
           
+          {/* Purchase amount input for coupon redemption */}
+          <div className="card-brutalist">
+            <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500 block mb-2">
+              Monto de compra ({currencyInfo.code})
+            </label>
+            <div className="relative">
+              <span className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-zinc-400 text-lg sm:text-xl">{currencyInfo.symbol}</span>
+              <Input
+                type="number"
+                value={purchaseAmount}
+                onChange={(e) => setPurchaseAmount(e.target.value)}
+                placeholder="0"
+                className="input-brutalist pl-10 sm:pl-12 text-2xl sm:text-3xl font-mono h-14 sm:h-16 text-center"
+                data-testid="coupon-purchase-amount"
+              />
+            </div>
+          </div>
+          
           <Button
             onClick={() => openConfirmation('Usar')}
             disabled={loading}

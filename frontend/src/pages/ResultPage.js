@@ -873,8 +873,8 @@ const ResultPage = () => {
       }
     }
 
-    // For discount/cashback cards with purchase amount
-    if (config.requiresPurchaseAmount && (activeTab === 'Agregar' || activeTab === 'Aplicar')) {
+    // For discount/cashback cards with purchase amount (exclude reward cards - they have their own handler)
+    if (config.requiresPurchaseAmount && (activeTab === 'Agregar' || activeTab === 'Aplicar') && normalizedType !== 'reward') {
       // Get discount/cashback info from balance - handle different API field names
       const discountLevel = balance.discountLevel ?? balance.discountPercentage ?? null;
       const cashbackPercent = balance.cashbackPercent ?? balance.cashbackPercentage ?? null;

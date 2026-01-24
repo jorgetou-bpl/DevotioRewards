@@ -535,6 +535,8 @@ async def add_visit(card_id: str, action_data: CardActionRequest, current_user: 
     payload = {"visits": action_data.amount or 1}
     if action_data.comment:
         payload["comment"] = action_data.comment
+    if action_data.purchaseSum:
+        payload["purchaseSum"] = action_data.purchaseSum
     response = await call_boomerang_api('POST', f'/cards/{card_id}/add-visit', payload)
     await db.scan_logs.insert_one({"user_id": current_user['id'], "card_id": card_id, 
                                     "timestamp": datetime.now(timezone.utc).isoformat(), "action": "add_visit", "amount": action_data.amount})
@@ -543,6 +545,8 @@ async def add_visit(card_id: str, action_data: CardActionRequest, current_user: 
 @api_router.post("/cards/{card_id}/redeem-visit")
 async def redeem_visit(card_id: str, action_data: CardActionRequest, current_user: dict = Depends(get_current_user)):
     payload = {"visits": action_data.amount or 1}
+    if action_data.purchaseSum:
+        payload["purchaseSum"] = action_data.purchaseSum
     response = await call_boomerang_api('POST', f'/cards/{card_id}/redeem-visit', payload)
     await db.scan_logs.insert_one({"user_id": current_user['id'], "card_id": card_id, 
                                     "timestamp": datetime.now(timezone.utc).isoformat(), "action": "redeem_visit", "amount": action_data.amount})
@@ -554,6 +558,8 @@ async def subtract_visit(card_id: str, action_data: CardActionRequest, current_u
     payload = {"visits": action_data.amount or 1}
     if action_data.comment:
         payload["comment"] = action_data.comment
+    if action_data.purchaseSum:
+        payload["purchaseSum"] = action_data.purchaseSum
     response = await call_boomerang_api('POST', f'/cards/{card_id}/subtract-visit', payload)
     await db.scan_logs.insert_one({"user_id": current_user['id'], "card_id": card_id, 
                                     "timestamp": datetime.now(timezone.utc).isoformat(), "action": "subtract_visit", "amount": action_data.amount})

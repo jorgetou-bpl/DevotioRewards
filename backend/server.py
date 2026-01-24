@@ -449,7 +449,7 @@ async def add_stamp(card_id: str, action_data: CardActionRequest, current_user: 
     response = await call_boomerang_api('POST', f'/cards/{card_id}/add-stamp', payload)
     await db.scan_logs.insert_one({"user_id": current_user['id'], "card_id": card_id, 
                                     "timestamp": datetime.now(timezone.utc).isoformat(), "action": "add_stamp", "amount": action_data.amount})
-    return {"success": True, "card": mask_pii(response.get('data', {})), "message": "Stamp added successfully"}
+    return {"success": True, "card": mask_pii(response.get('data', {})), "message": "Sello agregado exitosamente"}
 
 @api_router.post("/cards/{card_id}/subtract-reward")
 async def subtract_reward(card_id: str, action_data: CardActionRequest, current_user: dict = Depends(get_current_user)):
@@ -472,7 +472,7 @@ async def add_points(card_id: str, action_data: CardActionRequest, current_user:
     response = await call_boomerang_api('POST', f'/cards/{card_id}/add-point', payload)
     await db.scan_logs.insert_one({"user_id": current_user['id'], "card_id": card_id, 
                                     "timestamp": datetime.now(timezone.utc).isoformat(), "action": "add_point", "amount": action_data.amount})
-    return {"success": True, "card": mask_pii(response.get('data', {})), "message": "Points added successfully"}
+    return {"success": True, "card": mask_pii(response.get('data', {})), "message": "Puntos agregados exitosamente"}
 
 @api_router.post("/cards/{card_id}/redeem-reward")
 async def redeem_reward(card_id: str, action_data: CardActionRequest, current_user: dict = Depends(get_current_user)):
@@ -480,7 +480,7 @@ async def redeem_reward(card_id: str, action_data: CardActionRequest, current_us
     response = await call_boomerang_api('POST', f'/cards/{card_id}/receive-reward', payload)
     await db.scan_logs.insert_one({"user_id": current_user['id'], "card_id": card_id, 
                                     "timestamp": datetime.now(timezone.utc).isoformat(), "action": "redeem_reward"})
-    return {"success": True, "card": mask_pii(response.get('data', {})), "message": "Reward redeemed successfully"}
+    return {"success": True, "card": mask_pii(response.get('data', {})), "message": "Recompensa canjeada exitosamente"}
 
 @api_router.post("/cards/{card_id}/redeem-points")
 async def redeem_points(card_id: str, action_data: CardActionRequest, current_user: dict = Depends(get_current_user)):
@@ -488,7 +488,7 @@ async def redeem_points(card_id: str, action_data: CardActionRequest, current_us
     response = await call_boomerang_api('POST', f'/cards/{card_id}/redeem-points', payload)
     await db.scan_logs.insert_one({"user_id": current_user['id'], "card_id": card_id, 
                                     "timestamp": datetime.now(timezone.utc).isoformat(), "action": "redeem_points", "amount": action_data.amount})
-    return {"success": True, "card": mask_pii(response.get('data', {})), "message": "Points redeemed successfully"}
+    return {"success": True, "card": mask_pii(response.get('data', {})), "message": "Puntos canjeados exitosamente"}
 
 @api_router.post("/cards/{card_id}/subtract-point")
 async def subtract_point(card_id: str, action_data: CardActionRequest, current_user: dict = Depends(get_current_user)):
@@ -535,7 +535,7 @@ async def redeem_visit(card_id: str, action_data: CardActionRequest, current_use
     response = await call_boomerang_api('POST', f'/cards/{card_id}/redeem-visit', payload)
     await db.scan_logs.insert_one({"user_id": current_user['id'], "card_id": card_id, 
                                     "timestamp": datetime.now(timezone.utc).isoformat(), "action": "redeem_visit", "amount": action_data.amount})
-    return {"success": True, "card": mask_pii(response.get('data', {})), "message": "Visit redeemed successfully"}
+    return {"success": True, "card": mask_pii(response.get('data', {})), "message": "Visita canjeada exitosamente"}
 
 @api_router.post("/cards/{card_id}/subtract-visit")
 async def subtract_visit(card_id: str, action_data: CardActionRequest, current_user: dict = Depends(get_current_user)):

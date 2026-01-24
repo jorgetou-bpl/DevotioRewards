@@ -1142,26 +1142,28 @@ const ResultPage = () => {
           </h2>
         </div>
 
-        {/* Tabs */}
-        <div className="flex border rounded-xl mb-4 sm:mb-6 overflow-hidden" style={{ borderColor: '#120627' }}>
-          {config.tabs.map((tab) => (
-            <button
-              key={tab}
-              onClick={() => {
-                setActiveTab(tab);
-                setActionAmount(1);
-              }}
-              className={`flex-1 py-2.5 sm:py-3 text-xs sm:text-sm font-semibold uppercase tracking-wider transition-colors ${
-                activeTab === tab
-                  ? 'bg-[#120627] text-white hover:bg-[#ffca32] hover:text-[#120627]'
-                  : 'bg-white text-[#120627] hover:bg-[#ee478a] hover:text-white'
-              }`}
-              data-testid={`tab-${tab.toLowerCase()}`}
-            >
-              {tab}
-            </button>
-          ))}
-        </div>
+        {/* Tabs - Hide for single-tab cards like coupon */}
+        {config.tabs.length > 1 && (
+          <div className="flex border rounded-xl mb-4 sm:mb-6 overflow-hidden" style={{ borderColor: '#120627' }}>
+            {config.tabs.map((tab) => (
+              <button
+                key={tab}
+                onClick={() => {
+                  setActiveTab(tab);
+                  setActionAmount(1);
+                }}
+                className={`flex-1 py-2.5 sm:py-3 text-xs sm:text-sm font-semibold uppercase tracking-wider transition-colors ${
+                  activeTab === tab
+                    ? 'bg-[#120627] text-white hover:bg-[#ffca32] hover:text-[#120627]'
+                    : 'bg-white text-[#120627] hover:bg-[#ee478a] hover:text-white'
+                }`}
+                data-testid={`tab-${tab.toLowerCase()}`}
+              >
+                {tab}
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* Action Content */}
         <div className="mb-4 sm:mb-6">

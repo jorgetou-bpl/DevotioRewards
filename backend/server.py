@@ -505,12 +505,18 @@ async def redeem_points(card_id: str, action_data: CardActionRequest, current_us
 
 @api_router.post("/cards/{card_id}/subtract-point")
 async def subtract_point(card_id: str, action_data: CardActionRequest, current_user: dict = Depends(get_current_user)):
-    """Subtract points from certificate/gift cards - used for redeeming balance"""
-    payload = {"points": float(action_data.amount or 1)}
+    """Subtract points from certificate/gift/cashback cards - used for redeeming balance"""
+    amount = float(action_data.amount or 1)
+    payload = {"points": amount}
     if action_data.comment:
         payload["comment"] = action_data.comment
+    # For cashback/gift cards, purchaseSum should equal the amount being redeemed
+    # If purchaseSum is provided use it, otherwise use the amount itself
     if action_data.purchaseSum:
         payload["purchaseSum"] = action_data.purchaseSum
+    else:
+        # Default purchaseSum to equal the points amount for consistency
+        payload["purchaseSum"] = amount
     
     response = await call_boomerang_api('POST', f'/cards/{card_id}/subtract-point', payload)
     await db.scan_logs.insert_one({"user_id": current_user['id'], "card_id": card_id, 

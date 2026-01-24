@@ -444,11 +444,20 @@ const ResultPage = () => {
     if ((normalizedType === 'multipass' || normalizedType === 'subscription')) {
       const availableVisits = balance.currentNumberOfUses || 0;
       const bonusPoints = balance.bonusBalance || 0;
+      const totalVisits = balance.numberOfUses || 10; // Total visits configured on the card
       
       // Visitas tab - shows visits balance with Add/Redeem buttons
       if (activeTab === 'Visitas') {
         return (
           <div className="space-y-4 sm:space-y-6">
+            {/* Visual Stamp Grid for Multipass visits */}
+            <StampGrid 
+              activeStamps={availableVisits} 
+              stampsUntilReward={totalVisits - availableVisits}
+              totalStampsForReward={totalVisits}
+              numberStampsTotal={totalVisits}
+            />
+            
             {/* Visits balance display */}
             <div className="text-center p-4 sm:p-6 bg-zinc-50 rounded-xl">
               <span className="text-4xl sm:text-5xl font-mono font-bold gradient-text">
@@ -457,6 +466,24 @@ const ResultPage = () => {
               <p className="text-xs sm:text-sm text-zinc-500 mt-2">
                 Visitas disponibles
               </p>
+            </div>
+            
+            {/* Purchase amount input for multipass */}
+            <div className="card-brutalist">
+              <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500 block mb-2">
+                Monto de compra ({currencyInfo.code})
+              </label>
+              <div className="relative">
+                <span className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-zinc-400 text-lg sm:text-xl">{currencyInfo.symbol}</span>
+                <Input
+                  type="number"
+                  value={purchaseAmount}
+                  onChange={(e) => setPurchaseAmount(e.target.value)}
+                  placeholder="0"
+                  className="input-brutalist pl-10 sm:pl-12 text-2xl sm:text-3xl font-mono h-14 sm:h-16 text-center"
+                  data-testid="multipass-purchase-amount"
+                />
+              </div>
             </div>
             
             {/* Counter */}

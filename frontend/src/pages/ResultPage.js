@@ -174,15 +174,15 @@ const ResultPage = () => {
         endpoint = `/cards/${card.id}/${actionConfig.endpoint}`;
       }
       
-      // Check if this is a multipass bonus points action (no purchase amount needed for points)
+      // Check if this is a multipass bonus points action (now includes purchaseSum)
       const isMultipassPointsAction = ['agregarpuntos', 'canjearpuntos'].includes(actionKey);
       
       // Get the purchase amount from confirmation modal or state
-      // Include purchaseSum for: stamp cards, discount/cashback cards, coupon cards, multipass visits
+      // Include purchaseSum for: stamp cards, discount/cashback cards, coupon cards, multipass (visits and points)
       const shouldIncludePurchaseSum = config.requiresPurchaseAmount || 
                                         normalizedType === 'stamp' || 
                                         normalizedType === 'coupon' ||
-                                        ['agregarvisitas', 'canjearvisitas'].includes(actionKey);
+                                        ['agregarvisitas', 'canjearvisitas', 'agregarpuntos', 'canjearpuntos'].includes(actionKey);
       
       const finalPurchaseAmount = confirmPurchaseAmount ? parseFloat(confirmPurchaseAmount) : 
                                   (shouldIncludePurchaseSum ? parseFloat(purchaseAmount) || undefined : undefined);

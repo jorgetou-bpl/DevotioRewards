@@ -190,7 +190,7 @@ const ResultPage = () => {
       // Build payload - handle reward tier ID for receive-reward endpoint
       let payload = {
         comment: comment || undefined,
-        purchaseSum: isMultipassPointsAction ? undefined : finalPurchaseAmount
+        purchaseSum: finalPurchaseAmount // Include purchaseSum for all card types that need it
       };
       
       // For receive-reward endpoint, pass the tier ID as amount

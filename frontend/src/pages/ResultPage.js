@@ -284,7 +284,7 @@ const ResultPage = () => {
             </p>
             <p className="text-xs sm:text-sm text-zinc-500 mt-1">
               {stampsBeforeReward > 0 
-                ? `${stampsBeforeReward} sellos hasta la próxima recompensa`
+                ? `${stampsBeforeReward} sello${stampsBeforeReward !== 1 ? 's' : ''} hasta la próxima recompensa`
                 : '¡Recompensa disponible!'}
             </p>
           </div>

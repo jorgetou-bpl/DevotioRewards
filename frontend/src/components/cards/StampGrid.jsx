@@ -1,11 +1,12 @@
 import React from 'react';
 import { Star } from 'lucide-react';
 
-const StampGrid = ({ activeStamps, stampsUntilReward, totalStampsForReward = 10 }) => {
-  // Always show 10 stars
-  const displayTotal = 10;
+const StampGrid = ({ activeStamps, stampsUntilReward, totalStampsForReward = 10, numberStampsTotal }) => {
+  // Always show 10 stars (or the actual total from the API)
+  const displayTotal = numberStampsTotal || 10;
   // Calculate how many to fill based on stamps earned towards the current reward
-  const fillCount = Math.min(activeStamps, displayTotal);
+  // If activeStamps is explicitly 0 or undefined, show 0 filled
+  const fillCount = Math.min(Math.max(0, activeStamps || 0), displayTotal);
   
   const stamps = [];
   for (let i = 0; i < displayTotal; i++) {

@@ -279,29 +279,31 @@ const ScannerPage = () => {
             )}
           </div>
 
-          {/* Manual Input Only - Search removed */}
-          <form onSubmit={handleManualSubmit} className="space-y-3 sm:space-y-4">
-            <div className="relative">
-              <Input
-                type="text"
-                value={manualInput}
-                onChange={(e) => setManualInput(e.target.value)}
-                placeholder="Ingresar ID de tarjeta manualmente"
-                className="input-brutalist text-sm sm:text-base pr-16"
-                data-testid="manual-input"
-              />
-              {manualInput && (
-                <Button
-                  type="submit"
-                  size="sm"
-                  className="absolute right-1 top-1/2 -translate-y-1/2 bg-[#120627] text-white px-3 sm:px-4 h-9 sm:h-10 rounded-lg hover:bg-[#ffca32] hover:text-[#120627] text-sm"
-                  data-testid="manual-submit"
-                >
-                  Ir
-                </Button>
-              )}
-            </div>
-          </form>
+          {/* Manual Input - Only shown when enable_manual_search is enabled in settings */}
+          {settings?.enable_manual_search && (
+            <form onSubmit={handleManualSubmit} className="space-y-3 sm:space-y-4">
+              <div className="relative">
+                <Input
+                  type="text"
+                  value={manualInput}
+                  onChange={(e) => setManualInput(e.target.value)}
+                  placeholder="Ingresar ID de tarjeta manualmente"
+                  className="input-brutalist text-sm sm:text-base pr-16"
+                  data-testid="manual-input"
+                />
+                {manualInput && (
+                  <Button
+                    type="submit"
+                    size="sm"
+                    className="absolute right-1 top-1/2 -translate-y-1/2 bg-[#120627] text-white px-3 sm:px-4 h-9 sm:h-10 rounded-lg hover:bg-[#ffca32] hover:text-[#120627] text-sm"
+                    data-testid="manual-submit"
+                  >
+                    Ir
+                  </Button>
+                )}
+              </div>
+            </form>
+          )}
         </div>
       </main>
 

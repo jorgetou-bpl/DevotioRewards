@@ -362,37 +362,58 @@ const ResultPage = () => {
             </p>
           </div>
           
-          {/* Multi-reward selection (if available) */}
+          {/* Purchase amount input for reward redemption */}
+          <div className="card-brutalist">
+            <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500 block mb-2">
+              Monto de compra ({currencyInfo.code})
+            </label>
+            <div className="relative">
+              <span className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-zinc-400 text-lg sm:text-xl">{currencyInfo.symbol}</span>
+              <Input
+                type="number"
+                value={purchaseAmount}
+                onChange={(e) => setPurchaseAmount(e.target.value)}
+                placeholder="0"
+                className="input-brutalist pl-10 sm:pl-12 text-2xl sm:text-3xl font-mono h-14 sm:h-16 text-center"
+                data-testid="stamp-redeem-purchase-amount"
+              />
+            </div>
+          </div>
+          
+          {/* Multi-reward selection dropdown (if available) */}
           {availableRewardTiers.length > 0 ? (
             <div className="space-y-3">
               <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500 block">
                 Seleccionar recompensa
               </label>
-              {availableRewardTiers.map((tier, index) => (
-                <button
-                  key={tier.id || index}
-                  onClick={() => {
-                    setActionAmount(tier.id || index + 1);
-                    openConfirmation('Canjear', tier);
-                  }}
-                  disabled={loading || numberRewardsUnused < 1}
-                  className="w-full p-4 border-2 rounded-xl text-left hover:border-[#120627] hover:bg-zinc-50 transition-all disabled:opacity-50"
-                  style={{ borderColor: actionAmount === (tier.id || index + 1) ? '#120627' : '#e4e4e7' }}
-                  data-testid={`reward-tier-${index}`}
-                >
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <p className="font-medium text-sm sm:text-base">{tier.name || `Recompensa ${index + 1}`}</p>
-                      <p className="text-xs text-zinc-500 mt-1">
-                        A los {tier.threshold || ((index + 1) * 10)} sellos
-                      </p>
-                    </div>
-                    <div className="text-[#120627]">
-                      <Gift className="h-6 w-6" />
-                    </div>
-                  </div>
-                </button>
-              ))}
+              <select
+                value={actionAmount}
+                onChange={(e) => {
+                  const tierId = parseInt(e.target.value);
+                  setActionAmount(tierId);
+                }}
+                className="input-brutalist w-full h-12 sm:h-14 text-sm sm:text-base"
+                disabled={loading || numberRewardsUnused < 1}
+                data-testid="reward-tier-select"
+              >
+                <option value="">-- Seleccionar --</option>
+                {availableRewardTiers.map((tier, index) => (
+                  <option key={tier.id || index} value={tier.id || index + 1}>
+                    {tier.name || `Recompensa ${index + 1}`} - A los {tier.threshold || ((index + 1) * 10)} sellos
+                  </option>
+                ))}
+              </select>
+              <Button
+                onClick={() => {
+                  const selectedTier = availableRewardTiers.find(t => t.id === actionAmount || (!t.id && actionAmount === availableRewardTiers.indexOf(t) + 1));
+                  openConfirmation('Canjear', selectedTier);
+                }}
+                disabled={loading || numberRewardsUnused < 1 || !actionAmount}
+                className="w-full h-12 sm:h-14 text-base sm:text-lg btn-primary"
+                data-testid="redeem-reward-button"
+              >
+                {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Canjear Recompensa'}
+              </Button>
             </div>
           ) : numberRewardsUnused > 0 ? (
             // Single reward redemption (no tiers configured)

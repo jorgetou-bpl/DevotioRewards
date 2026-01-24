@@ -472,7 +472,18 @@ async def add_points(card_id: str, action_data: CardActionRequest, current_user:
     response = await call_boomerang_api('POST', f'/cards/{card_id}/add-point', payload)
     await db.scan_logs.insert_one({"user_id": current_user['id'], "card_id": card_id, 
                                     "timestamp": datetime.now(timezone.utc).isoformat(), "action": "add_point", "amount": action_data.amount})
-    return {"success": True, "card": mask_pii(response.get('data', {})), "message": "Puntos agregados exitosamente"}
+    
+    # Determine the correct Spanish message based on card type from the response
+    card_data = response.get('data', {})
+    card_type = card_data.get('cardType', '').lower()
+    if 'discount' in card_type or card_type == 'discount_card':
+        message = "Descuento aplicado correctamente"
+    elif 'cashback' in card_type or card_type == 'cashback_card':
+        message = "Cashback agregado exitosamente"
+    else:
+        message = "Puntos agregados exitosamente"
+    
+    return {"success": True, "card": mask_pii(card_data), "message": message}
 
 @api_router.post("/cards/{card_id}/redeem-reward")
 async def redeem_reward(card_id: str, action_data: CardActionRequest, current_user: dict = Depends(get_current_user)):

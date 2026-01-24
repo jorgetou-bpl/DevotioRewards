@@ -73,6 +73,7 @@ class SettingsUpdate(BaseModel):
     copy_to_clipboard: Optional[bool] = None
     currency: Optional[str] = None
     require_comments: Optional[bool] = None
+    enable_manual_search: Optional[bool] = None
 
 class SettingsResponse(BaseModel):
     vibration: bool = False
@@ -81,6 +82,7 @@ class SettingsResponse(BaseModel):
     copy_to_clipboard: bool = True
     currency: str = "CRC"
     require_comments: bool = True
+    enable_manual_search: bool = False
 
 class CardActionRequest(BaseModel):
     amount: Optional[int] = 1

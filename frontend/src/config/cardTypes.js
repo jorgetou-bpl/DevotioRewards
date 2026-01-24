@@ -105,20 +105,20 @@ export const CARD_TYPE_CONFIG = {
     name: 'Tarjeta de Descuento',
     icon: Percent,
     color: '#F040A0',
-    tabs: ['Agregar'],
+    tabs: ['Aplicar'],
     requiresPurchaseAmount: true,
     actions: {
-      agregar: { label: 'Agregar Puntos', endpoint: 'add-point', amountLabel: 'Ingrese monto de compra' }
+      aplicar: { label: 'Aplicar Descuento', endpoint: 'add-point', amountLabel: 'Ingrese monto de compra' }
     }
   },
   discount_card: {
     name: 'Tarjeta de Descuento',
     icon: Percent,
     color: '#F040A0',
-    tabs: ['Agregar'],
+    tabs: ['Aplicar'],
     requiresPurchaseAmount: true,
     actions: {
-      agregar: { label: 'Agregar Puntos', endpoint: 'add-point', amountLabel: 'Ingrese monto de compra' }
+      aplicar: { label: 'Aplicar Descuento', endpoint: 'add-point', amountLabel: 'Ingrese monto de compra' }
     }
   },
   // Gift card (type ID 5) - Boomerang API returns "certificate" type

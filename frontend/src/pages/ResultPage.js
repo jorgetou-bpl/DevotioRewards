@@ -222,18 +222,22 @@ const ResultPage = () => {
     // For stamp cards, show stamp grid
     if ((normalizedType === 'stamp') && activeTab === 'Agregar') {
       // Calculate active stamps towards next reward
-      // stampsBeforeReward tells us how many stamps until next reward
-      // If stampsBeforeReward = 2 and reward is at 10 stamps, then activeStamps = 10 - 2 = 8
-      const stampsBeforeReward = balance.stampsBeforeReward ?? 10;
-      const stampsPerReward = 10; // Default to 10, will fetch from API if available
-      const activeStamps = Math.max(0, stampsPerReward - stampsBeforeReward);
+      // numberStampsTotal = total stamps needed for a reward (e.g., 10)
+      // stampsBeforeReward = how many MORE stamps needed until next reward
+      // activeStamps = numberStampsTotal - stampsBeforeReward
+      // Example: If card needs 10 stamps and stampsBeforeReward = 10, activeStamps = 0 (new card)
+      // Example: If stampsBeforeReward = 2, activeStamps = 8 (8 stamps collected)
+      const numberStampsTotal = balance.numberStampsTotal || 10;
+      const stampsBeforeReward = balance.stampsBeforeReward ?? numberStampsTotal;
+      const activeStamps = Math.max(0, numberStampsTotal - stampsBeforeReward);
       
       return (
         <div className="space-y-4 sm:space-y-6">
           <StampGrid 
             activeStamps={activeStamps} 
             stampsUntilReward={stampsBeforeReward}
-            totalStampsForReward={stampsPerReward}
+            totalStampsForReward={numberStampsTotal}
+            numberStampsTotal={numberStampsTotal}
           />
           
           <div className="text-center">
@@ -242,6 +246,24 @@ const ResultPage = () => {
                 ? `${stampsBeforeReward} sellos hasta la próxima recompensa`
                 : '¡Recompensa disponible!'}
             </p>
+          </div>
+          
+          {/* Purchase amount input for stamp cards */}
+          <div className="card-brutalist">
+            <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500 block mb-2">
+              Monto de compra ({currencyInfo.code})
+            </label>
+            <div className="relative">
+              <span className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-zinc-400 text-lg sm:text-xl">{currencyInfo.symbol}</span>
+              <Input
+                type="number"
+                value={purchaseAmount}
+                onChange={(e) => setPurchaseAmount(e.target.value)}
+                placeholder="0"
+                className="input-brutalist pl-10 sm:pl-12 text-2xl sm:text-3xl font-mono h-14 sm:h-16 text-center"
+                data-testid="stamp-purchase-amount"
+              />
+            </div>
           </div>
           
           {/* Stamp counter - with keyboard input */}

@@ -32,7 +32,8 @@ export const SettingsProvider = ({ children }) => {
     show_result: true,
     copy_to_clipboard: true,
     currency: 'CRC',
-    require_comments: true
+    require_comments: true,
+    enable_manual_search: false
   });
   const [loading, setLoading] = useState(false);
 

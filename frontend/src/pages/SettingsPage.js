@@ -13,7 +13,8 @@ import {
   DollarSign,
   ChevronDown,
   Check,
-  MessageSquare
+  MessageSquare,
+  Search
 } from 'lucide-react';
 
 const SettingsPage = () => {
@@ -75,6 +76,13 @@ const SettingsPage = () => {
       description: 'Requerir comentario en cada transacción',
       icon: MessageSquare,
       testId: 'setting-require-comments'
+    },
+    {
+      key: 'enable_manual_search',
+      label: 'Búsqueda manual',
+      description: 'Habilitar búsqueda por nombre o ID de tarjeta',
+      icon: Search,
+      testId: 'setting-manual-search'
     }
   ];
 

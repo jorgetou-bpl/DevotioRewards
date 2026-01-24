@@ -1247,9 +1247,12 @@ const ResultPage = () => {
                   <span className="text-zinc-500 text-sm">Sellos activos</span>
                   <span className="font-medium text-sm">
                     {(() => {
-                      const stampsPerReward = 10;
-                      const stampsBeforeReward = balance.stampsBeforeReward ?? 10;
-                      return Math.max(0, stampsPerReward - stampsBeforeReward);
+                      // Get reward threshold from available tiers or use stampsBeforeReward
+                      const rewardThreshold = (card.availableRewardTiers && card.availableRewardTiers.length > 0 
+                        ? card.availableRewardTiers[0].threshold 
+                        : null) || balance.stampsBeforeReward || 10;
+                      const stampsBeforeReward = balance.stampsBeforeReward ?? rewardThreshold;
+                      return Math.max(0, rewardThreshold - stampsBeforeReward);
                     })()}
                   </span>
                 </div>

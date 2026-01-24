@@ -248,10 +248,8 @@ const ScannerPage = () => {
                     <p className="text-xs sm:text-sm">{cameraError}</p>
                   </div>
                 ) : (
-                  <div className="text-center text-zinc-300">
-                    <Camera className="h-10 w-10 sm:h-12 sm:w-12 mx-auto mb-2" />
-                    <p className="text-xs sm:text-sm">Escáner de códigos de barras y QR</p>
-                  </div>
+                  /* Empty placeholder - camera icon and text removed per client request */
+                  <div className="w-full h-full" />
                 )}
               </div>
             )}

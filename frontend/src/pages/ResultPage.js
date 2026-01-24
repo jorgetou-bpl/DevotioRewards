@@ -455,6 +455,217 @@ const ResultPage = () => {
       );
     }
 
+    // For Membership cards - show membership tier, status, and visits
+    if (normalizedType === 'membership') {
+      const membershipTier = card.membershipTier || {};
+      const customerSubscription = card.customerSubscription || {};
+      const availableVisits = balance.currentNumberOfUses || 0;
+      const totalVisits = customerSubscription.balance || 0;
+      const subscriptionStatus = customerSubscription.status === 1 ? 'Activo' : 'Inactivo';
+      const countVisits = card.countVisits || 0;
+      
+      // Calculate expiration date
+      let expiresAt = null;
+      if (customerSubscription.expiredAt) {
+        expiresAt = new Date(customerSubscription.expiredAt * 1000).toLocaleDateString('es-ES', {
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric'
+        });
+      }
+      
+      if (activeTab === 'Agregar') {
+        return (
+          <div className="space-y-4 sm:space-y-6">
+            {/* Membership status card */}
+            <div className="text-center p-4 sm:p-6 bg-zinc-50 rounded-xl">
+              <div className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold text-white mb-3 ${
+                subscriptionStatus === 'Activo' ? 'bg-green-500' : 'bg-gray-500'
+              }`}>
+                {subscriptionStatus}
+              </div>
+              <p className="text-2xl sm:text-3xl font-bold text-[#120627]">
+                {membershipTier.name || 'Membresía'}
+              </p>
+              {membershipTier.description && membershipTier.description !== membershipTier.name && (
+                <p className="text-sm text-zinc-500 mt-1">{membershipTier.description}</p>
+              )}
+              {expiresAt && (
+                <p className="text-xs text-zinc-400 mt-2">Vence: {expiresAt}</p>
+              )}
+            </div>
+            
+            {/* Visits display with visual */}
+            <StampGrid 
+              activeStamps={availableVisits} 
+              stampsUntilReward={totalVisits - availableVisits}
+              totalStampsForReward={totalVisits > 0 ? totalVisits : 10}
+              numberStampsTotal={totalVisits > 0 ? totalVisits : 10}
+            />
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div className="text-center p-3 bg-zinc-50 rounded-xl">
+                <span className="text-2xl sm:text-3xl font-mono font-bold gradient-text">
+                  {availableVisits}
+                </span>
+                <p className="text-xs text-zinc-500 mt-1">Visitas disponibles</p>
+              </div>
+              <div className="text-center p-3 bg-zinc-50 rounded-xl">
+                <span className="text-2xl sm:text-3xl font-mono font-bold text-[#120627]">
+                  {countVisits}
+                </span>
+                <p className="text-xs text-zinc-500 mt-1">Visitas totales</p>
+              </div>
+            </div>
+            
+            {/* Purchase amount input */}
+            <div className="card-brutalist">
+              <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500 block mb-2">
+                Monto de compra ({currencyInfo.code})
+              </label>
+              <div className="relative">
+                <span className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-zinc-400 text-lg sm:text-xl">{currencyInfo.symbol}</span>
+                <Input
+                  type="number"
+                  value={purchaseAmount}
+                  onChange={(e) => setPurchaseAmount(e.target.value)}
+                  placeholder="0"
+                  className="input-brutalist pl-10 sm:pl-12 text-2xl sm:text-3xl font-mono h-14 sm:h-16 text-center"
+                  data-testid="membership-purchase-amount"
+                />
+              </div>
+            </div>
+            
+            {/* Visits counter */}
+            <div className="card-brutalist">
+              <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500 block mb-2">
+                Cantidad de visitas
+              </label>
+              <div className="flex items-center gap-3">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setActionAmount(Math.max(1, actionAmount - 1))}
+                  className="h-12 w-12 sm:h-14 sm:w-14 border-2 rounded-lg bg-white hover:bg-[#ee478a] hover:border-[#ee478a] hover:text-white flex-shrink-0"
+                  style={{ borderColor: '#120627', color: '#120627' }}
+                  data-testid="decrease-visits"
+                >
+                  <Minus className="h-5 w-5 sm:h-6 sm:w-6" />
+                </Button>
+                <Input
+                  type="number"
+                  value={actionAmount}
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value) || 1;
+                    setActionAmount(Math.max(1, val));
+                  }}
+                  min="1"
+                  className="input-brutalist text-2xl sm:text-3xl font-mono h-12 sm:h-14 text-center flex-1"
+                  data-testid="membership-visits-input"
+                />
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setActionAmount(actionAmount + 1)}
+                  className="h-12 w-12 sm:h-14 sm:w-14 border-2 rounded-lg bg-white hover:bg-[#ee478a] hover:border-[#ee478a] hover:text-white flex-shrink-0"
+                  style={{ borderColor: '#120627', color: '#120627' }}
+                  data-testid="increase-visits"
+                >
+                  <Plus className="h-5 w-5 sm:h-6 sm:w-6" />
+                </Button>
+              </div>
+            </div>
+            
+            <Button
+              onClick={() => openConfirmation('Agregar')}
+              disabled={loading || actionAmount < 1}
+              className="w-full h-12 sm:h-14 text-base sm:text-lg btn-primary disabled:opacity-50"
+              data-testid="add-membership-visits-button"
+            >
+              {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : actionConfig.label}
+            </Button>
+          </div>
+        );
+      }
+      
+      // Canjear tab for membership
+      if (activeTab === 'Canjear') {
+        return (
+          <div className="space-y-4 sm:space-y-6">
+            {/* Membership status card */}
+            <div className="text-center p-4 sm:p-6 bg-zinc-50 rounded-xl">
+              <div className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold text-white mb-3 ${
+                subscriptionStatus === 'Activo' ? 'bg-green-500' : 'bg-gray-500'
+              }`}>
+                {subscriptionStatus}
+              </div>
+              <p className="text-2xl sm:text-3xl font-bold text-[#120627]">
+                {membershipTier.name || 'Membresía'}
+              </p>
+            </div>
+            
+            {/* Available visits display */}
+            <div className="text-center p-4 sm:p-6 bg-zinc-50 rounded-xl">
+              <span className="text-4xl sm:text-5xl font-mono font-bold gradient-text">
+                {availableVisits}
+              </span>
+              <p className="text-xs sm:text-sm text-zinc-500 mt-2">Visitas disponibles</p>
+            </div>
+            
+            {/* Visits counter for redemption */}
+            <div className="card-brutalist">
+              <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500 block mb-2">
+                Visitas a canjear
+              </label>
+              <div className="flex items-center gap-3">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setActionAmount(Math.max(1, actionAmount - 1))}
+                  className="h-12 w-12 sm:h-14 sm:w-14 border-2 rounded-lg bg-white hover:bg-[#ee478a] hover:border-[#ee478a] hover:text-white flex-shrink-0"
+                  style={{ borderColor: '#120627', color: '#120627' }}
+                  data-testid="decrease-redeem-visits"
+                >
+                  <Minus className="h-5 w-5 sm:h-6 sm:w-6" />
+                </Button>
+                <Input
+                  type="number"
+                  value={actionAmount}
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value) || 1;
+                    setActionAmount(Math.max(1, Math.min(val, availableVisits)));
+                  }}
+                  min="1"
+                  max={availableVisits}
+                  className="input-brutalist text-2xl sm:text-3xl font-mono h-12 sm:h-14 text-center flex-1"
+                  data-testid="membership-redeem-visits-input"
+                />
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setActionAmount(Math.min(actionAmount + 1, availableVisits))}
+                  className="h-12 w-12 sm:h-14 sm:w-14 border-2 rounded-lg bg-white hover:bg-[#ee478a] hover:border-[#ee478a] hover:text-white flex-shrink-0"
+                  style={{ borderColor: '#120627', color: '#120627' }}
+                  data-testid="increase-redeem-visits"
+                >
+                  <Plus className="h-5 w-5 sm:h-6 sm:w-6" />
+                </Button>
+              </div>
+            </div>
+            
+            <Button
+              onClick={() => openConfirmation('Canjear')}
+              disabled={loading || availableVisits <= 0 || actionAmount < 1 || actionAmount > availableVisits}
+              className="w-full h-12 sm:h-14 text-base sm:text-lg btn-primary disabled:opacity-50"
+              data-testid="redeem-membership-visits-button"
+            >
+              {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : actionConfig.label}
+            </Button>
+          </div>
+        );
+      }
+    }
+
     // For Multipass/Subscription cards - special two-tab UI with Visits and Points
     if ((normalizedType === 'multipass' || normalizedType === 'subscription')) {
       const availableVisits = balance.currentNumberOfUses || 0;

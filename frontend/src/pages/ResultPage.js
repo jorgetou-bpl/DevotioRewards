@@ -79,10 +79,17 @@ const ResultPage = () => {
   const openConfirmation = (action, rewardTier = null) => {
     const details = [];
     const actionLower = action.toLowerCase();
+    const normalizedType = cardType ? cardType.replace('_card', '') : '';
     
     details.push({ label: 'ID de Tarjeta', value: card.id });
     
-    if (actionLower === 'agregar' && config.requiresPurchaseAmount) {
+    // Include purchase amount for stamp cards when adding stamps
+    if (actionLower === 'agregar' && normalizedType === 'stamp') {
+      if (purchaseAmount) {
+        details.push({ label: 'Monto de Compra', value: formatCurrency(parseFloat(purchaseAmount) || 0) });
+      }
+      details.push({ label: 'Cantidad de Sellos', value: actionAmount });
+    } else if (actionLower === 'agregar' && config.requiresPurchaseAmount) {
       details.push({ label: 'Monto de Compra', value: formatCurrency(parseFloat(purchaseAmount) || 0) });
     } else if (actionLower === 'agregar') {
       details.push({ label: 'Cantidad', value: actionAmount });
@@ -97,9 +104,15 @@ const ResultPage = () => {
     } else if (actionLower === 'agregarvisitas') {
       // Multipass: Add visits
       details.push({ label: 'Visitas a Agregar', value: actionAmount });
+      if (purchaseAmount) {
+        details.push({ label: 'Monto de Compra', value: formatCurrency(parseFloat(purchaseAmount) || 0) });
+      }
     } else if (actionLower === 'canjearvisitas') {
       // Multipass: Redeem visits
       details.push({ label: 'Visitas a Canjear', value: actionAmount });
+      if (purchaseAmount) {
+        details.push({ label: 'Monto de Compra', value: formatCurrency(parseFloat(purchaseAmount) || 0) });
+      }
     } else if (actionLower === 'agregarpuntos') {
       // Multipass: Add bonus points
       details.push({ label: 'Puntos a Agregar', value: actionAmount });
@@ -108,15 +121,22 @@ const ResultPage = () => {
       details.push({ label: 'Puntos a Canjear', value: actionAmount });
     }
     
+    // Include purchase amount for coupon redemption
     if (actionLower === 'usar') {
       details.push({ label: 'Estado del Cupón', value: 'Activo' });
+      if (purchaseAmount) {
+        details.push({ label: 'Monto de Compra', value: formatCurrency(parseFloat(purchaseAmount) || 0) });
+      }
     }
+    
+    // For stamp cards, always pass purchaseAmount if available
+    const shouldIncludePurchaseAmount = config.requiresPurchaseAmount || normalizedType === 'stamp' || normalizedType === 'coupon';
     
     setConfirmModal({ 
       open: true, 
       action, 
       details,
-      purchaseAmount: config.requiresPurchaseAmount ? purchaseAmount : '',
+      purchaseAmount: shouldIncludePurchaseAmount ? purchaseAmount : '',
       rewardTier: rewardTier // Store the reward tier for later use
     });
   };

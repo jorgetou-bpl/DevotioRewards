@@ -17,7 +17,8 @@ import {
   ChevronUp,
   Gift,
   User,
-  CreditCard
+  CreditCard,
+  X
 } from 'lucide-react';
 
 // Import extracted components

@@ -226,7 +226,17 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(g
     except jwt.InvalidTokenError:
         raise HTTPException(status_code=401, detail="Invalid token")
 
-async def call_boomerang_api(method: str, endpoint: str, data: dict = None) -> dict:
+async def call_boomerang_api(method: str, endpoint: str, data: dict = None, raise_on_error: bool = True) -> dict:
+    """
+    Call Boomerang API with optional error handling control.
+    
+    Args:
+        method: HTTP method (GET, POST)
+        endpoint: API endpoint path
+        data: Request payload for POST requests
+        raise_on_error: If True (default), raises HTTPException on error. 
+                       If False, returns the error response for caller to handle.
+    """
     # Always use mock data for DEMO cards (for proposal demo purposes)
     if '/cards/' in endpoint:
         card_id = endpoint.split('/cards/')[-1].split('/')[0].upper()
@@ -262,6 +272,15 @@ async def call_boomerang_api(method: str, endpoint: str, data: dict = None) -> d
             if response.status_code >= 400:
                 error_detail = response.text
                 logger.error(f"Boomerang API error: {response.status_code} - {error_detail}")
+                
+                # Return error response for caller to handle if raise_on_error is False
+                if not raise_on_error:
+                    try:
+                        error_json = response.json()
+                        return {"code": response.status_code, "message": error_json.get('message', error_detail), "data": None}
+                    except:
+                        return {"code": response.status_code, "message": error_detail, "data": None}
+                
                 raise HTTPException(
                     status_code=response.status_code, 
                     detail=f"Error de API Boomerang: {error_detail[:200]}"

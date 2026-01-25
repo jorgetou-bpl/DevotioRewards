@@ -41,6 +41,8 @@ const ResultPage = () => {
   const [showCardInfo, setShowCardInfo] = useState(false);
   const [confirmModal, setConfirmModal] = useState({ open: false, action: null, details: [], purchaseAmount: '' });
   const [successModal, setSuccessModal] = useState({ open: false, message: '' });
+  const [templateRewardTiers, setTemplateRewardTiers] = useState([]);
+  const [loadingTemplate, setLoadingTemplate] = useState(false);
 
   const currencyInfo = getCurrencyInfo();
 
@@ -54,6 +56,37 @@ const ResultPage = () => {
       setActiveTab(config.tabs[0]);
     }
   }, [cardType, config]);
+
+  // Fetch template data for stamp cards with available rewards
+  // This gets the reward tier configuration from the card's template
+  useEffect(() => {
+    const fetchTemplateRewardTiers = async () => {
+      // Only fetch for stamp cards with unused rewards and a valid templateId
+      const normalizedType = cardType ? cardType.replace('_card', '') : '';
+      const hasUnusedRewards = card?.balance?.numberRewardsUnused > 0;
+      const hasTemplateId = card?.templateId;
+      const hasNoTiersFromCard = !card?.availableRewardTiers || card.availableRewardTiers.length === 0;
+      
+      if (normalizedType === 'stamp' && hasUnusedRewards && hasTemplateId && hasNoTiersFromCard) {
+        setLoadingTemplate(true);
+        try {
+          const response = await axios.get(`${API}/templates/${card.templateId}`);
+          if (response.data?.template?.rewardTiers) {
+            setTemplateRewardTiers(response.data.template.rewardTiers);
+          }
+        } catch (error) {
+          console.log('No reward tiers available for this template');
+          setTemplateRewardTiers([]);
+        } finally {
+          setLoadingTemplate(false);
+        }
+      }
+    };
+    
+    if (card) {
+      fetchTemplateRewardTiers();
+    }
+  }, [card, cardType]);
 
   if (!card) {
     return (

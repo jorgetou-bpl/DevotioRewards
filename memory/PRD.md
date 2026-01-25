@@ -37,6 +37,10 @@ Build a custom scanner app for "Devotio Rewards" SaaS whitelabel service connect
    - ✅ Stars fill progressively based on active stamps
    - ✅ Show only "X sellos activos" (no confusing "2/12" format)
    - ✅ Multi-reward tier selection (when configured in Boomerangme template)
+   - ✅ **Support for all 3 program types:**
+     - **Sellos** (stamps): Manual stamp entry
+     - **Visita** (visit): Per-visit stamps (auto-detected)
+     - **Gastar** (spend): Spend-based stamps (auto-detected)
 
 6. **Cashback Cards**:
    - ✅ Show balance in currency (not percentage) in Agregar view

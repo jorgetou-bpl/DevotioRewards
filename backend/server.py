@@ -435,15 +435,73 @@ async def update_settings(settings_data: SettingsUpdate, current_user: dict = De
 
 # ============ SCANNER/CARD ROUTES ============
 
+def is_phone_number(input_str: str) -> bool:
+    """Check if input looks like a phone number (digits only, 8-15 chars)"""
+    digits_only = ''.join(filter(str.isdigit, input_str))
+    return len(digits_only) >= 8 and len(digits_only) <= 15
+
 @api_router.post("/scan")
 async def scan_card(scan_data: ScanRequest, current_user: dict = Depends(get_current_user)):
-    card_id = extract_card_id_from_qr(scan_data.qr_data)
+    """
+    Scan/search for a card by:
+    - Card ID (e.g., 192362-969-247)
+    - Phone number (e.g., 50622355710)
+    - QR code data containing card ID
+    """
+    input_data = scan_data.qr_data.strip()
+    
+    # First, try to extract card ID from QR data
+    card_id = extract_card_id_from_qr(input_data)
+    
+    # If no card ID found, check if it's a phone number
+    if not card_id and is_phone_number(input_data):
+        phone_digits = ''.join(filter(str.isdigit, input_data))
+        logger.info(f"Searching by phone number: {phone_digits}")
+        
+        # Search for customer by phone
+        customer_response = await call_boomerang_api('GET', f'/customers?phone={phone_digits}')
+        if customer_response.get('code') == 200:
+            customers = customer_response.get('data', [])
+            if customers:
+                customer_id = customers[0].get('id')
+                logger.info(f"Found customer: {customer_id}")
+                
+                # Get cards for this customer
+                cards_response = await call_boomerang_api('GET', f'/cards?customerId={customer_id}')
+                if cards_response.get('code') == 200:
+                    cards = cards_response.get('data', [])
+                    if cards:
+                        # Return the first card found (or could return list for selection)
+                        card_data = cards[0]
+                        masked_data = mask_pii(card_data)
+                        
+                        await db.scan_logs.insert_one({
+                            "user_id": current_user['id'], 
+                            "card_id": card_data.get('id'), 
+                            "timestamp": datetime.now(timezone.utc).isoformat(), 
+                            "action": "scan_by_phone"
+                        })
+                        
+                        # If customer has multiple cards, add info to response
+                        if len(cards) > 1:
+                            return {
+                                "success": True, 
+                                "card": masked_data,
+                                "message": f"Cliente tiene {len(cards)} tarjetas. Mostrando la primera."
+                            }
+                        return {"success": True, "card": masked_data}
+                    else:
+                        raise HTTPException(status_code=404, detail="Cliente encontrado pero no tiene tarjetas activas")
+        
+        raise HTTPException(status_code=404, detail="No se encontró cliente con ese número de teléfono")
+    
+    # Standard card ID lookup
     if not card_id:
-        raise HTTPException(status_code=400, detail="Invalid QR code format")
+        raise HTTPException(status_code=400, detail="Formato inválido. Ingrese ID de tarjeta o número de teléfono")
     
     response = await call_boomerang_api('GET', f'/cards/{card_id}')
     if response.get('code') != 200:
-        raise HTTPException(status_code=404, detail="Card not found")
+        raise HTTPException(status_code=404, detail="Tarjeta no encontrada")
     
     card_data = response.get('data', {})
     masked_data = mask_pii(card_data)

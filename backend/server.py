@@ -447,61 +447,82 @@ def is_card_id(input_str: str) -> bool:
     # Card IDs have format like 192362-969-247
     return bool(re.match(r'^\d{5,6}-\d{3}-\d{3}$', input_str.strip()))
 
+def is_email(input_str: str) -> bool:
+    """Check if input looks like an email address"""
+    import re
+    # Simple email pattern check
+    return bool(re.match(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$', input_str.strip()))
+
+async def search_customer_and_get_card(search_type: str, search_value: str, current_user: dict, db):
+    """Helper function to search customer by phone or email and return their card"""
+    logger.info(f"Searching by {search_type}: {search_value}")
+    
+    # Search for customer
+    customer_response = await call_boomerang_api('GET', f'/customers?{search_type}={search_value}')
+    if customer_response.get('code') == 200:
+        customers = customer_response.get('data', [])
+        if customers:
+            customer_id = customers[0].get('id')
+            customer_name = f"{customers[0].get('firstName', '')} {customers[0].get('surname', '')}".strip()
+            logger.info(f"Found customer: {customer_id} - {customer_name}")
+            
+            # Get cards for this customer
+            cards_response = await call_boomerang_api('GET', f'/cards?customerId={customer_id}')
+            if cards_response.get('code') == 200:
+                cards = cards_response.get('data', [])
+                if cards:
+                    # Get full card data using the card ID
+                    card_id = cards[0].get('id')
+                    full_card_response = await call_boomerang_api('GET', f'/cards/{card_id}')
+                    if full_card_response.get('code') == 200:
+                        card_data = full_card_response.get('data', {})
+                        masked_data = mask_pii(card_data)
+                        
+                        await db.scan_logs.insert_one({
+                            "user_id": current_user['id'], 
+                            "card_id": card_id, 
+                            "timestamp": datetime.now(timezone.utc).isoformat(), 
+                            "action": f"scan_by_{search_type}"
+                        })
+                        
+                        # If customer has multiple cards, add info to response
+                        if len(cards) > 1:
+                            return {
+                                "success": True, 
+                                "card": masked_data,
+                                "message": f"Cliente tiene {len(cards)} tarjetas. Mostrando la primera."
+                            }
+                        return {"success": True, "card": masked_data}
+                else:
+                    return {"error": "Cliente encontrado pero no tiene tarjetas activas", "code": 404}
+    
+    return {"error": f"No se encontró cliente con ese {search_type}", "code": 404}
+
 @api_router.post("/scan")
 async def scan_card(scan_data: ScanRequest, current_user: dict = Depends(get_current_user)):
     """
     Scan/search for a card by:
     - Card ID (e.g., 192362-969-247)
     - Phone number (e.g., 50622355710)
+    - Email address (e.g., cliente@email.com)
     - QR code data containing card ID
     """
     input_data = scan_data.qr_data.strip()
     
-    # Check if it's a phone number first (before trying as card ID)
+    # Check if it's an email address
+    if is_email(input_data):
+        result = await search_customer_and_get_card('email', input_data, current_user, db)
+        if 'error' in result:
+            raise HTTPException(status_code=result['code'], detail=result['error'])
+        return result
+    
+    # Check if it's a phone number (before trying as card ID)
     if is_phone_number(input_data) and not is_card_id(input_data):
         phone_digits = ''.join(filter(str.isdigit, input_data))
-        logger.info(f"Searching by phone number: {phone_digits}")
-        
-        # Search for customer by phone
-        customer_response = await call_boomerang_api('GET', f'/customers?phone={phone_digits}')
-        if customer_response.get('code') == 200:
-            customers = customer_response.get('data', [])
-            if customers:
-                customer_id = customers[0].get('id')
-                customer_name = f"{customers[0].get('firstName', '')} {customers[0].get('surname', '')}".strip()
-                logger.info(f"Found customer: {customer_id} - {customer_name}")
-                
-                # Get cards for this customer
-                cards_response = await call_boomerang_api('GET', f'/cards?customerId={customer_id}')
-                if cards_response.get('code') == 200:
-                    cards = cards_response.get('data', [])
-                    if cards:
-                        # Get full card data using the card ID
-                        card_id = cards[0].get('id')
-                        full_card_response = await call_boomerang_api('GET', f'/cards/{card_id}')
-                        if full_card_response.get('code') == 200:
-                            card_data = full_card_response.get('data', {})
-                            masked_data = mask_pii(card_data)
-                            
-                            await db.scan_logs.insert_one({
-                                "user_id": current_user['id'], 
-                                "card_id": card_id, 
-                                "timestamp": datetime.now(timezone.utc).isoformat(), 
-                                "action": "scan_by_phone"
-                            })
-                            
-                            # If customer has multiple cards, add info to response
-                            if len(cards) > 1:
-                                return {
-                                    "success": True, 
-                                    "card": masked_data,
-                                    "message": f"Cliente tiene {len(cards)} tarjetas. Mostrando la primera."
-                                }
-                            return {"success": True, "card": masked_data}
-                    else:
-                        raise HTTPException(status_code=404, detail="Cliente encontrado pero no tiene tarjetas activas")
-        
-        raise HTTPException(status_code=404, detail="No se encontró cliente con ese número de teléfono")
+        result = await search_customer_and_get_card('phone', phone_digits, current_user, db)
+        if 'error' in result:
+            raise HTTPException(status_code=result['code'], detail=result['error'])
+        return result
     
     # Try to extract card ID from QR data or use as-is
     card_id = extract_card_id_from_qr(input_data)

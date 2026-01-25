@@ -152,8 +152,34 @@ const LoginPage = () => {
             </Button>
           </form>
 
-{/* Register and Forgot Password options removed per client request - 
-             Users are managed directly in Boomerangme admin panel */}
+          {/* Forgot Password Link */}
+          {isLogin && (
+            <div className="text-center mt-4">
+              <button
+                type="button"
+                onClick={() => toast.info('Por favor contacte al administrador de Devotio Rewards para restablecer su contraseña.')}
+                className="text-xs sm:text-sm text-zinc-500 hover:text-[#120627] transition-colors underline"
+                data-testid="forgot-password-link"
+              >
+                ¿Olvidaste tu contraseña?
+              </button>
+            </div>
+          )}
+
+          {/* Toggle between Login and Register */}
+          <div className="text-center mt-6 pt-4 border-t border-zinc-200">
+            <p className="text-xs sm:text-sm text-zinc-500">
+              {isLogin ? '¿No tienes una cuenta?' : '¿Ya tienes una cuenta?'}
+              <button
+                type="button"
+                onClick={() => setIsLogin(!isLogin)}
+                className="ml-2 text-[#120627] font-semibold hover:underline"
+                data-testid="toggle-auth-mode"
+              >
+                {isLogin ? 'Crear cuenta' : 'Iniciar sesión'}
+              </button>
+            </p>
+          </div>
         </div>
 
         {/* Footer */}

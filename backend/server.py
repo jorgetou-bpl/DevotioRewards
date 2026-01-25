@@ -528,7 +528,7 @@ async def scan_card(scan_data: ScanRequest, current_user: dict = Depends(get_cur
     card_id = extract_card_id_from_qr(input_data)
     
     if not card_id:
-        raise HTTPException(status_code=400, detail="Formato inválido. Ingrese ID de tarjeta o número de teléfono")
+        raise HTTPException(status_code=400, detail="Formato inválido. Ingrese ID de tarjeta, teléfono o email")
     
     response = await call_boomerang_api('GET', f'/cards/{card_id}')
     if response.get('code') != 200:

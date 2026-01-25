@@ -404,7 +404,10 @@ const ResultPage = () => {
     // Stamp card "Canjear" tab - show available rewards to redeem
     if ((normalizedType === 'stamp') && activeTab === 'Canjear') {
       const numberRewardsUnused = balance.numberRewardsUnused ?? 0;
-      const availableRewardTiers = card.availableRewardTiers || [];
+      // Use card's availableRewardTiers if present, otherwise use template reward tiers
+      const availableRewardTiers = (card.availableRewardTiers && card.availableRewardTiers.length > 0) 
+        ? card.availableRewardTiers 
+        : templateRewardTiers;
       
       return (
         <div className="space-y-4 sm:space-y-6">
@@ -436,32 +439,62 @@ const ResultPage = () => {
             </div>
           </div>
           
-          {/* Multi-reward selection dropdown (if available) */}
-          {availableRewardTiers.length > 0 ? (
+          {/* Loading state for template fetch */}
+          {loadingTemplate && (
+            <div className="text-center p-4">
+              <Loader2 className="h-6 w-6 animate-spin mx-auto text-zinc-400" />
+              <p className="text-xs text-zinc-500 mt-2">Cargando opciones de recompensa...</p>
+            </div>
+          )}
+          
+          {/* Multi-reward selection with cards UI (if tiers available) */}
+          {!loadingTemplate && availableRewardTiers.length > 0 && numberRewardsUnused > 0 ? (
             <div className="space-y-3">
               <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500 block">
-                Seleccionar recompensa
+                Seleccionar recompensa a canjear
               </label>
-              <select
-                value={actionAmount}
-                onChange={(e) => {
-                  const tierId = parseInt(e.target.value);
-                  setActionAmount(tierId);
-                }}
-                className="input-brutalist w-full h-12 sm:h-14 text-sm sm:text-base"
-                disabled={loading || numberRewardsUnused < 1}
-                data-testid="reward-tier-select"
-              >
-                <option value="">-- Seleccionar --</option>
-                {availableRewardTiers.map((tier, index) => (
-                  <option key={tier.id || index} value={tier.id || index + 1}>
-                    {tier.name || `Recompensa ${index + 1}`} - A los {tier.threshold || ((index + 1) * 10)} sellos
-                  </option>
-                ))}
-              </select>
+              <div className="space-y-2">
+                {availableRewardTiers.map((tier, index) => {
+                  const tierId = tier.id || index + 1;
+                  const isSelected = actionAmount === tierId;
+                  return (
+                    <button
+                      key={tierId}
+                      onClick={() => setActionAmount(tierId)}
+                      disabled={loading}
+                      className={`w-full p-4 border-2 rounded-xl text-left transition-all ${
+                        isSelected 
+                          ? 'border-[#120627] bg-zinc-50' 
+                          : 'border-zinc-200 bg-white hover:border-zinc-300'
+                      }`}
+                      data-testid={`reward-tier-card-${tierId}`}
+                    >
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <p className="font-medium text-sm sm:text-base text-[#120627]">
+                            {tier.name || `Recompensa ${index + 1}`}
+                          </p>
+                          <p className="text-xs text-zinc-500 mt-1">
+                            A los {tier.threshold || 10} sellos
+                          </p>
+                        </div>
+                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                          isSelected 
+                            ? 'border-[#120627] bg-[#120627]' 
+                            : 'border-zinc-300'
+                        }`}>
+                          {isSelected && <Check className="h-3 w-3 text-white" />}
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
               <Button
                 onClick={() => {
-                  const selectedTier = availableRewardTiers.find(t => t.id === actionAmount || (!t.id && actionAmount === availableRewardTiers.indexOf(t) + 1));
+                  const selectedTier = availableRewardTiers.find(t => 
+                    t.id === actionAmount || (!t.id && actionAmount === availableRewardTiers.indexOf(t) + 1)
+                  );
                   openConfirmation('Canjear', selectedTier);
                 }}
                 disabled={loading || numberRewardsUnused < 1 || !actionAmount}
@@ -471,7 +504,7 @@ const ResultPage = () => {
                 {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Canjear Recompensa'}
               </Button>
             </div>
-          ) : numberRewardsUnused > 0 ? (
+          ) : !loadingTemplate && numberRewardsUnused > 0 ? (
             // Single reward redemption (no tiers configured)
             <Button
               onClick={() => openConfirmation('Canjear')}
@@ -481,7 +514,7 @@ const ResultPage = () => {
             >
               {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Canjear Recompensa'}
             </Button>
-          ) : (
+          ) : !loadingTemplate ? (
             <div className="text-center p-6 bg-zinc-50 rounded-xl">
               <Gift className="h-10 w-10 mx-auto text-zinc-300 mb-3" />
               <p className="text-zinc-500 text-sm">
@@ -491,7 +524,7 @@ const ResultPage = () => {
                 Sigue acumulando sellos para ganar recompensas.
               </p>
             </div>
-          )}
+          ) : null}
         </div>
       );
     }

@@ -79,22 +79,26 @@ All 8 Boomerangme card types now correctly recognized and rendered:
 
 ## What's Been Implemented
 
-### Session 9 - Multi-Reward Selection for Stamp Cards (January 25, 2026)
+### Session 9 - Multi-Program Support & Reward Selection (January 25, 2026)
 1. **New Backend Endpoint: `/api/templates/{template_id}`**
    - Fetches template data from Boomerangme API
    - Returns reward tiers configuration (`rewardTiers` array)
    - Each tier includes: id, name, threshold (stamps needed), value
 
 2. **Multi-Reward Selection UI for Stamp Cards**
-   - Frontend now fetches template data when stamp card has unused rewards
-   - When reward tiers are configured: Shows card-selection UI with radio buttons
-   - When no tiers configured: Falls back to simple "Canjear Recompensa" button
-   - Loading state while fetching template data
+   - Frontend displays card-selection UI when `availableRewardTiers` exists
+   - Shows reward name and stamp threshold (e.g., "Cafe Gratis - A los 10 sellos")
+   - Falls back to simple button when no tiers configured
+   - Purchase amount input always available for LTV tracking
 
-3. **Note on Current State**
-   - The user's test cards (template ID 996928) don't have reward tiers configured in Boomerangme
-   - Simple redemption UI is correctly shown (single button)
-   - When tiers ARE configured in Boomerangme, card-selection UI will automatically appear
+3. **Multi-Program Type Support for Stamp Cards (Auto-Detection)**
+   - Backend now auto-detects the correct endpoint based on card configuration:
+     - **Sellos** → `add-stamp` endpoint (manual stamps)
+     - **Visita** → `add-visit` endpoint (per-visit stamps)
+     - **Gastar** → `add-purchase` endpoint (spend-based stamps)
+   - Handles "Irrelevant accrual type" errors gracefully with fallback
+   - All program types support `purchaseSum` for LTV tracking
+   - Appropriate success messages for each type (Spanish localized)
 
 ### Session 8 - P2 Fix & Refactoring (January 18, 2026)
 1. **Fixed API Auth Status Codes (P2)**

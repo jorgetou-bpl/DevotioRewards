@@ -1649,7 +1649,7 @@ const ResultPage = () => {
                 </div>
               )}
               {/* Show "Until next level" for cashback cards if tier info available */}
-              {(normalizedType === 'cashback' || normalizedType === 'cashback_card') && 
+              {(cardType === 'cashback' || cardType === 'cashback_card') && 
                card.nextTierThreshold && balance.discountAmount !== undefined && (
                 <div className="flex justify-between p-3 sm:p-4">
                   <span className="text-zinc-500 text-sm">Hasta el siguiente nivel</span>

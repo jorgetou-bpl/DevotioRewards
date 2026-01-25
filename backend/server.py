@@ -46,6 +46,61 @@ async def get_credentials(credentials: HTTPAuthorizationCredentials = Depends(se
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
+# ============ ERROR HANDLING ============
+
+# User-friendly error messages (hide technical details from end users)
+SUPPORT_MESSAGE = "Por favor contacte al administrador de Devotio Rewards para asistencia."
+
+def get_user_friendly_error(error_type: str, technical_error: str = None) -> str:
+    """
+    Return user-friendly error messages without exposing API details.
+    Log the technical error for debugging but return a clean message to users.
+    """
+    if technical_error:
+        logger.error(f"Technical error ({error_type}): {technical_error}")
+    
+    error_messages = {
+        "card_not_found": "Tarjeta no encontrada. Verifique el ID e intente nuevamente.",
+        "customer_not_found": "Cliente no encontrado. Verifique los datos e intente nuevamente.",
+        "invalid_format": "Formato inválido. Ingrese ID de tarjeta, teléfono o email.",
+        "connection_error": f"Error de conexión. {SUPPORT_MESSAGE}",
+        "timeout": f"El servicio está tardando más de lo esperado. {SUPPORT_MESSAGE}",
+        "action_failed": f"No se pudo completar la acción. {SUPPORT_MESSAGE}",
+        "template_not_found": "Información de plantilla no disponible.",
+        "already_redeemed": "Esta recompensa ya fue canjeada.",
+        "no_rewards": "No hay recompensas disponibles para canjear.",
+        "visit_limit": "Ya se registró una visita hoy para esta tarjeta.",
+        "insufficient_balance": "Saldo insuficiente para esta operación.",
+        "general_error": f"Ocurrió un error. {SUPPORT_MESSAGE}",
+    }
+    return error_messages.get(error_type, error_messages["general_error"])
+
+def parse_api_error(error_message: str) -> str:
+    """
+    Parse API error messages and return user-friendly versions.
+    This hides technical API details from end users.
+    """
+    error_lower = str(error_message).lower()
+    
+    # Map common API errors to user-friendly messages
+    if "irrelevant accrual type" in error_lower:
+        return None  # This is handled by fallback logic, not shown to user
+    if "visit has already been registered" in error_lower:
+        return get_user_friendly_error("visit_limit")
+    if "card not found" in error_lower:
+        return get_user_friendly_error("card_not_found")
+    if "customer not found" in error_lower:
+        return get_user_friendly_error("customer_not_found")
+    if "already redeemed" in error_lower or "coupon was redeemed" in error_lower:
+        return get_user_friendly_error("already_redeemed")
+    if "insufficient" in error_lower or "not enough" in error_lower:
+        return get_user_friendly_error("insufficient_balance")
+    if "no rewards" in error_lower or "no available" in error_lower:
+        return get_user_friendly_error("no_rewards")
+    
+    # Default: return generic error without exposing API details
+    return get_user_friendly_error("general_error", error_message)
+
 # ============ MODELS ============
 
 class UserCreate(BaseModel):

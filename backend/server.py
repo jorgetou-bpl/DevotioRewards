@@ -635,6 +635,50 @@ async def receive_reward(card_id: str, action_data: CardActionRequest, current_u
                                     "timestamp": datetime.now(timezone.utc).isoformat(), "action": "receive_reward", "amount": action_data.amount})
     return {"success": True, "card": mask_pii(response.get('data', {})), "message": "Recompensa canjeada exitosamente"}
 
+# ============ TEMPLATE ROUTES ============
+
+@api_router.get("/templates/{template_id}")
+async def get_template(template_id: str, current_user: dict = Depends(get_current_user)):
+    """Fetch template data including reward tiers from Boomerang API"""
+    try:
+        response = await call_boomerang_api('GET', f'/templates/{template_id}')
+        if response.get('code') != 200:
+            raise HTTPException(status_code=404, detail="Plantilla no encontrada")
+        
+        template_data = response.get('data', {})
+        
+        # Extract reward tiers from template
+        reward_tiers = template_data.get('rewardTiers', [])
+        
+        # Format for frontend consumption
+        formatted_tiers = []
+        for tier in reward_tiers:
+            formatted_tiers.append({
+                'id': tier.get('id'),
+                'templateId': tier.get('templateId'),
+                'name': tier.get('name', f"Recompensa a los {tier.get('threshold', 0)} sellos"),
+                'type': tier.get('type', 0),  # 0=custom, 1=amount, 2=percent
+                'threshold': tier.get('threshold', 0),  # Stamps needed
+                'value': tier.get('value', 0),
+                'valueLimit': tier.get('valueLimit'),
+                'usageLimit': tier.get('usageLimit')
+            })
+        
+        return {
+            "success": True,
+            "template": {
+                "id": template_data.get('id'),
+                "name": template_data.get('name'),
+                "type": template_data.get('type'),
+                "rewardTiers": formatted_tiers
+            }
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error fetching template: {e}")
+        raise HTTPException(status_code=500, detail="Error al obtener datos de la plantilla")
+
 # ============ CUSTOMER ROUTES ============
 
 @api_router.get("/customers")

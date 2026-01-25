@@ -932,7 +932,7 @@ async def search_customers(
 async def get_customer(customer_id: str, current_user: dict = Depends(get_current_user)):
     response = await call_boomerang_api('GET', f'/customers/{customer_id}')
     if response.get('code') != 200:
-        raise HTTPException(status_code=404, detail="Customer not found")
+        raise HTTPException(status_code=404, detail=get_user_friendly_error("customer_not_found"))
     return {"success": True, "customer": mask_pii(response.get('data', {}))}
 
 @api_router.get("/customers/{customer_id}/cards")

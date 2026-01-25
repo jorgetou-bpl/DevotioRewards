@@ -249,39 +249,47 @@ const ResultPage = () => {
 
     // For stamp cards, show stamp grid
     if ((normalizedType === 'stamp') && activeTab === 'Agregar') {
-      // Stamp card calculation:
-      // - stampsBeforeReward = stamps needed until next reward (NOT total stamps per reward)
-      // - numberStampsTotal = total stamps ever collected
-      // - For a new card with 0 stamps: stampsBeforeReward equals the reward threshold
-      // - As stamps are added, stampsBeforeReward decreases
-      // - When stampsBeforeReward reaches 0, a reward is earned and it resets
+      // Stamp card display logic:
+      // - ALWAYS display 10 stars (standard Boomerang "Recuento de estampillas")
+      // - stampsBeforeReward = stamps remaining until NEXT reward
+      // - activeStamps = 10 - stampsBeforeReward (how many are filled)
+      // 
+      // Example: Card with rewards at 2 and 10 stamps
+      // - New card (0 collected): stampsBeforeReward=2, active=10-2=8? NO!
+      // - We need to check if card is new (numberStampsTotal = 0)
+      // - After 2 stamps (first reward): stampsBeforeReward=8, active=10-8=2 ✓
+      // - After 10 stamps (second reward): stampsBeforeReward=2 (reset), active=10-2=8? 
+      //   NO - should show 0 because cycle resets
       
-      // Get the reward threshold from available tiers, or use stampsBeforeReward as fallback
-      // If numberStampsTotal is 0 and stampsBeforeReward > 0, then stampsBeforeReward IS the threshold
-      const rewardThreshold = (card.availableRewardTiers && card.availableRewardTiers.length > 0 
-        ? card.availableRewardTiers[0].threshold 
-        : null) || balance.stampsBeforeReward || 10;
+      const displayTotal = 10; // Always show 10 stars
+      const stampsBeforeReward = balance.stampsBeforeReward ?? displayTotal;
+      const totalStampsCollected = balance.numberStampsTotal || 0;
+      const numberRewardsUnused = balance.numberRewardsUnused || 0;
       
-      const stampsBeforeReward = balance.stampsBeforeReward ?? rewardThreshold;
-      
-      // Calculate active stamps: threshold - stampsBeforeReward
-      // Example: threshold=10, stampsBeforeReward=10 → activeStamps=0 (new card)
-      // Example: threshold=10, stampsBeforeReward=8 → activeStamps=2
-      // Example: threshold=2, stampsBeforeReward=2 → activeStamps=0 (new card with 2-stamp threshold)
-      const activeStamps = Math.max(0, rewardThreshold - stampsBeforeReward);
+      // Calculate active stamps towards current reward cycle
+      // If no stamps collected (new card), show 0 active
+      // Otherwise, calculate based on remaining until next reward
+      let activeStamps;
+      if (totalStampsCollected === 0) {
+        // New card - no stamps collected yet
+        activeStamps = 0;
+      } else {
+        // Card with stamps - active = displayTotal - stampsBeforeReward
+        activeStamps = Math.max(0, displayTotal - stampsBeforeReward);
+      }
       
       return (
         <div className="space-y-4 sm:space-y-6">
           <StampGrid 
             activeStamps={activeStamps} 
             stampsUntilReward={stampsBeforeReward}
-            totalStampsForReward={rewardThreshold}
-            numberStampsTotal={rewardThreshold}
+            totalStampsForReward={displayTotal}
+            numberStampsTotal={displayTotal}
           />
           
           <div className="text-center">
             <p className="text-xs sm:text-sm text-zinc-500">
-              Sellos activos: {activeStamps} / {rewardThreshold}
+              Sellos activos: {activeStamps} / {displayTotal}
             </p>
             <p className="text-xs sm:text-sm text-zinc-500 mt-1">
               {stampsBeforeReward > 0 

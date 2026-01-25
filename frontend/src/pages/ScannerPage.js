@@ -285,7 +285,7 @@ const ScannerPage = () => {
                   type="text"
                   value={manualInput}
                   onChange={(e) => setManualInput(e.target.value)}
-                  placeholder="ID de tarjeta o teléfono"
+                  placeholder="ID, teléfono o email"
                   className="input-brutalist text-sm sm:text-base pr-16"
                   data-testid="manual-input"
                 />
@@ -301,7 +301,7 @@ const ScannerPage = () => {
                 )}
               </div>
               <p className="text-xs text-zinc-400 text-center">
-                Buscar por ID de tarjeta (ej: 192362-969-247) o número de teléfono
+                Buscar por ID de tarjeta, número de teléfono o email del cliente
               </p>
             </form>
           )}

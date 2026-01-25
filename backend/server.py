@@ -658,11 +658,12 @@ async def add_stamp(card_id: str, action_data: CardActionRequest, current_user: 
             last_error = error_msg
             continue
         
-        # Other error - raise immediately
-        raise HTTPException(status_code=response.get('code', 400), detail=f"Error de API Boomerang: {error_msg}")
+        # Other error - parse and return user-friendly message
+        user_error = parse_api_error(error_msg)
+        raise HTTPException(status_code=response.get('code', 400), detail=user_error)
     
     # All endpoints failed
-    raise HTTPException(status_code=400, detail=f"No se pudo agregar al card. Último error: {last_error}")
+    raise HTTPException(status_code=400, detail=get_user_friendly_error("action_failed", last_error))
 
 @api_router.post("/cards/{card_id}/subtract-reward")
 async def subtract_reward(card_id: str, action_data: CardActionRequest, current_user: dict = Depends(get_current_user)):

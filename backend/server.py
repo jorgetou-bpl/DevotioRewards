@@ -140,7 +140,7 @@ class SettingsResponse(BaseModel):
     enable_manual_search: bool = False
 
 class CardActionRequest(BaseModel):
-    amount: Optional[int] = 1
+    amount: Optional[float] = 1  # Changed to float to support decimal amounts (e.g., cashback)
     comment: Optional[str] = None
     purchaseSum: Optional[float] = None
 

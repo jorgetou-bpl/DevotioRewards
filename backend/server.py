@@ -300,10 +300,9 @@ async def call_boomerang_api(method: str, endpoint: str, data: dict = None, rais
             return get_mock_response(endpoint, method, data)
     
     if not BOOMERANG_API_KEY:
-        logger.warning("No Boomerang API key configured, returning mock data")
+        logger.warning("No API key configured, returning mock data")
         return get_mock_response(endpoint, method, data)
     
-    # Boomerang API uses X-Api-Key header for authentication
     headers = {
         'X-Api-Key': BOOMERANG_API_KEY,
         'Content-Type': 'application/json',
@@ -311,7 +310,7 @@ async def call_boomerang_api(method: str, endpoint: str, data: dict = None, rais
     }
     url = f"{BOOMERANG_API_BASE}{endpoint}"
     
-    logger.info(f"Calling Boomerang API: {method} {url}")
+    logger.info(f"Calling API: {method} {url}")
     
     async with httpx.AsyncClient() as client:
         try:
@@ -322,11 +321,11 @@ async def call_boomerang_api(method: str, endpoint: str, data: dict = None, rais
             else:
                 raise ValueError(f"Unsupported method: {method}")
             
-            logger.info(f"Boomerang API response: {response.status_code}")
+            logger.info(f"API response: {response.status_code}")
             
             if response.status_code >= 400:
                 error_detail = response.text
-                logger.error(f"Boomerang API error: {response.status_code} - {error_detail}")
+                logger.error(f"API error: {response.status_code} - {error_detail}")
                 
                 # Return error response for caller to handle if raise_on_error is False
                 if not raise_on_error:
@@ -336,9 +335,11 @@ async def call_boomerang_api(method: str, endpoint: str, data: dict = None, rais
                     except:
                         return {"code": response.status_code, "message": error_detail, "data": None}
                 
+                # Parse the error and return user-friendly message
+                user_error = parse_api_error(error_detail)
                 raise HTTPException(
                     status_code=response.status_code, 
-                    detail=f"Error de API Boomerang: {error_detail[:200]}"
+                    detail=user_error
                 )
             
             result = response.json()
@@ -348,11 +349,11 @@ async def call_boomerang_api(method: str, endpoint: str, data: dict = None, rais
             return {"code": 200, "data": result}
             
         except httpx.TimeoutException:
-            logger.error("Boomerang API timeout")
-            raise HTTPException(status_code=504, detail="Tiempo de espera agotado en API Boomerang")
+            logger.error("API timeout")
+            raise HTTPException(status_code=504, detail=get_user_friendly_error("timeout"))
         except httpx.RequestError as e:
-            logger.error(f"Failed to connect to Boomerang API: {e}")
-            raise HTTPException(status_code=502, detail=f"Error de conexión con API Boomerang: {str(e)}")
+            logger.error(f"Failed to connect to API: {e}")
+            raise HTTPException(status_code=502, detail=get_user_friendly_error("connection_error", str(e)))
 
 def get_mock_response(endpoint: str, method: str, data: dict = None) -> dict:
     """Return mock data for demo"""

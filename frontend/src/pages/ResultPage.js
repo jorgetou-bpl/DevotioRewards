@@ -1607,20 +1607,12 @@ const ResultPage = () => {
           
           {showCardInfo && (
             <div className="border-t border-zinc-200 divide-y divide-zinc-100">
-              {/* Stamp card - calculate active stamps using stampsBeforeReward */}
+              {/* Stamp card - use currentNumberOfUses as active stamps */}
               {(cardType === 'stamp' || cardType === 'stamp_card') && (
                 <div className="flex justify-between p-3 sm:p-4">
                   <span className="text-zinc-500 text-sm">Sellos activos</span>
                   <span className="font-medium text-sm">
-                    {(() => {
-                      const displayTotal = 10; // Always 10 stars
-                      const stampsBeforeReward = balance.stampsBeforeReward ?? displayTotal;
-                      const totalStampsCollected = balance.numberStampsTotal || 0;
-                      // New card = 0 active stamps
-                      if (totalStampsCollected === 0) return 0;
-                      // Otherwise calculate: 10 - stampsBeforeReward
-                      return Math.max(0, displayTotal - stampsBeforeReward);
-                    })()}
+                    {balance.currentNumberOfUses ?? 0}
                   </span>
                 </div>
               )}

@@ -601,7 +601,7 @@ async def scan_card(scan_data: ScanRequest, current_user: dict = Depends(get_cur
 async def get_card(card_id: str, current_user: dict = Depends(get_current_user)):
     response = await call_boomerang_api('GET', f'/cards/{card_id}')
     if response.get('code') != 200:
-        raise HTTPException(status_code=404, detail="Card not found")
+        raise HTTPException(status_code=404, detail=get_user_friendly_error("card_not_found"))
     return {"success": True, "card": mask_pii(response.get('data', {}))}
 
 @api_router.post("/cards/{card_id}/add-stamp")

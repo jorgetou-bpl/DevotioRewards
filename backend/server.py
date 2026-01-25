@@ -550,9 +550,11 @@ async def search_customer_and_get_card(search_type: str, search_value: str, curr
                             }
                         return {"success": True, "card": masked_data}
                 else:
-                    return {"error": "Cliente encontrado pero no tiene tarjetas activas", "code": 404}
+                    return {"error": "Cliente encontrado pero no tiene tarjetas activas.", "code": 404}
     
-    return {"error": f"No se encontró cliente con ese {search_type}", "code": 404}
+    # User-friendly error without exposing search type details
+    search_label = "teléfono" if search_type == "phone" else "email"
+    return {"error": f"No se encontró cliente con ese {search_label}. Verifique los datos e intente nuevamente.", "code": 404}
 
 @api_router.post("/scan")
 async def scan_card(scan_data: ScanRequest, current_user: dict = Depends(get_current_user)):

@@ -584,11 +584,11 @@ async def scan_card(scan_data: ScanRequest, current_user: dict = Depends(get_cur
     card_id = extract_card_id_from_qr(input_data)
     
     if not card_id:
-        raise HTTPException(status_code=400, detail="Formato inválido. Ingrese ID de tarjeta, teléfono o email")
+        raise HTTPException(status_code=400, detail=get_user_friendly_error("invalid_format"))
     
     response = await call_boomerang_api('GET', f'/cards/{card_id}')
     if response.get('code') != 200:
-        raise HTTPException(status_code=404, detail="Tarjeta no encontrada")
+        raise HTTPException(status_code=404, detail=get_user_friendly_error("card_not_found"))
     
     card_data = response.get('data', {})
     masked_data = mask_pii(card_data)

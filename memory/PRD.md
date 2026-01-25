@@ -36,7 +36,7 @@ Build a custom scanner app for "Devotio Rewards" SaaS whitelabel service connect
    - ✅ 10 stars displayed by default
    - ✅ Stars fill progressively based on active stamps
    - ✅ Show only "X sellos activos" (no confusing "2/12" format)
-   - ✅ Multi-reward support via dropdown/buttons in Canjear tab
+   - ✅ Multi-reward tier selection (when configured in Boomerangme template)
 
 6. **Cashback Cards**:
    - ✅ Show balance in currency (not percentage) in Agregar view
@@ -64,7 +64,7 @@ Build a custom scanner app for "Devotio Rewards" SaaS whitelabel service connect
 
 ### Card Types Supported (All P0 Bugs Fixed - January 15, 2026)
 All 8 Boomerangme card types now correctly recognized and rendered:
-- ✅ **Stamp** (type ID 0) - Shows stamp grid, Agregar/Canjear tabs, subtract-reward endpoint
+- ✅ **Stamp** (type ID 0) - Shows stamp grid, Agregar/Canjear tabs, subtract-reward endpoint, multi-tier reward selection
 - ✅ **Cashback** (type ID 1) - Shows cashback %, purchase amount input, subtract-point endpoint
 - ✅ **Multipass/Subscription** (type ID 2) - Shows Agregar/Canjear tabs, add-visit/subtract-visit endpoints
 - ✅ **Coupon** (type ID 3) - Shows single "Usar" tab, redeem-coupon endpoint
@@ -74,6 +74,23 @@ All 8 Boomerangme card types now correctly recognized and rendered:
 - ✅ **Reward** (type ID 7) - Shows reward tiers, add-scores/receive-reward endpoints
 
 ## What's Been Implemented
+
+### Session 9 - Multi-Reward Selection for Stamp Cards (January 25, 2026)
+1. **New Backend Endpoint: `/api/templates/{template_id}`**
+   - Fetches template data from Boomerangme API
+   - Returns reward tiers configuration (`rewardTiers` array)
+   - Each tier includes: id, name, threshold (stamps needed), value
+
+2. **Multi-Reward Selection UI for Stamp Cards**
+   - Frontend now fetches template data when stamp card has unused rewards
+   - When reward tiers are configured: Shows card-selection UI with radio buttons
+   - When no tiers configured: Falls back to simple "Canjear Recompensa" button
+   - Loading state while fetching template data
+
+3. **Note on Current State**
+   - The user's test cards (template ID 996928) don't have reward tiers configured in Boomerangme
+   - Simple redemption UI is correctly shown (single button)
+   - When tiers ARE configured in Boomerangme, card-selection UI will automatically appear
 
 ### Session 8 - P2 Fix & Refactoring (January 18, 2026)
 1. **Fixed API Auth Status Codes (P2)**

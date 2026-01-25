@@ -436,9 +436,16 @@ async def update_settings(settings_data: SettingsUpdate, current_user: dict = De
 # ============ SCANNER/CARD ROUTES ============
 
 def is_phone_number(input_str: str) -> bool:
-    """Check if input looks like a phone number (digits only, 8-15 chars)"""
+    """Check if input looks like a phone number (digits only, 8-15 chars, no dashes)"""
     digits_only = ''.join(filter(str.isdigit, input_str))
-    return len(digits_only) >= 8 and len(digits_only) <= 15
+    # Phone numbers are 8-15 digits and don't contain dashes in a card ID pattern (xxx-xxx-xxx)
+    return len(digits_only) >= 8 and len(digits_only) <= 15 and '-' not in input_str
+
+def is_card_id(input_str: str) -> bool:
+    """Check if input looks like a Boomerang card ID (format: XXXXXX-XXX-XXX)"""
+    import re
+    # Card IDs have format like 192362-969-247
+    return bool(re.match(r'^\d{5,6}-\d{3}-\d{3}$', input_str.strip()))
 
 @api_router.post("/scan")
 async def scan_card(scan_data: ScanRequest, current_user: dict = Depends(get_current_user)):
@@ -450,11 +457,8 @@ async def scan_card(scan_data: ScanRequest, current_user: dict = Depends(get_cur
     """
     input_data = scan_data.qr_data.strip()
     
-    # First, try to extract card ID from QR data
-    card_id = extract_card_id_from_qr(input_data)
-    
-    # If no card ID found, check if it's a phone number
-    if not card_id and is_phone_number(input_data):
+    # Check if it's a phone number first (before trying as card ID)
+    if is_phone_number(input_data) and not is_card_id(input_data):
         phone_digits = ''.join(filter(str.isdigit, input_data))
         logger.info(f"Searching by phone number: {phone_digits}")
         
@@ -464,38 +468,44 @@ async def scan_card(scan_data: ScanRequest, current_user: dict = Depends(get_cur
             customers = customer_response.get('data', [])
             if customers:
                 customer_id = customers[0].get('id')
-                logger.info(f"Found customer: {customer_id}")
+                customer_name = f"{customers[0].get('firstName', '')} {customers[0].get('surname', '')}".strip()
+                logger.info(f"Found customer: {customer_id} - {customer_name}")
                 
                 # Get cards for this customer
                 cards_response = await call_boomerang_api('GET', f'/cards?customerId={customer_id}')
                 if cards_response.get('code') == 200:
                     cards = cards_response.get('data', [])
                     if cards:
-                        # Return the first card found (or could return list for selection)
-                        card_data = cards[0]
-                        masked_data = mask_pii(card_data)
-                        
-                        await db.scan_logs.insert_one({
-                            "user_id": current_user['id'], 
-                            "card_id": card_data.get('id'), 
-                            "timestamp": datetime.now(timezone.utc).isoformat(), 
-                            "action": "scan_by_phone"
-                        })
-                        
-                        # If customer has multiple cards, add info to response
-                        if len(cards) > 1:
-                            return {
-                                "success": True, 
-                                "card": masked_data,
-                                "message": f"Cliente tiene {len(cards)} tarjetas. Mostrando la primera."
-                            }
-                        return {"success": True, "card": masked_data}
+                        # Get full card data using the card ID
+                        card_id = cards[0].get('id')
+                        full_card_response = await call_boomerang_api('GET', f'/cards/{card_id}')
+                        if full_card_response.get('code') == 200:
+                            card_data = full_card_response.get('data', {})
+                            masked_data = mask_pii(card_data)
+                            
+                            await db.scan_logs.insert_one({
+                                "user_id": current_user['id'], 
+                                "card_id": card_id, 
+                                "timestamp": datetime.now(timezone.utc).isoformat(), 
+                                "action": "scan_by_phone"
+                            })
+                            
+                            # If customer has multiple cards, add info to response
+                            if len(cards) > 1:
+                                return {
+                                    "success": True, 
+                                    "card": masked_data,
+                                    "message": f"Cliente tiene {len(cards)} tarjetas. Mostrando la primera."
+                                }
+                            return {"success": True, "card": masked_data}
                     else:
                         raise HTTPException(status_code=404, detail="Cliente encontrado pero no tiene tarjetas activas")
         
         raise HTTPException(status_code=404, detail="No se encontró cliente con ese número de teléfono")
     
-    # Standard card ID lookup
+    # Try to extract card ID from QR data or use as-is
+    card_id = extract_card_id_from_qr(input_data)
+    
     if not card_id:
         raise HTTPException(status_code=400, detail="Formato inválido. Ingrese ID de tarjeta o número de teléfono")
     

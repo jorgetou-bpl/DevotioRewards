@@ -284,32 +284,18 @@ const ResultPage = () => {
     if ((normalizedType === 'stamp') && activeTab === 'Agregar') {
       // Stamp card display logic:
       // - ALWAYS display 10 stars (standard Boomerang "Recuento de estampillas")
+      // - currentNumberOfUses = active stamps in current cycle (resets after reward)
       // - stampsBeforeReward = stamps remaining until NEXT reward
-      // - activeStamps = 10 - stampsBeforeReward (how many are filled)
       // 
-      // Example: Card with rewards at 2 and 10 stamps
-      // - New card (0 collected): stampsBeforeReward=2, active=10-2=8? NO!
-      // - We need to check if card is new (numberStampsTotal = 0)
-      // - After 2 stamps (first reward): stampsBeforeReward=8, active=10-8=2 ✓
-      // - After 10 stamps (second reward): stampsBeforeReward=2 (reset), active=10-2=8? 
-      //   NO - should show 0 because cycle resets
+      // The card can be configured for rewards at any interval (e.g., every 2 stamps or every 10)
+      // We use currentNumberOfUses as the source of truth for active stamps
       
-      const displayTotal = 10; // Always show 10 stars
+      const displayTotal = 10; // Always show 10 stars for visual display
       const stampsBeforeReward = balance.stampsBeforeReward ?? displayTotal;
-      const totalStampsCollected = balance.numberStampsTotal || 0;
-      const numberRewardsUnused = balance.numberRewardsUnused || 0;
       
-      // Calculate active stamps towards current reward cycle
-      // If no stamps collected (new card), show 0 active
-      // Otherwise, calculate based on remaining until next reward
-      let activeStamps;
-      if (totalStampsCollected === 0) {
-        // New card - no stamps collected yet
-        activeStamps = 0;
-      } else {
-        // Card with stamps - active = displayTotal - stampsBeforeReward
-        activeStamps = Math.max(0, displayTotal - stampsBeforeReward);
-      }
+      // Use currentNumberOfUses as the active stamps - this is the correct field from Boomerang
+      // It represents stamps collected in the current cycle, resetting after each reward
+      const activeStamps = balance.currentNumberOfUses ?? 0;
       
       return (
         <div className="space-y-4 sm:space-y-6">
@@ -322,7 +308,7 @@ const ResultPage = () => {
           
           <div className="text-center">
             <p className="text-xs sm:text-sm text-zinc-500">
-              Sellos activos: {activeStamps} / {displayTotal}
+              Sellos activos: {activeStamps}
             </p>
             <p className="text-xs sm:text-sm text-zinc-500 mt-1">
               {stampsBeforeReward > 0 

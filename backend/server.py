@@ -851,11 +851,11 @@ async def receive_reward(card_id: str, action_data: CardActionRequest, current_u
 
 @api_router.get("/templates/{template_id}")
 async def get_template(template_id: str, current_user: dict = Depends(get_current_user)):
-    """Fetch template data including reward tiers from Boomerang API"""
+    """Fetch template data including reward tiers"""
     try:
         response = await call_boomerang_api('GET', f'/templates/{template_id}')
         if response.get('code') != 200:
-            raise HTTPException(status_code=404, detail="Plantilla no encontrada")
+            raise HTTPException(status_code=404, detail=get_user_friendly_error("template_not_found"))
         
         template_data = response.get('data', {})
         
@@ -889,7 +889,7 @@ async def get_template(template_id: str, current_user: dict = Depends(get_curren
         raise
     except Exception as e:
         logger.error(f"Error fetching template: {e}")
-        raise HTTPException(status_code=500, detail="Error al obtener datos de la plantilla")
+        raise HTTPException(status_code=500, detail=get_user_friendly_error("general_error", str(e)))
 
 # ============ CUSTOMER ROUTES ============
 

@@ -494,7 +494,8 @@ async def add_stamp(card_id: str, action_data: CardActionRequest, current_user: 
     
     last_error = None
     for endpoint, payload, success_msg in endpoints:
-        response = await call_boomerang_api('POST', f'/cards/{card_id}/{endpoint}', payload)
+        # Use raise_on_error=False to handle errors gracefully for fallback
+        response = await call_boomerang_api('POST', f'/cards/{card_id}/{endpoint}', payload, raise_on_error=False)
         
         # Check if successful
         if response.get('code') == 200:
@@ -507,13 +508,13 @@ async def add_stamp(card_id: str, action_data: CardActionRequest, current_user: 
         
         # Check if it's an "Irrelevant accrual type" error - try next endpoint
         error_msg = response.get('message', '')
-        if 'Irrelevant accrual type' in error_msg:
+        if 'Irrelevant accrual type' in str(error_msg):
             logger.info(f"Card {card_id}: {endpoint} not supported, trying next accrual type")
             last_error = error_msg
             continue
         
         # Other error - raise immediately
-        raise HTTPException(status_code=response.get('code', 400), detail=f"Error de API Boomerang: {response}")
+        raise HTTPException(status_code=response.get('code', 400), detail=f"Error de API Boomerang: {error_msg}")
     
     # All endpoints failed
     raise HTTPException(status_code=400, detail=f"No se pudo agregar al card. Último error: {last_error}")

@@ -442,16 +442,62 @@ async def get_card(card_id: str, current_user: dict = Depends(get_current_user))
 
 @api_router.post("/cards/{card_id}/add-stamp")
 async def add_stamp(card_id: str, action_data: CardActionRequest, current_user: dict = Depends(get_current_user)):
-    payload = {"stamps": action_data.amount or 1}
-    if action_data.comment:
-        payload["comment"] = action_data.comment
-    if action_data.purchaseSum:
-        payload["purchaseSum"] = action_data.purchaseSum
+    """
+    Add stamps to stamp cards - supports all 3 program types:
+    - Sellos (stamps): Manual stamp entry - uses add-stamp endpoint
+    - Visita (visit): Per-visit stamps - uses add-visit endpoint  
+    - Gastar (spend): Spend-based stamps - uses add-purchase endpoint (Boomerang calculates stamps)
     
-    response = await call_boomerang_api('POST', f'/cards/{card_id}/add-stamp', payload)
-    await db.scan_logs.insert_one({"user_id": current_user['id'], "card_id": card_id, 
-                                    "timestamp": datetime.now(timezone.utc).isoformat(), "action": "add_stamp", "amount": action_data.amount})
-    return {"success": True, "card": mask_pii(response.get('data', {})), "message": "Sello agregado exitosamente"}
+    The function auto-detects the correct endpoint by trying each one and handling "Irrelevant accrual type" errors.
+    """
+    stamps = action_data.amount or 1
+    purchase_sum = action_data.purchaseSum or 0
+    comment = action_data.comment
+    
+    # Build payloads for each accrual type
+    stamp_payload = {"stamps": stamps}
+    visit_payload = {"visits": stamps}  # visits count same as stamps for visit-based
+    purchase_payload = {"amount": purchase_sum if purchase_sum > 0 else stamps}  # For gastar, send purchase amount
+    
+    # Add optional fields to all payloads
+    for payload in [stamp_payload, visit_payload, purchase_payload]:
+        if comment:
+            payload["comment"] = comment
+        if purchase_sum:
+            payload["purchaseSum"] = purchase_sum
+    
+    # Try endpoints in order: stamp -> visit -> purchase
+    endpoints = [
+        ('add-stamp', stamp_payload, "Sello agregado exitosamente"),
+        ('add-visit', visit_payload, "Visita registrada exitosamente"),
+        ('add-purchase', purchase_payload, "Compra registrada exitosamente")
+    ]
+    
+    last_error = None
+    for endpoint, payload, success_msg in endpoints:
+        response = await call_boomerang_api('POST', f'/cards/{card_id}/{endpoint}', payload)
+        
+        # Check if successful
+        if response.get('code') == 200:
+            await db.scan_logs.insert_one({
+                "user_id": current_user['id'], "card_id": card_id, 
+                "timestamp": datetime.now(timezone.utc).isoformat(), 
+                "action": endpoint, "amount": stamps, "purchase_sum": purchase_sum
+            })
+            return {"success": True, "card": mask_pii(response.get('data', {})), "message": success_msg}
+        
+        # Check if it's an "Irrelevant accrual type" error - try next endpoint
+        error_msg = response.get('message', '')
+        if 'Irrelevant accrual type' in error_msg:
+            logger.info(f"Card {card_id}: {endpoint} not supported, trying next accrual type")
+            last_error = error_msg
+            continue
+        
+        # Other error - raise immediately
+        raise HTTPException(status_code=response.get('code', 400), detail=f"Error de API Boomerang: {response}")
+    
+    # All endpoints failed
+    raise HTTPException(status_code=400, detail=f"No se pudo agregar al card. Último error: {last_error}")
 
 @api_router.post("/cards/{card_id}/subtract-reward")
 async def subtract_reward(card_id: str, action_data: CardActionRequest, current_user: dict = Depends(get_current_user)):

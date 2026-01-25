@@ -9,67 +9,77 @@ The user wants to build a custom scanner web app for a SaaS whitelabel service, 
 -   **Mobile-First Design:** Fully responsive with support for iOS safe areas.
 -   **Recent Adjustments (UAT):**
     -   Make transaction comments optional via a settings toggle.
-    -   Standardize UI/UX for Cashback, Gift, and Reward cards, using a clean numeric input for currency amounts instead of a +/- counter.
-    -   Improve mobile QR scanner performance.
-    -   Fix UI display bugs (icon overlaps, inconsistent labels, incorrect calculations).
+    -   Standardize UI/UX for all card types, ensuring a clean numeric input for currency amounts.
+    -   Fix all UI display bugs, inconsistent labels, and incorrect calculations reported during UAT.
+    -   Ensure the  is sent correctly to Boomerang for accurate LTV tracking.
     -   Remove all Made with Emergent branding/watermarks for a full white-label experience.
-    -   The in-app logo should feature full branding, while the PWA/favicon icon should be a simplified, icon-only version.
+    -   Handle dynamic reward structures within stamp cards.
 -   **Future Proposal:** A multi-tenant POS integration gateway to allow enterprise clients to trigger loyalty actions via API without using the scanner UI.
 
 **User's preferred language**: English (The user communicates in English, but the application's UI and all displayed text must be in Spanish).
 
 **what currently exists?**
-A full-stack application with a React frontend and a FastAPI backend. The app is fully branded for Devotio Rewards, with a Spanish UI, and is mobile-responsive. All 8 Boomerangme card types have been implemented, and the app has undergone multiple rounds of user acceptance testing (UAT) and adjustments.
+A full-stack application with a React frontend and a FastAPI backend, fully branded for Devotio Rewards with a Spanish UI. The application has undergone extensive User Acceptance Testing (UAT), and numerous fixes and features have been implemented.
 
-Key features include a settings page with a toggle for mandatory comments, refactored UI for major card types (Cashback, Gift, Reward), improved mobile scanner performance, and the removal of all Emergent platform watermarks. The  component has been partially refactored to improve maintainability, and a backend P2 issue regarding authentication error codes has been resolved.
+All 8 Boomerangme card types have specific UIs and backend logic. Critical issues like  tracking, currency formatting, and card-specific calculation bugs have been resolved. New features like a manual card search toggle have been added. The UI for all card types (Stamp, Discount, Coupon, Gift, Cashback, Reward, Membership, Multipass) has been significantly improved based on user feedback to provide a polished and accurate experience.
 
 **Last working item**:
--   **Last item agent was working:** The user asked to roll back the PWA/favicon logo to a previous version (a simplified, icon-only logo with a white background). The agent successfully downloaded and replaced the  file.
--   **Status:** USER VERIFICATION PENDING
--   **Agent Testing Done:** Y
--   **Which testing method agent to use?** Manual testing by user. The user needs to redeploy the application to verify the PWA icon change, as it can be heavily cached.
+-   **Last item agent was working:** The agent was investigating how to handle stamp cards that have multiple reward milestones (e.g., a reward at 2 stamps and another at 10). The user wants to be able to choose *which* earned reward to redeem. The agent discovered that this reward tier information is not in the individual card's API response but in the card's **template**. The next step is to fetch this template data to display the choice to the user.
+-   **Status:** IN PROGRESS
+-   **Agent Testing Done:** N
+-   **Which testing method agent to use?** Both. Start by creating and testing a new backend endpoint to fetch template data. Then, use the frontend testing agent to verify the new UI for selecting a reward.
 -   **User Testing Done:** N
 
 **All Pending/In progress Issue list**:
--   None. All previously reported bugs and issues have been resolved in this session.
+-   **Issue 1:** Implement Multi-Reward Redemption for Stamp Cards (P0)
+
+    -   **Description:** For stamp cards with multiple reward tiers, the Redeem Reward screen doesn't allow the user to choose which reward to use. It only shows a generic button and the total count of rewards available.
+    -   **Attempted fixes:** Investigation confirmed that the necessary  data is not available in the  endpoint response. It must be fetched from the  endpoint.
+    -   **Next debug checklist:**
+        1.  In , create a new API endpoint (e.g., ) that securely calls the Boomerangme  endpoint.
+        2.  In , when a stamp card is loaded and has , make a second API call to fetch the card's template data using its .
+        3.  Modify the Canjear (Redeem) tab UI for stamp cards. If multiple reward tiers are fetched from the template, display them as a list of selectable options instead of the current generic button.
+        4.  Update the  logic to pass the selected  to the backend when the user confirms the redemption.
+        5.  Update the backend endpoint for redeeming rewards to handle the optional .
+    -   **Why fix this issue and what will be achieved with the fix?** This is a direct feature improvement request from the user. It will give business owners more control and clarity when dealing with complex, multi-tier stamp cards, improving the app's utility.
+    -   **Status:** IN PROGRESS
+    -   **Is recurring issue?** N
+    -   **Should Test frontend/backend/both after fix?** Both
+    -   **Blocked on other issue:** None
 
 **In progress Task List**:
--   **Task 1:** Phase 2 POS Integration Gateway
-    -   **Where to resume:** A detailed technical analysis and implementation proposal for a multi-tenant POS gateway has been presented to the user. The next step is to get the user's decision on how to proceed.
-    -   **What will be achieved with this?** This will enable enterprise clients to integrate their Point-of-Sale systems directly with the Devotio Rewards platform, allowing for automated loyalty transactions and creating a new monetization opportunity.
-    -   **Status:** BLOCKED (Awaiting user decision on the proposal).
-    -   **Should Test frontend/backend/both after fix?** Both
-    -   **Blocked on something:** User decision is required to either start building, create documentation for the client, or build a proof-of-concept.
+-   None.
 
 **Upcoming and Future Tasks**
+
 -   **Upcoming Tasks:**
-    -   **P0: User Confirmation on Phase 2 POS Gateway:** The user needs to decide whether to proceed with building the gateway, creating documentation for direct integration, or building a proof-of-concept.
-    -   **P1: Final UAT & Deployment:** Once the user confirms all recent changes are satisfactory, a final round of end-to-end testing is needed before the official deployment.
--   **Future Tasks (Post-Deployment):**
-    -   **P2: Complete Refactoring of **: Extract card-specific rendering logic into separate components to improve maintainability.
-    -   **P2: Refactor **: Split the monolithic backend file into organized, feature-specific routers (e.g., , ).
+    -   **P1: Final UAT & Deployment:** Once the stamp card multi-reward feature is implemented, the user will conduct a final round of end-to-end testing before official deployment.
+-   **Future Tasks (Backlog):**
+    -   **P2: Phase 2 POS Integration Gateway:** Awaiting user decision on the proposal to build a multi-tenant POS gateway for enterprise clients. (Currently on hold).
+    -   **P2: Complete Refactoring of **: Extract the rendering logic for each of the 8 card types into smaller, dedicated components to improve maintainability.
+    -   **P2: Refactor **: Split the monolithic backend file into organized, feature-specific routers (e.g., , , ).
     -   **P2: Multi-Tenant Admin Panel:** A UI for managing multiple clients, their API keys, and configurations.
     -   **P2: Analytics Dashboard:** For viewing usage statistics.
     -   **P2: App Store Publishing:** Package the web app for mobile app stores.
 
 **Completed work in this session**
--   **Cashback & Gift Card UI Overhaul:** Fixed all calculation bugs, standardized labels (Cashback/Balance Total), and ensured consistent display across Agregar, Canjear, and Card Info sections.
--   **Input UX Improvement:** Replaced the cumbersome +/- counter with a clean, standard numeric input for all currency and multi-digit amount fields (Cashback, Gift, Reward cards), significantly improving usability for large numbers.
--   **New Feature - Optional Comments:** Implemented a full-stack solution with a settings toggle to make transaction comments optional, persisting the choice per user.
--   **Stamp Card Logic Fix:** Corrected the Sellos activos calculation to accurately reflect the progress towards the next reward, resolving a key UAT issue.
--   **Confirmation Modal Cleanup:** Removed redundant information from the transaction confirmation modal.
--   **P2 Backend Fix:** Resolved a recurring issue by changing incorrect  auth error responses to the correct .
--   **Major Refactoring:** Partially refactored the massive  by extracting modals, the stamp grid, and card type configurations into separate files, reducing its size by over 25%.
--   **White-Labeling:** Successfully removed the Made with Emergent watermark from the application by editing .
--   **Mobile Scanner Improvements:** Enhanced the QR scanner's configuration for better performance and reliability on mobile devices.
--   **UI Polish:** Fixed an icon/text overlap issue on the login and registration pages.
--   **Logo Management:** Handled multiple user requests to change and roll back the in-app and PWA/favicon logos, settling on a dual-logo strategy (full brand in-app, icon-only for PWA).
--   **Architecture Consulting:** Provided a detailed analysis and go-forward plan for a proposed Phase 2 POS integration gateway.
+-   **UAT Batch 1 & 2 Fixes (All Completed):**
+    -   **Login & Scanner Page UI:** Cleaned up UI by removing Register/Forgot Password links and extraneous background text/icons.
+    -   **New Feature - Manual Search:** Implemented a settings toggle to enable a manual card ID input field on the scanner page.
+    -   **Critical Bugfix -  Tracking:** Fixed logic across all relevant card types to ensure the  is sent correctly to Boomerang, which is essential for LTV tracking.
+    -   **Currency Formatting:** Implemented correct thousand separators for Spanish/Costa Rican locale (e.g., ).
+    -   **Stamp Card Logic:** Fixed a bug where new cards showed incorrect stamps and ensured the total number of stars displayed is always correct (based on Boomerang config).
+    -   **Discount Card UI:** Overhauled to display discount percentage and tier status (e.g., Bronce).
+    -   **Coupon Card Logic:** Now correctly detects and disables already redeemed coupons, preventing errors.
+    -   **Gift & Cashback Card Logic:** Aligned backend data to ensure transaction amount and purchase amount are consistent.
+    -   **Multipass & Reward Card Enhancements:** Added Monto de Compra fields and implemented full multi-tier reward redemption UI.
+    -   **Membership Card UI:** Completely redesigned to match the user's provided screenshot, showing tier, status, expiry, and visit counts.
+
+**Earlier issues found/mentioned but not fixed**
+-   None.
 
 **Known issue recurrence from previous fork**
--   **API Authentication Status Codes:** The issue of endpoints returning  instead of  was present and is now resolved by customizing the  scheme in .
--   **Recurrence count:** 1
--   **Status:** RESOLVED
+-   None.
 
 **Code Architecture**
 
@@ -83,45 +93,41 @@ Key features include a settings page with a toggle for mandatory comments, refac
 
 **key DB schema**
 -   **users:** 
--   **settings:**  (field added)
+-   **settings:** 
+
+**changes in tech stack**
+-   None.
 
 **All files of reference**
--   : Main file for all card interactions; heavily modified and partially refactored.
--   : Main backend file; modified for the optional comments feature and the auth status code fix.
--   : Modified to remove the Emergent watermark.
--   : Modified to improve scanner performance.
--   : Modified to fix a UI bug.
--    & : Modified to add the optional comments feature.
--   **New Files (from refactoring):** , , , .
+-   : The central component for all card interactions. Heavily modified to fix bugs and implement new UIs for all 8 card types.
+-   : The main backend file. Modified to handle  correctly, add new settings, and translate all API messages to Spanish.
+-   : Modified to configure  and action endpoints for various card types.
+-   : Modified for UI cleanup and the conditional manual search input.
+-    & : Updated to manage the new  setting.
 
 **Areas that need refactoring**:
--   : Still over 1100 lines. The core rendering logic for each card type's action tabs needs to be extracted into smaller, dedicated components.
--   : Remains a single monolithic file. The user has approved refactoring this into organized routers, which is a necessary step before starting the Phase 2 POS Gateway.
+-   : Urgently needs to be broken down. Its monolithic nature, handling all 8 card types, makes it difficult to maintain. The user has previously approved this refactoring.
+-   : Should be split into organized, feature-specific routers (e.g., , , and a new ).
 
 **key api endpoints**
--   : Now supports the  boolean field.
--   All authenticated endpoints now correctly return a  status on failure.
+-   : All card action endpoints (, , , etc.) have been updated to correctly process the  payload.
+-   : Updated to handle the  field.
+-   **New Endpoint Needed:**  to fetch reward tier data for stamp cards from the Boomerangme API.
 
 **Critical Info for New Agent**
--   **Phase 2 is the next big topic:** The user is actively considering a major architectural addition (POS Integration Gateway). Be prepared to discuss the proposal from the previous conversation and await their decision on how to proceed.
--   **Refactoring is approved and needed:** The user has agreed to refactor both the frontend () and backend (). This should be the next technical task, especially before implementing the POS gateway.
--   **PWA Caching is real:** The PWA icon/logo is the last thing the user changed. If they report not seeing the update after deployment, remind them to clear their browser cache or reinstall the app on their phone's home screen.
--   **White-Labeling is sensitive:** The Made with Emergent badge was removed by editing . This might be an unsupported modification. If any platform updates cause it to reappear, the user must be directed to contact Emergent Support, as the agent cannot control platform-level injections.
+-   **Immediate Task:** The top priority is implementing the multi-reward selection feature for stamp cards. This involves creating a new backend endpoint to fetch the card's template and updating the frontend UI to display the reward choices.
+-   **User is Actively Testing:** The user is in a UAT phase with their client. Be prepared for very specific feedback, often including card IDs and screenshots. Focus on precise, targeted fixes.
+-   **API is King:** Card behavior is dynamic and configured in the Boomerangme platform. Before debugging any unexpected card behavior, always fetch its latest data via the API () to verify its current state (, , etc.).
+-   **Refactoring is the Next Big Step:** Both  and  are due for refactoring. Once the current task is done, this should be proposed as the next major technical improvement.
 
 **documents and test reports created in this job**
--   : Updated to reflect all completed tasks.
+-   None.
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  **Request:** Asks for a technical overview of the app's stack and architecture. (Completed)
-2.  **Request:** Asks for clarification on the proposed POS integration gateway workflow. (Completed)
-3.  **Request:** Proposes a detailed architecture for a Phase 2 multi-tenant POS integration and asks for a viability check. (Completed)
-4.  **Request:** Asks to roll back the PWA/favicon logo to the previous version (icon-only). (Completed)
-5.  **Request:** Asks to change the PWA/favicon to a new design. (Superseded)
-6.  **Bug Report:** Reports that login page input icons still overlap with text. (Completed)
-7.  **Request:** Asks agent to remove the Made with Emergent watermark, stating support approved it. (Completed)
-8.  **Question:** Asks how to remove the Emergent watermark after deploying. (Completed)
-9.  **Request:** Asks agent to run a deployment health check. (Completed)
-10. **Request:** Asks to change the input for tarjeta de recompensa to allow multi-digit entry. (Completed)
+1.  **User (continue please):** Acknowledged a screenshot and asked the agent to proceed. (Done)
+2.  **User (im testing and so far so good, please kindly proceed with batch 2):** Confirmed Batch 1 fixes were good and authorized starting Batch 2. (Done)
+3.  **User (okay thanks so much, now my approach is to review...):** Provided feedback on the stamp card display. Noted that the total number of stars should always be 10 (from Boomerang config), not a dynamic number. (Fixed)
+4.  **User (okay perfect now make sense the stamp card...):** Confirmed the stamp card fix was good and asked a new question: how can users choose which reward to redeem on a multi-tier stamp card? (In Progress - This is the Last working item)
 
 **Project Health Check:**
 -   **Broken:** None
@@ -131,7 +137,7 @@ Key features include a settings page with a toggle for mandatory comments, refac
 -   **Boomerangme API:** Live integration for all loyalty card operations.
 
 **Testing status**
--   **Testing agent used after significant changes:** NO
+-   **Testing agent used after significant changes:** NO (Agent performed extensive manual testing with screenshots)
 -   **Troubleshoot agent used after agent stuck in loop:** NO
 -   **Test files created:** None
 -   **Known regressions:** None
@@ -139,7 +145,16 @@ Key features include a settings page with a toggle for mandatory comments, refac
 **Credentials to test flow:**
 -   **Login:**  / 
 -   **UAT API Key:** Located in 
--   **Test Cards:**
+-   **UAT Test Cards:**
+    -   Stamp card (new): 
+    -   Stamp card (used): 
+    -   Discount: 
+    -   Coupon (redeemed): 
+    -   Gift card: 
+    -   Reward: 
     -   Cashback: 
-    -   Stamp (8 active stamps): 
-    -   Gift Card:  (balance 75)</analysis>
+    -   Membership: 
+    -   Multi-pass: 
+
+**What agent forgot to execute**
+-   The agent completed a large number of tasks from the user's UAT feedback but did not update the  file to reflect the progress. This should be done upon completion of the next feature.</analysis>

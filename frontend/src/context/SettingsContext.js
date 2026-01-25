@@ -104,18 +104,28 @@ export const SettingsProvider = ({ children }) => {
   };
 
   // Currency formatting helper - uses period as thousand separator for Latin American currencies
-  const formatCurrency = (amount) => {
+  const formatCurrency = (amount, showDecimals = true) => {
     const currencyConfig = CURRENCIES.find(c => c.code === settings.currency) || CURRENCIES[0];
     
     // For Latin American currencies (CRC, COP, CLP, ARS, etc.), use period as thousand separator
-    // Format: ₡10.000 instead of ₡10,000 or ₡10 000
+    // Format: ₡10.000,00 instead of ₡10,000.00
     const latinAmericanCurrencies = ['CRC', 'COP', 'CLP', 'ARS', 'PEN', 'GTQ', 'HNL', 'NIO', 'PAB', 'DOP'];
     
     if (latinAmericanCurrencies.includes(currencyConfig.code)) {
-      // Manual formatting for Latin American style: 10.000
-      const formattedNumber = Math.round(amount)
-        .toString()
-        .replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+      // Manual formatting for Latin American style
+      let formattedNumber;
+      if (showDecimals) {
+        // Show 2 decimal places: 100.09 -> 100,09
+        const fixedAmount = parseFloat(amount).toFixed(2);
+        const [intPart, decPart] = fixedAmount.split('.');
+        const formattedInt = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+        formattedNumber = `${formattedInt},${decPart}`;
+      } else {
+        // No decimals: 10.000
+        formattedNumber = Math.round(amount)
+          .toString()
+          .replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+      }
       return `${currencyConfig.symbol}${formattedNumber}`;
     }
     
@@ -123,8 +133,8 @@ export const SettingsProvider = ({ children }) => {
     return new Intl.NumberFormat(currencyConfig.locale, {
       style: 'currency',
       currency: currencyConfig.code,
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
+      minimumFractionDigits: showDecimals ? 2 : 0,
+      maximumFractionDigits: showDecimals ? 2 : 0
     }).format(amount);
   };
 

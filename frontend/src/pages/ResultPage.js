@@ -263,7 +263,17 @@ const ResultPage = () => {
       setActionAmount(1);
       setPurchaseAmount('');
     } catch (error) {
-      const message = error.response?.data?.detail || 'La acción falló';
+      // Handle error - detail can be string or object (Pydantic validation error)
+      let message = 'La acción falló';
+      const detail = error.response?.data?.detail;
+      if (typeof detail === 'string') {
+        message = detail;
+      } else if (Array.isArray(detail) && detail.length > 0) {
+        // Pydantic validation errors come as array
+        message = detail[0]?.msg || 'Error de validación';
+      } else if (detail?.msg) {
+        message = detail.msg;
+      }
       toast.error(message);
       setConfirmModal({ open: false, action: null, details: [], purchaseAmount: '' });
     } finally {

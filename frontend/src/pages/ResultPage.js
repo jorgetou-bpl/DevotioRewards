@@ -1644,14 +1644,18 @@ const ResultPage = () => {
               {/* Discount card specific fields */}
               {(balance.discountPercentage !== undefined && balance.discountPercentage !== null) && (
                 <div className="flex justify-between p-3 sm:p-4">
-                  <span className="text-zinc-500 text-sm">Porcentaje de descuento</span>
+                  <span className="text-zinc-500 text-sm">Porcentaje de cashback</span>
                   <span className="font-medium text-sm">{balance.discountPercentage}%</span>
                 </div>
               )}
-              {(balance.discountAmount !== undefined && balance.discountAmount !== null && balance.discountAmount > 0) && (
+              {/* Show "Until next level" for cashback cards if tier info available */}
+              {(normalizedType === 'cashback' || normalizedType === 'cashback_card') && 
+               card.nextTierThreshold && balance.discountAmount !== undefined && (
                 <div className="flex justify-between p-3 sm:p-4">
-                  <span className="text-zinc-500 text-sm">Monto acumulado</span>
-                  <span className="font-medium text-sm">{formatCurrency(balance.discountAmount / 100)}</span>
+                  <span className="text-zinc-500 text-sm">Hasta el siguiente nivel</span>
+                  <span className="font-medium text-sm">
+                    {formatCurrency((card.nextTierThreshold - (balance.discountAmount / 100)), false)}
+                  </span>
                 </div>
               )}
               {/* Legacy demo fields */}

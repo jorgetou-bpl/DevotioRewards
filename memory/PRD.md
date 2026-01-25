@@ -244,11 +244,19 @@ BOOMERANG_API_KEY="542bcbc61866b65b2e63851267128679"  # UAT key
 - ✅ API key configured
 - ✅ Currency selection
 - ✅ All 8 card types supported
+- ✅ Multi-reward tier selection (when configured)
 - ⏳ Production API key (replace UAT key when ready)
 
 ## Next Steps
-1. **P2: API Auth Status Codes**: Fix 403 → 401 for unauthorized responses
-2. **Final UAT Testing**: Test all 8 card types with real Boomerangme cards
+1. **Final UAT Testing**: Test all 8 card types with real Boomerangme cards
+2. **Configure Reward Tiers**: If needed, configure reward tiers in Boomerangme template to use multi-tier selection
+
+## Key API Endpoints
+- `GET /api/cards/{card_id}` - Get card data with balance info
+- `POST /api/cards/{card_id}/add-stamp` - Add stamps (includes purchaseSum)
+- `POST /api/cards/{card_id}/subtract-reward` - Redeem stamp card reward
+- `GET /api/templates/{template_id}` - Get template with reward tiers *(NEW)*
+- All action endpoints support `purchaseSum` for LTV tracking
 
 ## Test Cards for Verification
 - **Multipass/Subscription**: `638920-251-210`
@@ -256,7 +264,8 @@ BOOMERANG_API_KEY="542bcbc61866b65b2e63851267128679"  # UAT key
 - **Coupon**: `312015-782-634`
 - **Gift/Certificate**: `100541-970-624`
 - **Reward**: `320292-721-660`
-- **Stamp**: `353530-676-963`
+- **Stamp (new)**: `820551-447-797`
+- **Stamp (used)**: `192362-969-247`
 - **Membership**: `314919-560-256`
 - **Cashback**: `591682-351-613`
 
@@ -267,9 +276,10 @@ BOOMERANG_API_KEY="542bcbc61866b65b2e63851267128679"  # UAT key
 - To change the icon: replace `/app/frontend/public/logo.png` with your custom icon (recommended 512x512 PNG)
 
 ## Backlog (P2)
-- Fix HTTP status codes (403 → 401 for unauthorized)
 - Refactor server.py into smaller modules
+- Refactor ResultPage.js into card-type components
 - Multi-tenant admin panel
 - Analytics dashboard
 - Webhook integration
 - App store publishing
+- Phase 2 POS Integration Gateway (awaiting user decision)

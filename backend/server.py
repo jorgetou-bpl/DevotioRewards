@@ -697,10 +697,11 @@ async def add_points(card_id: str, action_data: CardActionRequest, current_user:
     
     # Determine the correct Spanish message based on card type from the response
     card_data = response.get('data', {})
-    card_type = card_data.get('cardType', '').lower()
-    if 'discount' in card_type or card_type == 'discount_card':
+    card_type = str(card_data.get('type', '')).lower()
+    
+    if 'discount' in card_type:
         message = "Descuento aplicado correctamente"
-    elif 'cashback' in card_type or card_type == 'cashback_card':
+    elif 'cashback' in card_type:
         message = "Cashback agregado exitosamente"
     elif 'gift' in card_type or 'certificate' in card_type:
         message = "Saldo agregado exitosamente"

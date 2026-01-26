@@ -841,8 +841,13 @@ async def subtract_reward(card_id: str, action_data: CardActionRequest, current_
 
 @api_router.post("/cards/{card_id}/add-point")
 async def add_points(card_id: str, action_data: CardActionRequest, current_user: dict = Depends(get_current_user)):
+    gerente_name = action_data.gerente or current_user.get('name', '')
+    comment_with_gerente = build_comment_with_gerente(action_data.comment, gerente_name)
+    
     amount = float(action_data.amount or 1)
     payload = {"points": amount}
+    if comment_with_gerente:
+        payload["comment"] = comment_with_gerente
     # For gift cards, purchaseSum should equal the amount being added
     # For discount/cashback cards, purchaseSum is the purchase amount
     if action_data.purchaseSum:
@@ -851,8 +856,6 @@ async def add_points(card_id: str, action_data: CardActionRequest, current_user:
         # Default purchaseSum to equal the points amount for gift cards
         payload["purchaseSum"] = amount
     response = await call_boomerang_api('POST', f'/cards/{card_id}/add-point', payload)
-    await db.scan_logs.insert_one({"user_id": current_user['id'], "card_id": card_id, 
-                                    "timestamp": datetime.now(timezone.utc).isoformat(), "action": "add_point", "amount": action_data.amount})
     
     # Determine the correct Spanish message based on card type from the response
     card_data = response.get('data', {})
@@ -866,6 +869,18 @@ async def add_points(card_id: str, action_data: CardActionRequest, current_user:
         message = "Saldo agregado exitosamente"
     else:
         message = "Puntos agregados exitosamente"
+    
+    await log_operation(
+        card_id=card_id,
+        operation_type="add-point",
+        current_user=current_user,
+        card_data=card_data,
+        amount=amount,
+        balance=card_data.get('balance', {}).get('bonusBalance') or card_data.get('balance', {}).get('balance'),
+        purchase_sum=action_data.purchaseSum or amount,
+        note=action_data.comment,
+        gerente_override=gerente_name
+    )
     
     return {"success": True, "card": mask_pii(card_data), "message": message}
 

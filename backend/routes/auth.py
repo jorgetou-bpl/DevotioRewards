@@ -30,9 +30,17 @@ async def register(user_data: UserCreate):
 async def login(credentials: UserLogin):
     """Login with email and password."""
     user = await db.users.find_one({"email": credentials.email})
-    if not user or not verify_password(credentials.password, user.get("hashed_password", "")):
+    if not user:
         raise HTTPException(status_code=401, detail="Credenciales incorrectas")
-    return TokenResponse(token=create_token(user["_id"]), email=user["email"], name=user.get("name"))
+    
+    # Support both old 'password' field and new 'hashed_password' field
+    stored_hash = user.get("hashed_password") or user.get("password", "")
+    if not stored_hash or not verify_password(credentials.password, stored_hash):
+        raise HTTPException(status_code=401, detail="Credenciales incorrectas")
+    
+    # Get user ID - support both '_id' (ObjectId) and 'id' (string) formats
+    user_id = user.get("id") or str(user.get("_id"))
+    return TokenResponse(token=create_token(user_id), email=user["email"], name=user.get("name"))
 
 @router.get("/me", response_model=UserResponse)
 async def get_me(current_user: dict = Depends(get_current_user)):

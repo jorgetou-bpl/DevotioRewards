@@ -79,6 +79,41 @@ All 8 Boomerangme card types now correctly recognized and rendered:
 
 ## What's Been Implemented
 
+### Session 10 - Gerente Attribution & Operations History (January 26, 2026)
+1. **Gerente (Manager) Transaction Attribution**
+   - All card transaction endpoints now include `gerente` field in request payload
+   - Scanner app user's name automatically sent with every transaction
+   - Comment sent to Boomerangme includes `[Gerente: Name]` prefix for tracking
+   - Local operations log stored in MongoDB with full gerente attribution
+
+2. **New Operations/History Page (`/operations`)**
+   - New menu item "Operaciones" added between "Inicio" and "Configuración"
+   - Displays transaction history table with columns:
+     - Fecha, Cliente, Tarjeta, Operación, Monto, Saldo, Compra, **Gerente**, Nota
+   - Mobile-responsive: table on desktop, card layout on mobile
+
+3. **Operations Filtering System**
+   - Date range filter (start/end dates)
+   - Gerente dropdown (filter by specific user)
+   - Operation type dropdown (stamps, rewards, etc.)
+   - "Aplicar filtros" button to apply selected filters
+   - "Limpiar filtros" to reset
+
+4. **Export Functionality**
+   - **CSV Export**: Downloads `operaciones_YYYY-MM-DD.csv` with Spanish headers
+   - **XLSX Export**: Downloads `operaciones_YYYY-MM-DD.xlsx` with styled Excel file
+   - Both exports respect current filter settings
+
+5. **New Backend Endpoints**
+   - `GET /api/operations` - List operations with pagination and filtering
+   - `GET /api/operations/export?format=csv|xlsx` - Export operations
+   - `GET /api/operations/summary` - Get summary statistics by gerente
+
+6. **Technical Details**
+   - Boomerangme API doesn't accept `managerId` parameter via API
+   - Solution: Use comment field for Boomerangme attribution + local MongoDB logging
+   - All 14 card action endpoints updated to log operations with gerente
+
 ### Session 9 - Multi-Program Support & Reward Selection (January 25, 2026)
 1. **New Backend Endpoint: `/api/templates/{template_id}`**
    - Fetches template data from Boomerangme API

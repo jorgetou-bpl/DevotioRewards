@@ -12,6 +12,7 @@ import ResultPage from "./pages/ResultPage";
 import SettingsPage from "./pages/SettingsPage";
 import SearchPage from "./pages/SearchPage";
 import SupportPage from "./pages/SupportPage";
+import OperationsPage from "./pages/OperationsPage";
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {

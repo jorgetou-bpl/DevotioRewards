@@ -32,6 +32,7 @@ const ResultPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { triggerVibration, triggerBeep, copyToClipboard, formatCurrency, getCurrencyInfo, settings } = useSettings();
+  const { user } = useAuth();
   
   const [card, setCard] = useState(location.state?.card || null);
   const [loading, setLoading] = useState(false);

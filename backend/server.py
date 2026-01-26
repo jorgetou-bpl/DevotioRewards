@@ -886,27 +886,61 @@ async def add_points(card_id: str, action_data: CardActionRequest, current_user:
 
 @api_router.post("/cards/{card_id}/redeem-reward")
 async def redeem_reward(card_id: str, action_data: CardActionRequest, current_user: dict = Depends(get_current_user)):
+    gerente_name = action_data.gerente or current_user.get('name', '')
+    comment_with_gerente = build_comment_with_gerente(action_data.comment, gerente_name)
+    
     payload = {"id": action_data.amount or 1}
+    if comment_with_gerente:
+        payload["comment"] = comment_with_gerente
     response = await call_boomerang_api('POST', f'/cards/{card_id}/receive-reward', payload)
-    await db.scan_logs.insert_one({"user_id": current_user['id'], "card_id": card_id, 
-                                    "timestamp": datetime.now(timezone.utc).isoformat(), "action": "redeem_reward"})
-    return {"success": True, "card": mask_pii(response.get('data', {})), "message": "Recompensa canjeada exitosamente"}
+    card_data = response.get('data', {})
+    
+    await log_operation(
+        card_id=card_id,
+        operation_type="redeem-reward",
+        current_user=current_user,
+        card_data=card_data,
+        amount=action_data.amount or 1,
+        note=action_data.comment,
+        gerente_override=gerente_name
+    )
+    
+    return {"success": True, "card": mask_pii(card_data), "message": "Recompensa canjeada exitosamente"}
 
 @api_router.post("/cards/{card_id}/redeem-points")
 async def redeem_points(card_id: str, action_data: CardActionRequest, current_user: dict = Depends(get_current_user)):
+    gerente_name = action_data.gerente or current_user.get('name', '')
+    comment_with_gerente = build_comment_with_gerente(action_data.comment, gerente_name)
+    
     payload = {"points": action_data.amount or 1}
+    if comment_with_gerente:
+        payload["comment"] = comment_with_gerente
     response = await call_boomerang_api('POST', f'/cards/{card_id}/redeem-points', payload)
-    await db.scan_logs.insert_one({"user_id": current_user['id'], "card_id": card_id, 
-                                    "timestamp": datetime.now(timezone.utc).isoformat(), "action": "redeem_points", "amount": action_data.amount})
-    return {"success": True, "card": mask_pii(response.get('data', {})), "message": "Puntos canjeados exitosamente"}
+    card_data = response.get('data', {})
+    
+    await log_operation(
+        card_id=card_id,
+        operation_type="redeem-points",
+        current_user=current_user,
+        card_data=card_data,
+        amount=action_data.amount or 1,
+        balance=card_data.get('balance', {}).get('bonusBalance'),
+        note=action_data.comment,
+        gerente_override=gerente_name
+    )
+    
+    return {"success": True, "card": mask_pii(card_data), "message": "Puntos canjeados exitosamente"}
 
 @api_router.post("/cards/{card_id}/subtract-point")
 async def subtract_point(card_id: str, action_data: CardActionRequest, current_user: dict = Depends(get_current_user)):
     """Subtract points from certificate/gift/cashback cards - used for redeeming balance"""
+    gerente_name = action_data.gerente or current_user.get('name', '')
+    comment_with_gerente = build_comment_with_gerente(action_data.comment, gerente_name)
+    
     amount = float(action_data.amount or 1)
     payload = {"points": amount}
-    if action_data.comment:
-        payload["comment"] = action_data.comment
+    if comment_with_gerente:
+        payload["comment"] = comment_with_gerente
     # For cashback/gift cards, purchaseSum should equal the amount being redeemed
     # If purchaseSum is provided use it, otherwise use the amount itself
     if action_data.purchaseSum:
@@ -916,46 +950,104 @@ async def subtract_point(card_id: str, action_data: CardActionRequest, current_u
         payload["purchaseSum"] = amount
     
     response = await call_boomerang_api('POST', f'/cards/{card_id}/subtract-point', payload)
-    await db.scan_logs.insert_one({"user_id": current_user['id'], "card_id": card_id, 
-                                    "timestamp": datetime.now(timezone.utc).isoformat(), "action": "subtract_point", "amount": action_data.amount})
-    return {"success": True, "card": mask_pii(response.get('data', {})), "message": "Saldo canjeado exitosamente"}
+    card_data = response.get('data', {})
+    
+    await log_operation(
+        card_id=card_id,
+        operation_type="subtract-point",
+        current_user=current_user,
+        card_data=card_data,
+        amount=amount,
+        balance=card_data.get('balance', {}).get('balance'),
+        purchase_sum=action_data.purchaseSum or amount,
+        note=action_data.comment,
+        gerente_override=gerente_name
+    )
+    
+    return {"success": True, "card": mask_pii(card_data), "message": "Saldo canjeado exitosamente"}
 
 @api_router.post("/cards/{card_id}/use-coupon")
 async def use_coupon(card_id: str, action_data: CardActionRequest, current_user: dict = Depends(get_current_user)):
-    # Boomerang API v2 uses "redeem-coupon" endpoint, not "use-coupon"
+    """Redeem a coupon"""
+    gerente_name = action_data.gerente or current_user.get('name', '')
+    comment_with_gerente = build_comment_with_gerente(action_data.comment, gerente_name)
+    
     payload = {}
-    if action_data.comment:
-        payload["comment"] = action_data.comment
+    if comment_with_gerente:
+        payload["comment"] = comment_with_gerente
     if action_data.purchaseSum:
         payload["purchaseSum"] = action_data.purchaseSum
     
     response = await call_boomerang_api('POST', f'/cards/{card_id}/redeem-coupon', payload)
-    await db.scan_logs.insert_one({"user_id": current_user['id'], "card_id": card_id, 
-                                    "timestamp": datetime.now(timezone.utc).isoformat(), "action": "redeem_coupon"})
-    return {"success": True, "card": mask_pii(response.get('data', {})), "message": "Cupón canjeado exitosamente"}
+    card_data = response.get('data', {})
+    
+    await log_operation(
+        card_id=card_id,
+        operation_type="use-coupon",
+        current_user=current_user,
+        card_data=card_data,
+        amount=1,
+        purchase_sum=action_data.purchaseSum,
+        note=action_data.comment,
+        gerente_override=gerente_name
+    )
+    
+    return {"success": True, "card": mask_pii(card_data), "message": "Cupón canjeado exitosamente"}
 
 @api_router.post("/cards/{card_id}/add-visit")
 async def add_visit(card_id: str, action_data: CardActionRequest, current_user: dict = Depends(get_current_user)):
     """Add visit = SELL/ADD available visits to customer (increases currentNumberOfUses)"""
+    gerente_name = action_data.gerente or current_user.get('name', '')
+    comment_with_gerente = build_comment_with_gerente(action_data.comment, gerente_name)
+    
     payload = {"visits": action_data.amount or 1}
-    if action_data.comment:
-        payload["comment"] = action_data.comment
+    if comment_with_gerente:
+        payload["comment"] = comment_with_gerente
     if action_data.purchaseSum:
         payload["purchaseSum"] = action_data.purchaseSum
     response = await call_boomerang_api('POST', f'/cards/{card_id}/add-visit', payload)
-    await db.scan_logs.insert_one({"user_id": current_user['id'], "card_id": card_id, 
-                                    "timestamp": datetime.now(timezone.utc).isoformat(), "action": "add_visit", "amount": action_data.amount})
-    return {"success": True, "card": mask_pii(response.get('data', {})), "message": "Visitas agregadas exitosamente"}
+    card_data = response.get('data', {})
+    
+    await log_operation(
+        card_id=card_id,
+        operation_type="add-visit",
+        current_user=current_user,
+        card_data=card_data,
+        amount=action_data.amount or 1,
+        balance=card_data.get('balance', {}).get('visitsAvailable'),
+        purchase_sum=action_data.purchaseSum,
+        note=action_data.comment,
+        gerente_override=gerente_name
+    )
+    
+    return {"success": True, "card": mask_pii(card_data), "message": "Visitas agregadas exitosamente"}
 
 @api_router.post("/cards/{card_id}/redeem-visit")
 async def redeem_visit(card_id: str, action_data: CardActionRequest, current_user: dict = Depends(get_current_user)):
+    gerente_name = action_data.gerente or current_user.get('name', '')
+    comment_with_gerente = build_comment_with_gerente(action_data.comment, gerente_name)
+    
     payload = {"visits": action_data.amount or 1}
+    if comment_with_gerente:
+        payload["comment"] = comment_with_gerente
     if action_data.purchaseSum:
         payload["purchaseSum"] = action_data.purchaseSum
     response = await call_boomerang_api('POST', f'/cards/{card_id}/redeem-visit', payload)
-    await db.scan_logs.insert_one({"user_id": current_user['id'], "card_id": card_id, 
-                                    "timestamp": datetime.now(timezone.utc).isoformat(), "action": "redeem_visit", "amount": action_data.amount})
-    return {"success": True, "card": mask_pii(response.get('data', {})), "message": "Visita canjeada exitosamente"}
+    card_data = response.get('data', {})
+    
+    await log_operation(
+        card_id=card_id,
+        operation_type="redeem-visit",
+        current_user=current_user,
+        card_data=card_data,
+        amount=action_data.amount or 1,
+        balance=card_data.get('balance', {}).get('visitsAvailable'),
+        purchase_sum=action_data.purchaseSum,
+        note=action_data.comment,
+        gerente_override=gerente_name
+    )
+    
+    return {"success": True, "card": mask_pii(card_data), "message": "Visita canjeada exitosamente"}
 
 @api_router.post("/cards/{card_id}/subtract-visit")
 async def subtract_visit(card_id: str, action_data: CardActionRequest, current_user: dict = Depends(get_current_user)):

@@ -114,6 +114,20 @@ All 8 Boomerangme card types now correctly recognized and rendered:
    - Solution: Use comment field for Boomerangme attribution + local MongoDB logging
    - All 14 card action endpoints updated to log operations with gerente
 
+7. **Backend Refactoring Complete**
+   - Refactored monolithic `server.py` (1602 lines → 61 lines)
+   - New modular structure:
+     - `/routes/auth.py` - Authentication (register, login, me)
+     - `/routes/cards.py` - All card actions (14 endpoints)
+     - `/routes/operations.py` - Operations history & export
+     - `/routes/settings.py` - User settings
+     - `/routes/templates.py` - Template fetching
+     - `/routes/customers.py` - Customer search
+     - `/utils/config.py` - Database & API configuration
+     - `/utils/auth.py` - JWT & password utilities
+     - `/utils/boomerang.py` - Boomerang API client & helpers
+     - `/models.py` - Pydantic request/response models
+
 ### Session 9 - Multi-Program Support & Reward Selection (January 25, 2026)
 1. **New Backend Endpoint: `/api/templates/{template_id}`**
    - Fetches template data from Boomerangme API

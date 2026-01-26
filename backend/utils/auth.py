@@ -34,7 +34,10 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(g
         if not user_id:
             raise HTTPException(status_code=401, detail="Invalid token")
         
-        user = await db.users.find_one({"_id": user_id}, {"password": 0, "hashed_password": 0})
+        # Try to find user by 'id' field first (string format), then by '_id' (ObjectId)
+        user = await db.users.find_one({"id": user_id}, {"password": 0, "hashed_password": 0})
+        if not user:
+            user = await db.users.find_one({"_id": user_id}, {"password": 0, "hashed_password": 0})
         if not user:
             raise HTTPException(status_code=401, detail="User not found")
         

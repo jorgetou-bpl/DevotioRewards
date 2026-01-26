@@ -83,12 +83,12 @@ async def scan_card(scan_data: ScanRequest, current_user: dict = Depends(get_cur
     if not qr_data:
         raise HTTPException(status_code=400, detail=get_user_friendly_error("invalid_search"))
     
-    if is_phone_number(qr_data):
-        logger.info(f"Searching by phone number")
-        result = await search_customer_and_get_card('phone', qr_data, current_user, db)
-        if result:
-            return {"success": True, "card": mask_pii(result)}
-        raise HTTPException(status_code=404, detail=get_user_friendly_error("search_no_results"))
+    # Check for card ID first (format: XXX-XXX-XXX)
+    if is_card_id(qr_data):
+        card_id = extract_card_id_from_qr(qr_data)
+        logger.info(f"Scanning card ID: {card_id}")
+        response = await call_boomerang_api('GET', f'/cards/{card_id}', {})
+        return {"success": True, "card": mask_pii(response.get('data', {}))}
     
     if is_email(qr_data):
         logger.info(f"Searching by email")
@@ -97,9 +97,16 @@ async def scan_card(scan_data: ScanRequest, current_user: dict = Depends(get_cur
             return {"success": True, "card": mask_pii(result)}
         raise HTTPException(status_code=404, detail=get_user_friendly_error("search_no_results"))
     
-    card_id = extract_card_id_from_qr(qr_data)
-    logger.info(f"Scanning card ID: {card_id}")
+    if is_phone_number(qr_data):
+        logger.info(f"Searching by phone number")
+        result = await search_customer_and_get_card('phone', qr_data, current_user, db)
+        if result:
+            return {"success": True, "card": mask_pii(result)}
+        raise HTTPException(status_code=404, detail=get_user_friendly_error("search_no_results"))
     
+    # Try as card ID anyway
+    card_id = extract_card_id_from_qr(qr_data)
+    logger.info(f"Scanning card ID (fallback): {card_id}")
     response = await call_boomerang_api('GET', f'/cards/{card_id}', {})
     return {"success": True, "card": mask_pii(response.get('data', {}))}
 

@@ -746,7 +746,11 @@ async def add_stamp(card_id: str, action_data: CardActionRequest, current_user: 
     """
     stamps = action_data.amount or 1
     purchase_sum = action_data.purchaseSum or 0
-    comment = action_data.comment
+    original_comment = action_data.comment
+    gerente_name = action_data.gerente or current_user.get('name', '')
+    
+    # Build comment with gerente attribution for Boomerangme
+    comment_with_gerente = build_comment_with_gerente(original_comment, gerente_name)
     
     # Build payloads for each accrual type
     stamp_payload = {"stamps": stamps}
@@ -755,8 +759,8 @@ async def add_stamp(card_id: str, action_data: CardActionRequest, current_user: 
     
     # Add optional fields to all payloads
     for payload in [stamp_payload, visit_payload, purchase_payload]:
-        if comment:
-            payload["comment"] = comment
+        if comment_with_gerente:
+            payload["comment"] = comment_with_gerente
         if purchase_sum:
             payload["purchaseSum"] = purchase_sum
     
@@ -774,12 +778,23 @@ async def add_stamp(card_id: str, action_data: CardActionRequest, current_user: 
         
         # Check if successful
         if response.get('code') == 200:
-            await db.scan_logs.insert_one({
-                "user_id": current_user['id'], "card_id": card_id, 
-                "timestamp": datetime.now(timezone.utc).isoformat(), 
-                "action": endpoint, "amount": stamps, "purchase_sum": purchase_sum
-            })
-            return {"success": True, "card": mask_pii(response.get('data', {})), "message": success_msg}
+            card_data = response.get('data', {})
+            card_balance = card_data.get('balance', {})
+            
+            # Log operation with gerente attribution
+            await log_operation(
+                card_id=card_id,
+                operation_type=endpoint,
+                current_user=current_user,
+                card_data=card_data,
+                amount=stamps,
+                balance=card_balance.get('currentNumberOfUses'),
+                purchase_sum=purchase_sum,
+                note=original_comment,
+                gerente_override=gerente_name
+            )
+            
+            return {"success": True, "card": mask_pii(card_data), "message": success_msg}
         
         # Check if it's an "Irrelevant accrual type" error - try next endpoint
         error_msg = response.get('message', '')

@@ -226,7 +226,8 @@ const ResultPage = () => {
       // Build payload - handle reward tier ID for receive-reward endpoint
       let payload = {
         comment: comment || undefined,
-        purchaseSum: finalPurchaseAmount // Include purchaseSum for all card types that need it
+        purchaseSum: finalPurchaseAmount, // Include purchaseSum for all card types that need it
+        gerente: user?.name || undefined // Include gerente for attribution
       };
       
       // For receive-reward endpoint, pass the tier ID as amount

@@ -813,15 +813,31 @@ async def add_stamp(card_id: str, action_data: CardActionRequest, current_user: 
 @api_router.post("/cards/{card_id}/subtract-reward")
 async def subtract_reward(card_id: str, action_data: CardActionRequest, current_user: dict = Depends(get_current_user)):
     """Subtract/redeem rewards from stamp cards (type ID 0)"""
+    gerente_name = action_data.gerente or current_user.get('name', '')
+    comment_with_gerente = build_comment_with_gerente(action_data.comment, gerente_name)
+    
     payload = {"rewards": int(action_data.amount or 1)}
-    if action_data.comment:
-        payload["comment"] = action_data.comment
+    if comment_with_gerente:
+        payload["comment"] = comment_with_gerente
     if action_data.purchaseSum:
         payload["purchaseSum"] = action_data.purchaseSum
+    
     response = await call_boomerang_api('POST', f'/cards/{card_id}/subtract-reward', payload)
-    await db.scan_logs.insert_one({"user_id": current_user['id'], "card_id": card_id, 
-                                    "timestamp": datetime.now(timezone.utc).isoformat(), "action": "subtract_reward", "amount": action_data.amount})
-    return {"success": True, "card": mask_pii(response.get('data', {})), "message": "Recompensa canjeada exitosamente"}
+    card_data = response.get('data', {})
+    
+    await log_operation(
+        card_id=card_id,
+        operation_type="subtract-reward",
+        current_user=current_user,
+        card_data=card_data,
+        amount=action_data.amount or 1,
+        balance=card_data.get('balance', {}).get('numberRewardsUnused'),
+        purchase_sum=action_data.purchaseSum,
+        note=action_data.comment,
+        gerente_override=gerente_name
+    )
+    
+    return {"success": True, "card": mask_pii(card_data), "message": "Recompensa canjeada exitosamente"}
 
 @api_router.post("/cards/{card_id}/add-point")
 async def add_points(card_id: str, action_data: CardActionRequest, current_user: dict = Depends(get_current_user)):

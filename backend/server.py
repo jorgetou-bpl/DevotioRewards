@@ -295,6 +295,105 @@ def create_token(user_id: str) -> str:
     payload = {'user_id': user_id, 'exp': datetime.now(timezone.utc) + timedelta(hours=JWT_EXPIRATION_HOURS)}
     return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
 
+# Operation type mapping for Spanish labels
+OPERATION_TYPES = {
+    "add-stamp": "Sellos agregados",
+    "add-visit": "Visita registrada",
+    "add-purchase": "Compra registrada",
+    "subtract-reward": "Recompensa canjeada",
+    "add-point": "Puntos agregados",
+    "redeem-reward": "Recompensa canjeada",
+    "redeem-points": "Puntos canjeados",
+    "subtract-point": "Saldo canjeado",
+    "use-coupon": "Cupón canjeado",
+    "redeem-visit": "Visita canjeada",
+    "subtract-visit": "Visita utilizada",
+    "add-reward": "Recompensas agregadas",
+    "add-scores": "Puntos agregados",
+    "subtract-scores": "Puntos canjeados",
+    "receive-reward": "Recompensa recibida",
+}
+
+async def log_operation(
+    card_id: str,
+    operation_type: str,
+    current_user: dict,
+    card_data: dict = None,
+    amount: float = None,
+    balance: float = None,
+    purchase_sum: float = None,
+    note: str = None,
+    gerente_override: str = None
+):
+    """
+    Log an operation to local database with full details for reporting.
+    This creates our own transaction history with gerente attribution.
+    """
+    try:
+        # Extract customer info from card data
+        customer = card_data.get('customer', {}) if card_data else {}
+        customer_name = f"{customer.get('firstName', '')} {customer.get('surname', '')}".strip()
+        customer_phone = customer.get('phone', '')
+        
+        # Get device and template info
+        device = card_data.get('device', 'Unknown') if card_data else 'Unknown'
+        template_id = card_data.get('templateId', '') if card_data else ''
+        
+        # Determine balance from card data if not provided
+        if balance is None and card_data:
+            card_balance = card_data.get('balance', {})
+            # Try different balance fields depending on card type
+            balance = (
+                card_balance.get('currentNumberOfUses') or
+                card_balance.get('balance') or
+                card_balance.get('bonusBalance') or
+                card_balance.get('visitsAvailable') or
+                0
+            )
+        
+        # Create operation record
+        operation_id = str(uuid.uuid4())
+        operation_record = {
+            "id": operation_id,
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "card_id": card_id,
+            "customer_name": customer_name,
+            "customer_phone": customer_phone,
+            "device": device,
+            "template_id": str(template_id),
+            "operation_type": operation_type,
+            "operation_label": OPERATION_TYPES.get(operation_type, operation_type),
+            "note": note,
+            "amount": amount,
+            "balance": balance,
+            "purchase_sum": purchase_sum,
+            "gerente": gerente_override or current_user.get('name', 'Unknown'),
+            "gerente_email": current_user.get('email', ''),
+            "user_id": current_user.get('id', ''),
+            "source": "scanner"
+        }
+        
+        await db.operations.insert_one(operation_record)
+        logger.info(f"Logged operation: {operation_type} for card {card_id} by {operation_record['gerente']}")
+        return operation_record
+    except Exception as e:
+        logger.error(f"Failed to log operation: {e}")
+        return None
+
+def build_comment_with_gerente(original_comment: str, gerente_name: str) -> str:
+    """
+    Build comment string that includes gerente attribution for Boomerangme.
+    Format: [Gerente: Name] Original comment
+    """
+    if not gerente_name:
+        return original_comment or ""
+    
+    gerente_tag = f"[Gerente: {gerente_name}]"
+    
+    if original_comment:
+        return f"{gerente_tag} {original_comment}"
+    return gerente_tag
+
 async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(get_credentials)):
     try:
         payload = jwt.decode(credentials.credentials, JWT_SECRET, algorithms=[JWT_ALGORITHM])

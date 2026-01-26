@@ -143,6 +143,7 @@ class CardActionRequest(BaseModel):
     amount: Optional[float] = 1  # Changed to float to support decimal amounts (e.g., cashback)
     comment: Optional[str] = None
     purchaseSum: Optional[float] = None
+    gerente: Optional[str] = None  # Scanner app user performing the transaction
 
 class ScanRequest(BaseModel):
     qr_data: str

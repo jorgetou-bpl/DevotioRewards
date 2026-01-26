@@ -174,6 +174,7 @@ const ScannerPage = () => {
 
   const menuItems = [
     { icon: Home, label: 'Inicio', action: () => navigate('/'), testId: 'menu-home' },
+    { icon: ClipboardList, label: 'Operaciones', action: () => navigate('/operations'), testId: 'menu-operations' },
     { icon: Settings, label: 'Configuración', action: () => navigate('/settings'), testId: 'menu-settings' },
     { icon: HelpCircle, label: 'Soporte', action: () => navigate('/support'), testId: 'menu-support' },
     { icon: LogOut, label: 'Cerrar Sesión', action: handleLogout, testId: 'menu-logout' }

@@ -17,7 +17,8 @@ import {
   LogOut,
   Loader2,
   Camera,
-  CameraOff
+  CameraOff,
+  ClipboardList
 } from 'lucide-react';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;

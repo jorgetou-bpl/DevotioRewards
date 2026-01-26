@@ -148,6 +148,34 @@ class CardActionRequest(BaseModel):
 class ScanRequest(BaseModel):
     qr_data: str
 
+# ============ OPERATIONS MODELS ============
+
+class OperationRecord(BaseModel):
+    """Local operation record for tracking transactions with gerente attribution"""
+    id: Optional[str] = None
+    created_at: str
+    card_id: str
+    customer_name: Optional[str] = None
+    customer_phone: Optional[str] = None
+    device: Optional[str] = None
+    template_name: Optional[str] = None
+    template_id: Optional[str] = None
+    operation_type: str  # stamps_earned, visit_logged, reward_redeemed, etc.
+    note: Optional[str] = None
+    amount: Optional[float] = None
+    balance: Optional[float] = None
+    purchase_sum: Optional[float] = None
+    gerente: str  # Scanner app user who performed the transaction
+    gerente_email: str
+    source: str = "scanner"  # scanner or api
+
+class OperationsFilter(BaseModel):
+    start_date: Optional[str] = None
+    end_date: Optional[str] = None
+    gerente: Optional[str] = None
+    operation_type: Optional[str] = None
+    card_id: Optional[str] = None
+
 # ============ DEMO DATA ============
 
 DEMO_CARDS = {

@@ -17,14 +17,19 @@ async def register(user_data: UserCreate):
         raise HTTPException(status_code=400, detail="El email ya está registrado")
     
     user_id = str(uuid.uuid4())
-    hashed_password = hash_password(user_data.password)
+    hashed_pw = hash_password(user_data.password)
+    user_name = user_data.name or user_data.email.split('@')[0]
+    
+    # Store user with both 'id' (string UUID) and '_id' (string UUID for consistency)
     await db.users.insert_one({
-        "_id": user_id, 
+        "_id": user_id,  # Use string UUID as _id for consistency
+        "id": user_id,   # Also store as 'id' field for lookup
         "email": user_data.email, 
-        "hashed_password": hashed_password,
-        "name": user_data.name or user_data.email.split('@')[0]
+        "hashed_password": hashed_pw,
+        "password": hashed_pw,  # Also store as 'password' for backward compatibility
+        "name": user_name
     })
-    return TokenResponse(token=create_token(user_id), email=user_data.email, name=user_data.name)
+    return TokenResponse(token=create_token(user_id), email=user_data.email, name=user_name)
 
 @router.post("/login", response_model=TokenResponse)
 async def login(credentials: UserLogin):

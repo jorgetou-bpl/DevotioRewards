@@ -34,13 +34,18 @@ api_router.include_router(operations_router)
 api_router.include_router(templates_router)
 api_router.include_router(customers_router)
 
-# Health check and root endpoints
+# Root-level health check for Kubernetes (MUST be at /health, not /api/health)
+@app.get("/health")
+async def root_health_check():
+    return {"status": "healthy", "timestamp": datetime.now(timezone.utc).isoformat()}
+
+# API-level endpoints
 @api_router.get("/")
 async def root():
     return {"message": "Devotio Rewards Scanner API", "version": "2.0.0"}
 
 @api_router.get("/health")
-async def health_check():
+async def api_health_check():
     return {"status": "healthy", "timestamp": datetime.now(timezone.utc).isoformat()}
 
 # Include API router in app

@@ -128,6 +128,15 @@ All 8 Boomerangme card types now correctly recognized and rendered:
      - `/utils/boomerang.py` - Boomerang API client & helpers
      - `/models.py` - Pydantic request/response models
 
+8. **Gerente Performance Dashboard**
+   - Added sub-tabs to Operations page: [Historial] and [Dashboard]
+   - Dashboard features:
+     - **Summary Cards**: Total Operations, Total Sales (currency), Active Gerentes
+     - **Gerente Leaderboard**: Ranked by transaction count with progress bars, shows sales volume
+     - **Operations by Type**: Grid showing count per operation type (Sellos, Recompensas, etc.)
+   - Date range filter for dashboard data
+   - All UI in Spanish
+
 ### Session 9 - Multi-Program Support & Reward Selection (January 25, 2026)
 1. **New Backend Endpoint: `/api/templates/{template_id}`**
    - Fetches template data from Boomerangme API

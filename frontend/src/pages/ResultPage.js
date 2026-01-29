@@ -263,6 +263,14 @@ const ResultPage = () => {
         gerente: user?.name || undefined // Include gerente for attribution
       };
       
+      // For stamp card reward redemption with pending rewards tracking
+      if (actionKey === 'canjear' && normalizedType === 'stamp' && selectedRewardId) {
+        payload.reward_id = selectedRewardId;
+        if (rewardValue) {
+          payload.reward_value = parseFloat(rewardValue);
+        }
+      }
+      
       // For receive-reward endpoint, pass the tier ID as amount
       if (rewardTier && endpoint.includes('receive-reward')) {
         payload.amount = rewardTier.id; // The tier ID is needed for receive-reward
@@ -287,6 +295,21 @@ const ResultPage = () => {
           ...response.data.card,
           balance: { ...prevCard.balance, ...response.data.card.balance }
         }));
+      }
+      
+      // Clear selected reward and refresh pending rewards list
+      if (actionKey === 'canjear' && normalizedType === 'stamp') {
+        setSelectedRewardId(null);
+        setRewardValue('');
+        // Refresh pending rewards
+        try {
+          const rewardsResponse = await axios.get(`${API}/cards/${card.id}/pending-rewards`);
+          if (rewardsResponse.data?.pending_rewards) {
+            setPendingRewards(rewardsResponse.data.pending_rewards);
+          }
+        } catch (e) {
+          console.log('Could not refresh pending rewards');
+        }
       }
       
       setConfirmModal({ open: false, action: null, details: [], purchaseAmount: '' });

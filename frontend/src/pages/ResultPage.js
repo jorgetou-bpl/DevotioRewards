@@ -1240,12 +1240,12 @@ const ResultPage = () => {
         ? availableRewardTiers.find(t => t.threshold > bonusBalance)?.threshold || 'Max'
         : null;
       
-      // Accrual program modes
-      const accrualModes = [
-        { id: 'spend', label: 'Por Compra', description: 'Puntos según monto gastado', icon: '💰' },
-        { id: 'visit', label: 'Por Visita', description: 'Puntos por cada visita', icon: '🚶' },
-        { id: 'points', label: 'Manual', description: 'Agregar puntos manualmente', icon: '✋' }
-      ];
+      // Mode labels for display
+      const modeLabels = {
+        spend: 'Por Compra',
+        visit: 'Por Visita', 
+        points: 'Manual'
+      };
       
       return (
         <div className="space-y-4 sm:space-y-6">
@@ -1262,34 +1262,25 @@ const ResultPage = () => {
             )}
           </div>
           
-          {/* Accrual Mode Selector */}
-          <div className="card-brutalist">
-            <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500 block mb-3">
-              Modo de acumulación
-            </label>
-            <div className="grid grid-cols-3 gap-2">
-              {accrualModes.map((mode) => (
-                <button
-                  key={mode.id}
-                  onClick={() => setAccrualMode(mode.id)}
-                  className={`p-3 rounded-lg border-2 transition-all ${
-                    accrualMode === mode.id 
-                      ? 'border-[#120627] bg-[#120627]/5' 
-                      : 'border-zinc-200 hover:border-zinc-300'
-                  }`}
-                  data-testid={`accrual-mode-${mode.id}`}
-                >
-                  <span className="text-xl block mb-1">{mode.icon}</span>
-                  <span className={`text-xs font-medium block ${accrualMode === mode.id ? 'text-[#120627]' : 'text-zinc-600'}`}>
-                    {mode.label}
-                  </span>
-                </button>
-              ))}
+          {/* Loading mode detection */}
+          {detectingMode && (
+            <div className="card-brutalist text-center py-4">
+              <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2 text-[#120627]" />
+              <p className="text-sm text-zinc-500">Detectando modo de acumulación...</p>
             </div>
-          </div>
+          )}
+          
+          {/* Mode indicator badge */}
+          {detectedAccrualMode && !detectingMode && (
+            <div className="flex justify-center">
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-[#120627]/10 text-[#120627]">
+                Modo: {modeLabels[detectedAccrualMode] || detectedAccrualMode}
+              </span>
+            </div>
+          )}
           
           {/* Spend Mode - Only Purchase Amount */}
-          {accrualMode === 'spend' && (
+          {detectedAccrualMode === 'spend' && !detectingMode && (
             <div className="card-brutalist">
               <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500 block mb-2">
                 Monto de compra ({currencyInfo.code}) <span className="text-[#ee478a]">*</span>
@@ -1310,7 +1301,7 @@ const ResultPage = () => {
           )}
           
           {/* Visit Mode - Visit Counter */}
-          {accrualMode === 'visit' && (
+          {detectedAccrualMode === 'visit' && !detectingMode && (
             <div className="card-brutalist">
               <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500 block mb-2">
                 Visitas a registrar
@@ -1346,7 +1337,7 @@ const ResultPage = () => {
           )}
           
           {/* Manual Points Mode - Both fields */}
-          {accrualMode === 'points' && (
+          {detectedAccrualMode === 'points' && !detectingMode && (
             <>
               <div className="card-brutalist">
                 <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500 block mb-2">

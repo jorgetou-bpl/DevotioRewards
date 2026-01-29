@@ -104,6 +104,30 @@ OPERATION_TYPES = {
     "receive-reward": "Recompensa recibida",
 }
 
+# Card type labels in Spanish
+CARD_TYPE_LABELS = {
+    "stamp": "Sellos",
+    "stamp_card": "Sellos",
+    "reward": "Recompensas",
+    "reward_card": "Recompensas",
+    "cashback": "Cashback",
+    "cashback_card": "Cashback",
+    "discount": "Descuento",
+    "discount_card": "Descuento",
+    "certificate": "Certificado",
+    "certificate_card": "Certificado",
+    "gift": "Regalo",
+    "gift_card": "Regalo",
+    "coupon": "Cupón",
+    "coupon_card": "Cupón",
+    "membership": "Membresía",
+    "membership_card": "Membresía",
+    "multipass": "Multipase",
+    "multipass_card": "Multipase",
+    "subscription": "Suscripción",
+    "subscription_card": "Suscripción",
+}
+
 async def log_operation(
     card_id: str,
     operation_type: str,
@@ -113,7 +137,8 @@ async def log_operation(
     balance: float = None,
     purchase_sum: float = None,
     note: str = None,
-    gerente_override: str = None
+    gerente_override: str = None,
+    redeemed_value: float = None  # NEW: Optional value for reward redemptions
 ):
     """Log an operation to local database with full details for reporting."""
     try:
@@ -123,6 +148,11 @@ async def log_operation(
         
         device = card_data.get('device', 'Unknown') if card_data else 'Unknown'
         template_id = card_data.get('templateId', '') if card_data else ''
+        
+        # Get card type from card_data
+        card_type_raw = card_data.get('type', 'unknown') if card_data else 'unknown'
+        card_type = str(card_type_raw).lower().replace('_card', '').replace(' ', '_')
+        card_type_label = CARD_TYPE_LABELS.get(card_type, CARD_TYPE_LABELS.get(card_type_raw, card_type_raw))
         
         if balance is None and card_data:
             card_balance = card_data.get('balance', {})
@@ -143,12 +173,15 @@ async def log_operation(
             "customer_phone": customer_phone,
             "device": device,
             "template_id": str(template_id),
+            "card_type": card_type,  # NEW: normalized card type
+            "card_type_label": card_type_label,  # NEW: Spanish label
             "operation_type": operation_type,
             "operation_label": OPERATION_TYPES.get(operation_type, operation_type),
             "note": note,
             "amount": amount,
             "balance": balance,
             "purchase_sum": purchase_sum,
+            "redeemed_value": redeemed_value,  # NEW: separate field for reward value
             "gerente": gerente_override or current_user.get('name', 'Unknown'),
             "gerente_email": current_user.get('email', ''),
             "user_id": current_user.get('id', ''),
@@ -156,7 +189,7 @@ async def log_operation(
         }
         
         await db.operations.insert_one(operation_record)
-        logger.info(f"Logged operation: {operation_type} for card {card_id} by {operation_record['gerente']}")
+        logger.info(f"Logged operation: {operation_type} for card {card_id} ({card_type_label}) by {operation_record['gerente']}")
         return operation_record
     except Exception as e:
         logger.error(f"Failed to log operation: {e}")

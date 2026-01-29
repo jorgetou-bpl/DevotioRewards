@@ -19,6 +19,7 @@ async def get_operations(
     end_date: Optional[str] = None,
     gerente: Optional[str] = None,
     operation_type: Optional[str] = None,
+    card_type: Optional[str] = None,
     card_id: Optional[str] = None,
     page: int = 1,
     items_per_page: int = 50,
@@ -38,6 +39,8 @@ async def get_operations(
         query_filter["gerente"] = gerente
     if operation_type:
         query_filter["operation_type"] = operation_type
+    if card_type:
+        query_filter["card_type"] = card_type
     if card_id:
         query_filter["card_id"] = card_id
     
@@ -52,6 +55,7 @@ async def get_operations(
     operations = await operations_cursor.to_list(length=items_per_page)
     gerentes = await db.operations.distinct("gerente")
     operation_types = await db.operations.distinct("operation_type")
+    card_types = await db.operations.distinct("card_type")
     
     return {
         "success": True,
@@ -64,7 +68,8 @@ async def get_operations(
         },
         "filters": {
             "gerentes": gerentes,
-            "operation_types": operation_types
+            "operation_types": operation_types,
+            "card_types": card_types
         }
     }
 
@@ -75,6 +80,7 @@ async def export_operations(
     end_date: Optional[str] = None,
     gerente: Optional[str] = None,
     operation_type: Optional[str] = None,
+    card_type: Optional[str] = None,
     card_id: Optional[str] = None,
     current_user: dict = Depends(get_current_user)
 ):
@@ -92,6 +98,8 @@ async def export_operations(
         query_filter["gerente"] = gerente
     if operation_type:
         query_filter["operation_type"] = operation_type
+    if card_type:
+        query_filter["card_type"] = card_type
     if card_id:
         query_filter["card_id"] = card_id
     
@@ -108,11 +116,13 @@ async def export_operations(
         "Teléfono",
         "Dispositivo",
         "Tarjeta ID",
+        "Tipo de Tarjeta",
         "Operación",
         "Nota",
         "Monto",
         "Saldo",
         "Monto de compra",
+        "Valor del Canje",
         "Gerente",
         "Email Gerente",
         "Fuente"
@@ -130,11 +140,13 @@ async def export_operations(
                 op.get("customer_phone", ""),
                 op.get("device", ""),
                 op.get("card_id", ""),
+                op.get("card_type_label", op.get("card_type", "")),
                 op.get("operation_label", op.get("operation_type", "")),
                 op.get("note", ""),
                 op.get("amount", ""),
                 op.get("balance", ""),
                 op.get("purchase_sum", ""),
+                op.get("redeemed_value", ""),
                 op.get("gerente", ""),
                 op.get("gerente_email", ""),
                 op.get("source", "scanner")
@@ -176,14 +188,16 @@ async def export_operations(
                 ws.cell(row=row_idx, column=3, value=op.get("customer_phone", ""))
                 ws.cell(row=row_idx, column=4, value=op.get("device", ""))
                 ws.cell(row=row_idx, column=5, value=op.get("card_id", ""))
-                ws.cell(row=row_idx, column=6, value=op.get("operation_label", op.get("operation_type", "")))
-                ws.cell(row=row_idx, column=7, value=op.get("note", ""))
-                ws.cell(row=row_idx, column=8, value=op.get("amount", ""))
-                ws.cell(row=row_idx, column=9, value=op.get("balance", ""))
-                ws.cell(row=row_idx, column=10, value=op.get("purchase_sum", ""))
-                ws.cell(row=row_idx, column=11, value=op.get("gerente", ""))
-                ws.cell(row=row_idx, column=12, value=op.get("gerente_email", ""))
-                ws.cell(row=row_idx, column=13, value=op.get("source", "scanner"))
+                ws.cell(row=row_idx, column=6, value=op.get("card_type_label", op.get("card_type", "")))
+                ws.cell(row=row_idx, column=7, value=op.get("operation_label", op.get("operation_type", "")))
+                ws.cell(row=row_idx, column=8, value=op.get("note", ""))
+                ws.cell(row=row_idx, column=9, value=op.get("amount", ""))
+                ws.cell(row=row_idx, column=10, value=op.get("balance", ""))
+                ws.cell(row=row_idx, column=11, value=op.get("purchase_sum", ""))
+                ws.cell(row=row_idx, column=12, value=op.get("redeemed_value", ""))
+                ws.cell(row=row_idx, column=13, value=op.get("gerente", ""))
+                ws.cell(row=row_idx, column=14, value=op.get("gerente_email", ""))
+                ws.cell(row=row_idx, column=15, value=op.get("source", "scanner"))
             
             for col in ws.columns:
                 max_length = 0
@@ -221,6 +235,7 @@ async def export_operations(
 async def get_operations_summary(
     start_date: Optional[str] = None,
     end_date: Optional[str] = None,
+    card_type: Optional[str] = None,
     current_user: dict = Depends(get_current_user)
 ):
     """Get summary statistics for operations."""
@@ -233,6 +248,8 @@ async def get_operations_summary(
             query_filter["created_at"]["$lte"] = end_date + "T23:59:59"
         else:
             query_filter["created_at"] = {"$lte": end_date + "T23:59:59"}
+    if card_type:
+        query_filter["card_type"] = card_type
     
     total_operations = await db.operations.count_documents(query_filter)
     
@@ -241,7 +258,8 @@ async def get_operations_summary(
         {"$group": {
             "_id": "$gerente",
             "count": {"$sum": 1},
-            "total_purchase_sum": {"$sum": {"$ifNull": ["$purchase_sum", 0]}}
+            "total_purchase_sum": {"$sum": {"$ifNull": ["$purchase_sum", 0]}},
+            "total_redeemed_value": {"$sum": {"$ifNull": ["$redeemed_value", 0]}}
         }},
         {"$sort": {"count": -1}}
     ]
@@ -259,11 +277,31 @@ async def get_operations_summary(
     
     by_type = await db.operations.aggregate(pipeline_type).to_list(length=100)
     
+    # Group by card type
+    pipeline_card_type = [
+        {"$match": query_filter},
+        {"$group": {
+            "_id": "$card_type_label",
+            "count": {"$sum": 1},
+            "card_type_key": {"$first": "$card_type"}
+        }},
+        {"$sort": {"count": -1}}
+    ]
+    
+    by_card_type = await db.operations.aggregate(pipeline_card_type).to_list(length=100)
+    
+    # Get available card types for filter dropdown
+    card_types = await db.operations.distinct("card_type")
+    
     return {
         "success": True,
         "summary": {
             "total_operations": total_operations,
             "by_gerente": by_gerente,
-            "by_type": by_type
+            "by_type": by_type,
+            "by_card_type": by_card_type
+        },
+        "filters": {
+            "card_types": card_types
         }
     }

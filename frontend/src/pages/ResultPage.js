@@ -1143,6 +1143,13 @@ const ResultPage = () => {
         ? availableRewardTiers.find(t => t.threshold > bonusBalance)?.threshold || 'Max'
         : null;
       
+      // Accrual program modes
+      const accrualModes = [
+        { id: 'spend', label: 'Por Compra', description: 'Puntos según monto gastado', icon: '💰' },
+        { id: 'visit', label: 'Por Visita', description: 'Puntos por cada visita', icon: '🚶' },
+        { id: 'points', label: 'Manual', description: 'Agregar puntos manualmente', icon: '✋' }
+      ];
+      
       return (
         <div className="space-y-4 sm:space-y-6">
           {/* Current points balance display */}
@@ -1158,63 +1165,149 @@ const ResultPage = () => {
             )}
           </div>
           
-          {/* Purchase amount input for reward card */}
+          {/* Accrual Mode Selector */}
           <div className="card-brutalist">
-            <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500 block mb-2">
-              Monto de compra ({currencyInfo.code})
+            <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500 block mb-3">
+              Modo de acumulación
             </label>
-            <div className="relative">
-              <span className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-zinc-400 text-lg sm:text-xl">{currencyInfo.symbol}</span>
-              <Input
-                type="number"
-                value={purchaseAmount}
-                onChange={(e) => setPurchaseAmount(e.target.value)}
-                placeholder="0"
-                className="input-brutalist pl-10 sm:pl-12 text-2xl sm:text-3xl font-mono h-14 sm:h-16 text-center"
-                data-testid="reward-purchase-amount"
-              />
+            <div className="grid grid-cols-3 gap-2">
+              {accrualModes.map((mode) => (
+                <button
+                  key={mode.id}
+                  onClick={() => setAccrualMode(mode.id)}
+                  className={`p-3 rounded-lg border-2 transition-all ${
+                    accrualMode === mode.id 
+                      ? 'border-[#120627] bg-[#120627]/5' 
+                      : 'border-zinc-200 hover:border-zinc-300'
+                  }`}
+                  data-testid={`accrual-mode-${mode.id}`}
+                >
+                  <span className="text-xl block mb-1">{mode.icon}</span>
+                  <span className={`text-xs font-medium block ${accrualMode === mode.id ? 'text-[#120627]' : 'text-zinc-600'}`}>
+                    {mode.label}
+                  </span>
+                </button>
+              ))}
             </div>
           </div>
           
-          {/* Points to add - based on purchase amount */}
-          <div className="card-brutalist">
-            <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500 block mb-2">
-              Puntos a agregar
-            </label>
-            <div className="flex items-center gap-3">
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => setActionAmount(Math.max(1, actionAmount - 1))}
-                className="h-12 w-12 sm:h-14 sm:w-14 border-2 rounded-lg bg-white hover:bg-[#ee478a] hover:border-[#ee478a] hover:text-white flex-shrink-0"
-                style={{ borderColor: '#120627', color: '#120627' }}
-                data-testid="decrease-points"
-              >
-                <Minus className="h-5 w-5 sm:h-6 sm:w-6" />
-              </Button>
-              <Input
-                type="number"
-                value={actionAmount}
-                onChange={(e) => {
-                  const val = parseInt(e.target.value) || 1;
-                  setActionAmount(Math.max(1, val));
-                }}
-                min="1"
-                className="input-brutalist text-2xl sm:text-3xl font-mono h-12 sm:h-14 text-center flex-1"
-                data-testid="reward-points-input"
-              />
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => setActionAmount(actionAmount + 1)}
-                className="h-12 w-12 sm:h-14 sm:w-14 border-2 rounded-lg bg-white hover:bg-[#ee478a] hover:border-[#ee478a] hover:text-white flex-shrink-0"
-                style={{ borderColor: '#120627', color: '#120627' }}
-                data-testid="increase-points"
-              >
-                <Plus className="h-5 w-5 sm:h-6 sm:w-6" />
-              </Button>
+          {/* Spend Mode - Only Purchase Amount */}
+          {accrualMode === 'spend' && (
+            <div className="card-brutalist">
+              <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500 block mb-2">
+                Monto de compra ({currencyInfo.code}) <span className="text-[#ee478a]">*</span>
+              </label>
+              <p className="text-xs text-zinc-400 mb-3">Los puntos se calcularán automáticamente según las reglas del programa</p>
+              <div className="relative">
+                <span className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-zinc-400 text-lg sm:text-xl">{currencyInfo.symbol}</span>
+                <Input
+                  type="number"
+                  value={purchaseAmount}
+                  onChange={(e) => setPurchaseAmount(e.target.value)}
+                  placeholder="0"
+                  className="input-brutalist pl-10 sm:pl-12 text-2xl sm:text-3xl font-mono h-14 sm:h-16 text-center"
+                  data-testid="reward-purchase-amount"
+                />
+              </div>
             </div>
-          </div>
+          )}
+          
+          {/* Visit Mode - Visit Counter */}
+          {accrualMode === 'visit' && (
+            <div className="card-brutalist">
+              <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500 block mb-2">
+                Visitas a registrar
+              </label>
+              <p className="text-xs text-zinc-400 mb-3">Los puntos se calcularán automáticamente por cada visita</p>
+              <div className="flex items-center justify-center gap-4">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setActionAmount(Math.max(1, actionAmount - 1))}
+                  className="h-14 w-14 border-2 rounded-lg bg-white hover:bg-[#ee478a] hover:border-[#ee478a] hover:text-white"
+                  style={{ borderColor: '#120627', color: '#120627' }}
+                  data-testid="decrease-visits"
+                >
+                  <Minus className="h-6 w-6" />
+                </Button>
+                <div className="text-center">
+                  <span className="text-4xl font-mono font-bold text-[#120627]">{actionAmount}</span>
+                  <p className="text-xs text-zinc-500 mt-1">visita{actionAmount > 1 ? 's' : ''}</p>
+                </div>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setActionAmount(actionAmount + 1)}
+                  className="h-14 w-14 border-2 rounded-lg bg-white hover:bg-[#ee478a] hover:border-[#ee478a] hover:text-white"
+                  style={{ borderColor: '#120627', color: '#120627' }}
+                  data-testid="increase-visits"
+                >
+                  <Plus className="h-6 w-6" />
+                </Button>
+              </div>
+            </div>
+          )}
+          
+          {/* Manual Points Mode - Both fields */}
+          {accrualMode === 'points' && (
+            <>
+              <div className="card-brutalist">
+                <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500 block mb-2">
+                  Monto de compra ({currencyInfo.code})
+                </label>
+                <div className="relative">
+                  <span className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-zinc-400 text-lg sm:text-xl">{currencyInfo.symbol}</span>
+                  <Input
+                    type="number"
+                    value={purchaseAmount}
+                    onChange={(e) => setPurchaseAmount(e.target.value)}
+                    placeholder="0"
+                    className="input-brutalist pl-10 sm:pl-12 text-2xl sm:text-3xl font-mono h-14 sm:h-16 text-center"
+                    data-testid="reward-purchase-amount-manual"
+                  />
+                </div>
+              </div>
+              
+              <div className="card-brutalist">
+                <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500 block mb-2">
+                  Puntos a agregar <span className="text-[#ee478a]">*</span>
+                </label>
+                <div className="flex items-center gap-3">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => setActionAmount(Math.max(1, actionAmount - 1))}
+                    className="h-12 w-12 sm:h-14 sm:w-14 border-2 rounded-lg bg-white hover:bg-[#ee478a] hover:border-[#ee478a] hover:text-white flex-shrink-0"
+                    style={{ borderColor: '#120627', color: '#120627' }}
+                    data-testid="decrease-points"
+                  >
+                    <Minus className="h-5 w-5 sm:h-6 sm:w-6" />
+                  </Button>
+                  <Input
+                    type="number"
+                    value={actionAmount}
+                    onChange={(e) => {
+                      const val = parseInt(e.target.value) || 1;
+                      setActionAmount(Math.max(1, val));
+                    }}
+                    min="1"
+                    className="input-brutalist text-2xl sm:text-3xl font-mono h-12 sm:h-14 text-center flex-1"
+                    data-testid="reward-points-input"
+                  />
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => setActionAmount(actionAmount + 1)}
+                    className="h-12 w-12 sm:h-14 sm:w-14 border-2 rounded-lg bg-white hover:bg-[#ee478a] hover:border-[#ee478a] hover:text-white flex-shrink-0"
+                    style={{ borderColor: '#120627', color: '#120627' }}
+                    data-testid="increase-points"
+                  >
+                    <Plus className="h-5 w-5 sm:h-6 sm:w-6" />
+                  </Button>
+                </div>
+              </div>
+            </>
+          )}
           
           <Button
             onClick={() => openConfirmation('Agregar')}

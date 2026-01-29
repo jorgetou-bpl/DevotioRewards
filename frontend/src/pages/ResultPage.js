@@ -126,6 +126,75 @@ const ResultPage = () => {
     fetchPendingRewards();
   }, [card, cardType, activeTab, selectedRewardId]);
 
+  // Auto-detect accrual mode for reward cards
+  useEffect(() => {
+    const detectAccrualMode = async () => {
+      if (!card || cardType !== 'reward') return;
+      
+      // Check localStorage cache first
+      const cacheKey = `accrualMode_${card.templateId}`;
+      const cachedMode = localStorage.getItem(cacheKey);
+      if (cachedMode) {
+        setDetectedAccrualMode(cachedMode);
+        return;
+      }
+      
+      setDetectingMode(true);
+      const token = localStorage.getItem('token');
+      
+      try {
+        // Try add-purchase first (spend mode) with minimal amount
+        const spendResponse = await axios.post(`${API}/cards/${card.id}/add-purchase`, {
+          amount: 0.01,
+          purchaseSum: 0.01,
+          comment: 'AUTO_DETECT_MODE'
+        }, { headers: { Authorization: `Bearer ${token}` } });
+        
+        if (spendResponse.data.success) {
+          setDetectedAccrualMode('spend');
+          localStorage.setItem(cacheKey, 'spend');
+          // Refresh card data
+          const refreshResponse = await axios.get(`${API}/cards/${card.id}`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          if (refreshResponse.data.card) {
+            setCard(prev => ({ ...prev, ...refreshResponse.data.card }));
+          }
+          return;
+        }
+      } catch (e) {
+        // Spend mode failed, try visit mode
+        try {
+          const visitResponse = await axios.post(`${API}/cards/${card.id}/add-visit-reward`, {
+            amount: 1,
+            comment: 'AUTO_DETECT_MODE'
+          }, { headers: { Authorization: `Bearer ${token}` } });
+          
+          if (visitResponse.data.success) {
+            setDetectedAccrualMode('visit');
+            localStorage.setItem(cacheKey, 'visit');
+            // Refresh card data
+            const refreshResponse = await axios.get(`${API}/cards/${card.id}`, {
+              headers: { Authorization: `Bearer ${token}` }
+            });
+            if (refreshResponse.data.card) {
+              setCard(prev => ({ ...prev, ...refreshResponse.data.card }));
+            }
+            return;
+          }
+        } catch (e2) {
+          // Visit mode also failed, assume points mode (manual)
+          setDetectedAccrualMode('points');
+          localStorage.setItem(cacheKey, 'points');
+        }
+      } finally {
+        setDetectingMode(false);
+      }
+    };
+    
+    detectAccrualMode();
+  }, [card?.id, card?.templateId, cardType]);
+
   if (!card) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center p-4 sm:p-6">

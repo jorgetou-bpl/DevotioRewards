@@ -50,6 +50,9 @@ const OperationsPage = () => {
   // Dashboard state
   const [dashboardData, setDashboardData] = useState(null);
   const [dashboardLoading, setDashboardLoading] = useState(false);
+  const [dashboardFilters, setDashboardFilters] = useState({ card_types: [] });
+  const [dashboardCardType, setDashboardCardType] = useState('');
+  const [dashboardCardTypeDropdownOpen, setDashboardCardTypeDropdownOpen] = useState(false);
   
   // Filter state
   const [startDate, setStartDate] = useState('');
@@ -98,6 +101,7 @@ const OperationsPage = () => {
       const params = new URLSearchParams();
       if (startDate) params.append('start_date', startDate);
       if (endDate) params.append('end_date', endDate);
+      if (dashboardCardType) params.append('card_type', dashboardCardType);
       
       const response = await axios.get(`${API}/operations/summary?${params.toString()}`, {
         headers: { Authorization: `Bearer ${token}` }
@@ -105,6 +109,9 @@ const OperationsPage = () => {
       
       if (response.data.success) {
         setDashboardData(response.data.summary);
+        if (response.data.filters) {
+          setDashboardFilters(response.data.filters);
+        }
       }
     } catch (error) {
       console.error('Error fetching dashboard:', error);
@@ -112,7 +119,7 @@ const OperationsPage = () => {
     } finally {
       setDashboardLoading(false);
     }
-  }, [token, startDate, endDate]);
+  }, [token, startDate, endDate, dashboardCardType]);
 
   useEffect(() => {
     if (activeTab === 'historial') {

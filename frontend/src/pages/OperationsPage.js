@@ -283,6 +283,49 @@ const OperationsPage = () => {
                   data-testid="dashboard-end-date"
                 />
               </div>
+              <div className="flex-1 relative">
+                <label className="block text-sm font-medium text-zinc-700 mb-1">
+                  Tipo de tarjeta
+                </label>
+                <button
+                  onClick={() => setDashboardCardTypeDropdownOpen(!dashboardCardTypeDropdownOpen)}
+                  className="w-full flex items-center justify-between p-2 border-2 border-zinc-200 rounded-md hover:border-[#120627] transition-colors bg-white h-10"
+                  data-testid="dashboard-card-type-dropdown"
+                >
+                  <span className={dashboardCardType ? 'text-[#120627]' : 'text-zinc-400'}>
+                    {dashboardCardType || 'Todos'}
+                  </span>
+                  <ChevronDown className={`h-4 w-4 text-zinc-400 transition-transform ${dashboardCardTypeDropdownOpen ? 'rotate-180' : ''}`} />
+                </button>
+                
+                {dashboardCardTypeDropdownOpen && (
+                  <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-zinc-200 rounded-md shadow-lg z-50 max-h-48 overflow-y-auto">
+                    <button
+                      onClick={() => {
+                        setDashboardCardType('');
+                        setDashboardCardTypeDropdownOpen(false);
+                      }}
+                      className={`w-full flex items-center justify-between p-2 hover:bg-zinc-50 ${!dashboardCardType ? 'bg-purple-50' : ''}`}
+                    >
+                      <span>Todos</span>
+                      {!dashboardCardType && <Check className="h-4 w-4 text-[#120627]" />}
+                    </button>
+                    {dashboardFilters.card_types?.map((cardType) => (
+                      <button
+                        key={cardType}
+                        onClick={() => {
+                          setDashboardCardType(cardType);
+                          setDashboardCardTypeDropdownOpen(false);
+                        }}
+                        className={`w-full flex items-center justify-between p-2 hover:bg-zinc-50 ${dashboardCardType === cardType ? 'bg-purple-50' : ''}`}
+                      >
+                        <span className="capitalize">{cardType || 'Sin tipo'}</span>
+                        {dashboardCardType === cardType && <Check className="h-4 w-4 text-[#120627]" />}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
               <Button
                 onClick={fetchDashboard}
                 className="btn-primary"
@@ -291,10 +334,10 @@ const OperationsPage = () => {
               >
                 {dashboardLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Aplicar'}
               </Button>
-              {(startDate || endDate) && (
+              {(startDate || endDate || dashboardCardType) && (
                 <Button
                   variant="outline"
-                  onClick={() => { setStartDate(''); setEndDate(''); }}
+                  onClick={() => { setStartDate(''); setEndDate(''); setDashboardCardType(''); }}
                   className="border-2 border-zinc-200"
                 >
                   <X className="h-4 w-4" />

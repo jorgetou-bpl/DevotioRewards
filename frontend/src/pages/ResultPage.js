@@ -142,51 +142,23 @@ const ResultPage = () => {
       setDetectingMode(true);
       const token = localStorage.getItem('token');
       
+      // Use backend auto-detection endpoint
       try {
-        // Try add-purchase first (spend mode) with minimal amount
-        const spendResponse = await axios.post(`${API}/cards/${card.id}/add-purchase`, {
-          amount: 0.01,
-          purchaseSum: 0.01,
-          comment: 'AUTO_DETECT_MODE'
-        }, { headers: { Authorization: `Bearer ${token}` } });
+        const response = await axios.post(`${API}/cards/${card.id}/detect-accrual-mode`, {}, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
         
-        if (spendResponse.data.success) {
+        if (response.data.success && response.data.detectedMode) {
+          setDetectedAccrualMode(response.data.detectedMode);
+          localStorage.setItem(cacheKey, response.data.detectedMode);
+        } else {
+          // Default to spend mode if detection fails
           setDetectedAccrualMode('spend');
-          localStorage.setItem(cacheKey, 'spend');
-          // Refresh card data
-          const refreshResponse = await axios.get(`${API}/cards/${card.id}`, {
-            headers: { Authorization: `Bearer ${token}` }
-          });
-          if (refreshResponse.data.card) {
-            setCard(prev => ({ ...prev, ...refreshResponse.data.card }));
-          }
-          return;
         }
       } catch (e) {
-        // Spend mode failed, try visit mode
-        try {
-          const visitResponse = await axios.post(`${API}/cards/${card.id}/add-visit-reward`, {
-            amount: 1,
-            comment: 'AUTO_DETECT_MODE'
-          }, { headers: { Authorization: `Bearer ${token}` } });
-          
-          if (visitResponse.data.success) {
-            setDetectedAccrualMode('visit');
-            localStorage.setItem(cacheKey, 'visit');
-            // Refresh card data
-            const refreshResponse = await axios.get(`${API}/cards/${card.id}`, {
-              headers: { Authorization: `Bearer ${token}` }
-            });
-            if (refreshResponse.data.card) {
-              setCard(prev => ({ ...prev, ...refreshResponse.data.card }));
-            }
-            return;
-          }
-        } catch (e2) {
-          // Visit mode also failed, assume points mode (manual)
-          setDetectedAccrualMode('points');
-          localStorage.setItem(cacheKey, 'points');
-        }
+        console.log('Accrual mode detection failed, defaulting to spend:', e);
+        // Default to spend mode - most common for reward cards
+        setDetectedAccrualMode('spend');
       } finally {
         setDetectingMode(false);
       }

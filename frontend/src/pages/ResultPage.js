@@ -233,7 +233,18 @@ const ResultPage = () => {
         // "Redeem visit" = customer USES a visit = subtract-visit (decreases currentNumberOfUses/available)
         endpoint = `/cards/${card.id}/subtract-visit`;
       } else if (actionKey === 'agregarpuntos') {
-        endpoint = `/cards/${card.id}/add-scores`;
+        // For reward cards, use the accrual mode to determine endpoint
+        if (normalizedType === 'reward') {
+          if (accrualMode === 'spend') {
+            endpoint = `/cards/${card.id}/add-purchase`;
+          } else if (accrualMode === 'visit') {
+            endpoint = `/cards/${card.id}/add-visit-reward`;
+          } else {
+            endpoint = `/cards/${card.id}/add-scores`;
+          }
+        } else {
+          endpoint = `/cards/${card.id}/add-scores`;
+        }
       } else if (actionKey === 'canjearpuntos') {
         endpoint = `/cards/${card.id}/subtract-scores`;
       } else {
@@ -265,6 +276,20 @@ const ResultPage = () => {
         gerente: user?.name || undefined // Include gerente for attribution
       };
       
+      // For reward card with spend mode, purchaseSum IS the amount
+      if (normalizedType === 'reward' && actionKey === 'agregarpuntos' && accrualMode === 'spend') {
+        payload.purchaseSum = parseFloat(purchaseAmount) || 0;
+        payload.amount = parseFloat(purchaseAmount) || 0;
+        payload.accrualProgram = 'spend';
+      } else if (normalizedType === 'reward' && actionKey === 'agregarpuntos' && accrualMode === 'visit') {
+        payload.amount = actionAmount;
+        payload.accrualProgram = 'visit';
+      } else if (normalizedType === 'reward' && actionKey === 'agregarpuntos' && accrualMode === 'points') {
+        payload.amount = actionAmount;
+        payload.accrualProgram = 'points';
+        payload.purchaseSum = parseFloat(purchaseAmount) || undefined;
+      }
+      
       // For stamp card reward redemption with pending rewards tracking
       if (actionKey === 'canjear' && normalizedType === 'stamp' && selectedRewardId) {
         payload.reward_id = selectedRewardId;
@@ -281,7 +306,7 @@ const ResultPage = () => {
         // points = purchaseSum * (percentage / 100)
         const percentage = balance.discountPercentage || balance.cashbackPercent || 1;
         payload.amount = Math.round(finalPurchaseAmount * (percentage / 100));
-      } else {
+      } else if (!payload.amount) {
         payload.amount = actionAmount;
       }
 

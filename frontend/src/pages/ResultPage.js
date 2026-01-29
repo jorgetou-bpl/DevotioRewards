@@ -96,6 +96,33 @@ const ResultPage = () => {
     }
   }, [card, cardType]);
 
+  // Fetch pending rewards for stamp cards when on Canjear tab
+  useEffect(() => {
+    const fetchPendingRewards = async () => {
+      const normalizedType = cardType ? cardType.replace('_card', '') : '';
+      if (normalizedType === 'stamp' && activeTab === 'Canjear' && card?.id) {
+        setLoadingPendingRewards(true);
+        try {
+          const response = await axios.get(`${API}/cards/${card.id}/pending-rewards`);
+          if (response.data?.pending_rewards) {
+            setPendingRewards(response.data.pending_rewards);
+            // Auto-select the first (oldest) reward if available
+            if (response.data.pending_rewards.length > 0 && !selectedRewardId) {
+              setSelectedRewardId(response.data.pending_rewards[0].id);
+            }
+          }
+        } catch (error) {
+          console.log('Could not fetch pending rewards:', error);
+          setPendingRewards([]);
+        } finally {
+          setLoadingPendingRewards(false);
+        }
+      }
+    };
+    
+    fetchPendingRewards();
+  }, [card, cardType, activeTab, selectedRewardId]);
+
   if (!card) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center p-4 sm:p-6">

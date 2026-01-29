@@ -45,6 +45,12 @@ const ResultPage = () => {
   const [successModal, setSuccessModal] = useState({ open: false, message: '' });
   const [templateRewardTiers, setTemplateRewardTiers] = useState([]);
   const [loadingTemplate, setLoadingTemplate] = useState(false);
+  
+  // Pending rewards state for timestamp-based tracking
+  const [pendingRewards, setPendingRewards] = useState([]);
+  const [loadingPendingRewards, setLoadingPendingRewards] = useState(false);
+  const [selectedRewardId, setSelectedRewardId] = useState(null);
+  const [rewardValue, setRewardValue] = useState(''); // Optional value for redemption
 
   const currencyInfo = getCurrencyInfo();
 

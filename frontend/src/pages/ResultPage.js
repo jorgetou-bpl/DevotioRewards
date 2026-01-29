@@ -1399,7 +1399,7 @@ const ResultPage = () => {
           
           <Button
             onClick={() => openConfirmation('Agregar')}
-            disabled={loading || actionAmount < 1}
+            disabled={loading || detectingMode || !detectedAccrualMode || (detectedAccrualMode === 'spend' && !purchaseAmount) || (detectedAccrualMode !== 'spend' && actionAmount < 1)}
             className="w-full h-12 sm:h-14 text-base sm:text-lg btn-primary disabled:opacity-50"
             data-testid="add-reward-points-button"
           >

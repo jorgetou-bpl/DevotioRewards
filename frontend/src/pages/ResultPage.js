@@ -46,6 +46,7 @@ const ResultPage = () => {
   const [successModal, setSuccessModal] = useState({ open: false, message: '' });
   const [templateRewardTiers, setTemplateRewardTiers] = useState([]);
   const [loadingTemplate, setLoadingTemplate] = useState(false);
+  const [accrualMode, setAccrualMode] = useState('spend'); // 'spend', 'visit', or 'points' for reward cards
   
   // Pending rewards state for timestamp-based tracking
   const [pendingRewards, setPendingRewards] = useState([]);

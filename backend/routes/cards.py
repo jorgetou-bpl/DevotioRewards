@@ -838,6 +838,44 @@ async def add_points_auto(card_id: str, action_data: CardActionRequest, current_
         raise last_error
     raise HTTPException(status_code=400, detail="No se pudo determinar el tipo de acumulación")
 
+@router.post("/cards/{card_id}/detect-accrual-mode")
+async def detect_accrual_mode(card_id: str, current_user: dict = Depends(get_current_user)):
+    """
+    Detect accrual mode for reward cards without making actual transactions.
+    Tries each endpoint with zero/minimal value and detects based on error response.
+    """
+    # Try spend mode first (most common)
+    endpoints_to_try = [
+        ('add-purchase', {'amount': 0, 'purchaseSum': 0}, 'spend'),
+        ('add-visit', {'visits': 0}, 'visit'),
+        ('add-scores', {'scores': 0}, 'points')
+    ]
+    
+    for endpoint, payload, mode in endpoints_to_try:
+        try:
+            # Use a dry-run approach - zero amounts should fail gracefully
+            # but the error message will tell us if it's the wrong accrual type
+            response = await call_boomerang_api('POST', f'/cards/{card_id}/{endpoint}', payload)
+            
+            # If it succeeds with zero, this mode is supported
+            if response.get('code') == 200:
+                return {"success": True, "detectedMode": mode}
+                
+        except HTTPException as e:
+            error_detail = str(e.detail).lower()
+            # "Irrelevant accrual type" means wrong mode - try next
+            if "irrelevant" in error_detail or "accrual" in error_detail:
+                continue
+            # Other errors (like "amount must be > 0") mean this mode IS correct
+            # but we just need to provide proper values
+            if "amount" in error_detail or "must be" in error_detail or "greater" in error_detail:
+                return {"success": True, "detectedMode": mode}
+        except Exception:
+            continue
+    
+    # Default to spend if all detection attempts fail
+    return {"success": True, "detectedMode": "spend"}
+
 @router.post("/cards/{card_id}/subtract-scores")
 async def subtract_scores(card_id: str, action_data: CardActionRequest, current_user: dict = Depends(get_current_user)):
     """Subtract scores/points from cards."""

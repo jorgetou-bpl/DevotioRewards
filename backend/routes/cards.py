@@ -287,7 +287,18 @@ async def add_stamp(card_id: str, action_data: CardActionRequest, current_user: 
                 gerente_override=gerente_name
             )
             
-            return {"success": True, "card": mask_pii(card_data), "message": success_msg}
+            # Include info about new rewards in response
+            response_data = {
+                "success": True, 
+                "card": mask_pii(card_data), 
+                "message": success_msg
+            }
+            
+            if new_rewards:
+                response_data["new_rewards_earned"] = len(new_rewards)
+                response_data["message"] = f"{success_msg} ¡{len(new_rewards)} recompensa(s) ganada(s)!"
+            
+            return response_data
         
         error_msg = response.get('message', '')
         if 'Irrelevant accrual type' in str(error_msg):
@@ -300,10 +311,26 @@ async def add_stamp(card_id: str, action_data: CardActionRequest, current_user: 
     
     raise HTTPException(status_code=400, detail=get_user_friendly_error("action_failed", last_error))
 
+@router.get("/cards/{card_id}/pending-rewards")
+async def get_card_pending_rewards(card_id: str, current_user: dict = Depends(get_current_user)):
+    """Get all pending (unredeemed) rewards for a card, sorted oldest first."""
+    rewards = await get_pending_rewards(card_id)
+    return {
+        "success": True,
+        "pending_rewards": rewards,
+        "count": len(rewards)
+    }
+
 @router.post("/cards/{card_id}/subtract-reward")
 async def subtract_reward(card_id: str, action_data: CardActionRequest, current_user: dict = Depends(get_current_user)):
-    """Subtract/redeem rewards from stamp cards."""
+    """
+    Subtract/redeem rewards from stamp cards.
+    
+    If reward_id is provided, marks that specific earned reward as redeemed.
+    If reward_value is provided, stores the value with the redemption.
+    """
     gerente_name = action_data.gerente or current_user.get('name', '')
+    gerente_email = current_user.get('email', '')
     comment_with_gerente = build_comment_with_gerente(action_data.comment, gerente_name)
     
     payload = {"rewards": int(action_data.amount or 1)}
@@ -315,6 +342,36 @@ async def subtract_reward(card_id: str, action_data: CardActionRequest, current_
     response = await call_boomerang_api('POST', f'/cards/{card_id}/subtract-reward', payload)
     card_data = response.get('data', {})
     
+    # If a specific reward_id was provided, mark it as redeemed in our tracking
+    reward_redeemed = None
+    if action_data.reward_id:
+        success = await redeem_specific_reward(
+            reward_id=action_data.reward_id,
+            gerente_name=gerente_name,
+            gerente_email=gerente_email,
+            value=action_data.reward_value,
+            note=action_data.comment
+        )
+        if success:
+            # Fetch the redeemed reward info
+            reward_redeemed = await db.rewards_earned.find_one(
+                {"id": action_data.reward_id},
+                {"_id": 0}
+            )
+    else:
+        # No specific reward_id - try to redeem oldest pending reward
+        pending = await get_pending_rewards(card_id)
+        if pending:
+            oldest = pending[0]
+            await redeem_specific_reward(
+                reward_id=oldest['id'],
+                gerente_name=gerente_name,
+                gerente_email=gerente_email,
+                value=action_data.reward_value,
+                note=action_data.comment
+            )
+            reward_redeemed = oldest
+    
     await log_operation(
         card_id=card_id,
         operation_type="subtract-reward",
@@ -322,12 +379,17 @@ async def subtract_reward(card_id: str, action_data: CardActionRequest, current_
         card_data=card_data,
         amount=action_data.amount or 1,
         balance=card_data.get('balance', {}).get('numberRewardsUnused'),
-        purchase_sum=action_data.purchaseSum,
+        purchase_sum=action_data.reward_value or action_data.purchaseSum,
         note=action_data.comment,
         gerente_override=gerente_name
     )
     
-    return {"success": True, "card": mask_pii(card_data), "message": "Recompensa canjeada exitosamente"}
+    return {
+        "success": True, 
+        "card": mask_pii(card_data), 
+        "message": "Recompensa canjeada exitosamente",
+        "reward_redeemed": reward_redeemed
+    }
 
 # ============ POINTS/BALANCE ACTIONS ============
 

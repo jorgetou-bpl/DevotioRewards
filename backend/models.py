@@ -50,9 +50,35 @@ class CardActionRequest(BaseModel):
     comment: Optional[str] = None
     purchaseSum: Optional[float] = None
     gerente: Optional[str] = None
+    # For reward redemption with tracking
+    reward_id: Optional[str] = None  # ID of specific earned reward to redeem
+    reward_value: Optional[float] = None  # Optional monetary value of reward
 
 class ScanRequest(BaseModel):
     qr_data: str
+
+# ============ REWARD TRACKING MODELS ============
+
+class EarnedReward(BaseModel):
+    """Tracks individual rewards earned by customers"""
+    id: Optional[str] = None
+    card_id: str
+    customer_name: Optional[str] = None
+    template_id: Optional[str] = None
+    
+    # Reward tier info
+    reward_threshold: int  # stamps needed (2, 10, etc.)
+    
+    # Timing
+    earned_at: str  # ISO timestamp when earned
+    stamps_at_earning: int  # stamp count when reward was earned
+    
+    # Status
+    status: str = "pending"  # pending, redeemed
+    redeemed_at: Optional[str] = None
+    redeemed_by: Optional[str] = None  # gerente who redeemed
+    redeemed_value: Optional[float] = None  # value entered at redemption
+    redeemed_note: Optional[str] = None
 
 # ============ OPERATIONS MODELS ============
 

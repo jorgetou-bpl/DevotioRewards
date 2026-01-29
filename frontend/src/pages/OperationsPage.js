@@ -487,6 +487,37 @@ const OperationsPage = () => {
                     </div>
                   )}
                 </div>
+
+                {/* Operations by Card Type */}
+                <div className="card-brutalist">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold text-[#120627] flex items-center gap-2">
+                      <Award className="h-5 w-5 text-[#10b981]" />
+                      Por Tipo de Tarjeta
+                    </h3>
+                  </div>
+                  
+                  {dashboardData.by_card_type?.length > 0 ? (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                      {dashboardData.by_card_type.map((cardType, index) => (
+                        <div 
+                          key={cardType._id || index}
+                          className="p-4 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl text-center hover:from-blue-100 hover:to-blue-200 transition-colors"
+                        >
+                          <p className="text-2xl font-bold text-[#120627]">{cardType.count}</p>
+                          <p className="text-xs text-blue-700 mt-1 truncate font-medium" title={cardType._id}>
+                            {cardType._id || 'Sin tipo'}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8">
+                      <Award className="h-12 w-12 mx-auto text-zinc-300 mb-3" />
+                      <p className="text-zinc-500">No hay datos por tipo de tarjeta</p>
+                    </div>
+                  )}
+                </div>
               </>
             ) : (
               <div className="text-center py-12">

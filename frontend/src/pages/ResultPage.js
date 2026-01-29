@@ -19,7 +19,8 @@ import {
   Gift,
   User,
   CreditCard,
-  X
+  X,
+  Calendar
 } from 'lucide-react';
 
 // Import extracted components

@@ -583,6 +583,7 @@ const OperationsPage = () => {
                       onClick={() => {
                         setTypeDropdownOpen(!typeDropdownOpen);
                         setGerenteDropdownOpen(false);
+                        setCardTypeDropdownOpen(false);
                       }}
                       className="w-full flex items-center justify-between p-2 border-2 border-zinc-200 rounded-md hover:border-[#120627] transition-colors bg-white"
                       data-testid="operation-type-dropdown"
@@ -616,6 +617,55 @@ const OperationsPage = () => {
                           >
                             <span>{type}</span>
                             {selectedOperationType === type && <Check className="h-4 w-4 text-[#120627]" />}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Card Type Dropdown */}
+                  <div className="relative">
+                    <label className="block text-sm font-medium text-zinc-700 mb-1">
+                      Tipo de tarjeta
+                    </label>
+                    <button
+                      onClick={() => {
+                        setCardTypeDropdownOpen(!cardTypeDropdownOpen);
+                        setGerenteDropdownOpen(false);
+                        setTypeDropdownOpen(false);
+                      }}
+                      className="w-full flex items-center justify-between p-2 border-2 border-zinc-200 rounded-md hover:border-[#120627] transition-colors bg-white"
+                      data-testid="card-type-dropdown"
+                    >
+                      <span className={selectedCardType ? 'text-[#120627]' : 'text-zinc-400'}>
+                        {selectedCardType || 'Todos'}
+                      </span>
+                      <ChevronDown className={`h-4 w-4 text-zinc-400 transition-transform ${cardTypeDropdownOpen ? 'rotate-180' : ''}`} />
+                    </button>
+                    
+                    {cardTypeDropdownOpen && (
+                      <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-zinc-200 rounded-md shadow-lg z-50 max-h-48 overflow-y-auto">
+                        <button
+                          onClick={() => {
+                            setSelectedCardType('');
+                            setCardTypeDropdownOpen(false);
+                          }}
+                          className={`w-full flex items-center justify-between p-2 hover:bg-zinc-50 ${!selectedCardType ? 'bg-purple-50' : ''}`}
+                        >
+                          <span>Todos</span>
+                          {!selectedCardType && <Check className="h-4 w-4 text-[#120627]" />}
+                        </button>
+                        {filters.card_types?.map((cardType) => (
+                          <button
+                            key={cardType}
+                            onClick={() => {
+                              setSelectedCardType(cardType);
+                              setCardTypeDropdownOpen(false);
+                            }}
+                            className={`w-full flex items-center justify-between p-2 hover:bg-zinc-50 ${selectedCardType === cardType ? 'bg-purple-50' : ''}`}
+                          >
+                            <span className="capitalize">{cardType || 'Sin tipo'}</span>
+                            {selectedCardType === cardType && <Check className="h-4 w-4 text-[#120627]" />}
                           </button>
                         ))}
                       </div>

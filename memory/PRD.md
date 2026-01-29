@@ -79,7 +79,48 @@ All 8 Boomerangme card types now correctly recognized and rendered:
 
 ## What's Been Implemented
 
-### Session 10 - Gerente Attribution & Operations History (January 26, 2026)
+### Session 11 - Card Type Tracking & Reporting Enhancements (January 29, 2026)
+1. **Card Type Tracking in All Operations**
+   - All transaction logs now include `card_type` (normalized key like "stamp", "cashback")
+   - Also includes `card_type_label` (Spanish label like "Sellos", "Cashback")
+   - Extracted from `card_data.type` during `log_operation()`
+   - Historical operations without card_type remain as null
+
+2. **Separate purchase_sum and redeemed_value Fields**
+   - `subtract-reward` endpoint now correctly separates:
+     - `purchase_sum`: Amount sent to Boomerangme API (mandatory)
+     - `redeemed_value`: Optional internal tracking of reward monetary value
+   - Both fields stored independently in operations collection
+
+3. **Operations API Updates**
+   - `GET /api/operations`:
+     - Added `card_type` query parameter for filtering
+     - Now returns `card_types` in filters list
+   - `GET /api/operations/summary`:
+     - Added `card_type` query parameter for filtering
+     - Returns `by_card_type` aggregation data
+     - Returns `card_types` in filters
+   - `GET /api/operations/export`:
+     - Added "Tipo de Tarjeta" column in CSV/XLSX
+     - Added "Valor del Canje" column in CSV/XLSX
+     - Supports `card_type` filter parameter
+
+4. **Frontend Operations Page Updates**
+   - **Historial Tab**:
+     - Added "Tipo de tarjeta" dropdown filter in filter panel
+     - Added "TIPO TARJETA" column in operations table
+     - Added "VALOR CANJE" column in operations table
+     - Mobile cards updated with card type badge and canje value
+   - **Dashboard Tab**:
+     - Added "Tipo de tarjeta" dropdown filter
+     - Added new "Por Tipo de Tarjeta" section with aggregated counts
+     - Dashboard filters now include card_type
+
+5. **Technical Details**
+   - Backend: `/app/backend/routes/operations.py` - Updated all 3 endpoints
+   - Backend: `/app/backend/routes/cards.py` - Fixed subtract_reward to pass redeemed_value separately
+   - Frontend: `/app/frontend/src/pages/OperationsPage.js` - Added filter, columns, and dashboard section
+   - Test report: `/app/test_reports/iteration_7.json` - 100% pass rate
 1. **Gerente (Manager) Transaction Attribution**
    - All card transaction endpoints now include `gerente` field in request payload
    - Scanner app user's name automatically sent with every transaction

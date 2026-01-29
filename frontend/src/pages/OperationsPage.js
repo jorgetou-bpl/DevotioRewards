@@ -43,7 +43,8 @@ const OperationsPage = () => {
   const [meta, setMeta] = useState({ total: 0, page: 1, total_pages: 1 });
   const [filters, setFilters] = useState({
     gerentes: [],
-    operation_types: []
+    operation_types: [],
+    card_types: []
   });
   
   // Dashboard state
@@ -55,9 +56,11 @@ const OperationsPage = () => {
   const [endDate, setEndDate] = useState('');
   const [selectedGerente, setSelectedGerente] = useState('');
   const [selectedOperationType, setSelectedOperationType] = useState('');
+  const [selectedCardType, setSelectedCardType] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [gerenteDropdownOpen, setGerenteDropdownOpen] = useState(false);
   const [typeDropdownOpen, setTypeDropdownOpen] = useState(false);
+  const [cardTypeDropdownOpen, setCardTypeDropdownOpen] = useState(false);
 
   const fetchOperations = useCallback(async (page = 1) => {
     try {
@@ -70,6 +73,7 @@ const OperationsPage = () => {
       if (endDate) params.append('end_date', endDate);
       if (selectedGerente) params.append('gerente', selectedGerente);
       if (selectedOperationType) params.append('operation_type', selectedOperationType);
+      if (selectedCardType) params.append('card_type', selectedCardType);
       
       const response = await axios.get(`${API}/operations?${params.toString()}`, {
         headers: { Authorization: `Bearer ${token}` }
@@ -86,7 +90,7 @@ const OperationsPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [token, startDate, endDate, selectedGerente, selectedOperationType]);
+  }, [token, startDate, endDate, selectedGerente, selectedOperationType, selectedCardType]);
 
   const fetchDashboard = useCallback(async () => {
     try {
@@ -128,6 +132,7 @@ const OperationsPage = () => {
       if (endDate) params.append('end_date', endDate);
       if (selectedGerente) params.append('gerente', selectedGerente);
       if (selectedOperationType) params.append('operation_type', selectedOperationType);
+      if (selectedCardType) params.append('card_type', selectedCardType);
       
       const response = await axios.get(`${API}/operations/export?${params.toString()}`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -159,6 +164,7 @@ const OperationsPage = () => {
     setEndDate('');
     setSelectedGerente('');
     setSelectedOperationType('');
+    setSelectedCardType('');
   };
 
   const formatDate = (dateString) => {
@@ -177,7 +183,7 @@ const OperationsPage = () => {
     }
   };
 
-  const hasActiveFilters = startDate || endDate || selectedGerente || selectedOperationType;
+  const hasActiveFilters = startDate || endDate || selectedGerente || selectedOperationType || selectedCardType;
 
   // Calculate total sales from dashboard data
   const totalSales = dashboardData?.by_gerente?.reduce((sum, g) => sum + (g.total_purchase_sum || 0), 0) || 0;

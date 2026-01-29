@@ -560,7 +560,27 @@ const ResultPage = () => {
             </div>
           )}
           
-          {/* Optional reward value input */}
+          {/* Purchase amount - MANDATORY - goes to Boomerangme */}
+          {(pendingRewards.length > 0 || numberRewardsUnused > 0) && (
+            <div className="card-brutalist">
+              <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500 block mb-2">
+                Monto de compra ({currencyInfo.code})
+              </label>
+              <div className="relative">
+                <span className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-zinc-400 text-lg sm:text-xl">{currencyInfo.symbol}</span>
+                <Input
+                  type="number"
+                  value={purchaseAmount}
+                  onChange={(e) => setPurchaseAmount(e.target.value)}
+                  placeholder="0"
+                  className="input-brutalist pl-10 sm:pl-12 text-2xl sm:text-3xl font-mono h-14 sm:h-16 text-center"
+                  data-testid="stamp-redeem-purchase-amount"
+                />
+              </div>
+            </div>
+          )}
+          
+          {/* Reward value - OPTIONAL - only goes to our MongoDB */}
           {(pendingRewards.length > 0 || numberRewardsUnused > 0) && (
             <div className="card-brutalist">
               <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500 block mb-2">
@@ -578,7 +598,7 @@ const ResultPage = () => {
                 />
               </div>
               <p className="text-xs text-zinc-400 mt-2">
-                Ingrese el valor monetario de esta recompensa para registro
+                Valor monetario de la recompensa canjeada (solo para registro interno)
               </p>
             </div>
           )}

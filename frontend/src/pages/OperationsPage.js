@@ -799,9 +799,16 @@ const OperationsPage = () => {
                   {operations.map((op, index) => (
                     <div key={op.id || index} className="card-brutalist p-4">
                       <div className="flex items-start justify-between mb-2">
-                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-                          {op.operation_label || op.operation_type}
-                        </span>
+                        <div className="flex flex-wrap gap-1">
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                            {op.operation_label || op.operation_type}
+                          </span>
+                          {op.card_type_label && (
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                              {op.card_type_label}
+                            </span>
+                          )}
+                        </div>
                         <span className="text-xs text-zinc-400">{formatDate(op.created_at)}</span>
                       </div>
                       
@@ -810,7 +817,7 @@ const OperationsPage = () => {
                         <p className="text-xs text-zinc-500 font-mono">{op.card_id}</p>
                       </div>
                       
-                      <div className="grid grid-cols-3 gap-2 mt-3 pt-3 border-t border-zinc-100">
+                      <div className="grid grid-cols-4 gap-2 mt-3 pt-3 border-t border-zinc-100">
                         <div>
                           <p className="text-xs text-zinc-400">Monto</p>
                           <p className="text-sm font-medium">{op.amount ?? '-'}</p>
@@ -822,6 +829,10 @@ const OperationsPage = () => {
                         <div>
                           <p className="text-xs text-zinc-400">Compra</p>
                           <p className="text-sm font-medium">{op.purchase_sum ? formatCurrency(op.purchase_sum) : '-'}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-zinc-400">Canje</p>
+                          <p className="text-sm font-medium">{op.redeemed_value ? formatCurrency(op.redeemed_value) : '-'}</p>
                         </div>
                       </div>
                       

@@ -303,11 +303,11 @@ const ResultPage = () => {
         // "Redeem visit" = customer USES a visit = subtract-visit (decreases currentNumberOfUses/available)
         endpoint = `/cards/${card.id}/subtract-visit`;
       } else if (actionKey === 'agregarpuntos' || (normalizedType === 'reward' && actionKey === 'agregar')) {
-        // For reward cards, use the accrual mode to determine endpoint
+        // For reward cards, use the detected accrual mode to determine endpoint
         if (normalizedType === 'reward') {
-          if (accrualMode === 'spend') {
+          if (detectedAccrualMode === 'spend') {
             endpoint = `/cards/${card.id}/add-purchase`;
-          } else if (accrualMode === 'visit') {
+          } else if (detectedAccrualMode === 'visit') {
             endpoint = `/cards/${card.id}/add-visit-reward`;
           } else {
             endpoint = `/cards/${card.id}/add-scores`;

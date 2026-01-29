@@ -740,10 +740,12 @@ const OperationsPage = () => {
                         <th className="p-3 text-left text-xs font-semibold uppercase">Fecha</th>
                         <th className="p-3 text-left text-xs font-semibold uppercase">Cliente</th>
                         <th className="p-3 text-left text-xs font-semibold uppercase">Tarjeta</th>
+                        <th className="p-3 text-left text-xs font-semibold uppercase">Tipo Tarjeta</th>
                         <th className="p-3 text-left text-xs font-semibold uppercase">Operación</th>
                         <th className="p-3 text-left text-xs font-semibold uppercase">Monto</th>
                         <th className="p-3 text-left text-xs font-semibold uppercase">Saldo</th>
                         <th className="p-3 text-left text-xs font-semibold uppercase">Compra</th>
+                        <th className="p-3 text-left text-xs font-semibold uppercase">Valor Canje</th>
                         <th className="p-3 text-left text-xs font-semibold uppercase">Gerente</th>
                         <th className="p-3 text-left text-xs font-semibold uppercase">Nota</th>
                       </tr>
@@ -758,6 +760,13 @@ const OperationsPage = () => {
                           <td className="p-3 text-sm font-medium text-[#120627]">{op.customer_name || '-'}</td>
                           <td className="p-3 text-sm text-zinc-600 font-mono">{op.card_id}</td>
                           <td className="p-3">
+                            {op.card_type_label ? (
+                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                {op.card_type_label}
+                              </span>
+                            ) : '-'}
+                          </td>
+                          <td className="p-3">
                             <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
                               {op.operation_label || op.operation_type}
                             </span>
@@ -766,6 +775,9 @@ const OperationsPage = () => {
                           <td className="p-3 text-sm text-zinc-600">{op.balance ?? '-'}</td>
                           <td className="p-3 text-sm text-zinc-600">
                             {op.purchase_sum ? formatCurrency(op.purchase_sum) : '-'}
+                          </td>
+                          <td className="p-3 text-sm text-zinc-600">
+                            {op.redeemed_value ? formatCurrency(op.redeemed_value) : '-'}
                           </td>
                           <td className="p-3">
                             <span className="inline-flex items-center gap-1">

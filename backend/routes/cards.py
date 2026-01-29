@@ -671,7 +671,7 @@ async def add_reward(card_id: str, action_data: CardActionRequest, current_user:
 
 @router.post("/cards/{card_id}/add-scores")
 async def add_scores(card_id: str, action_data: CardActionRequest, current_user: dict = Depends(get_current_user)):
-    """Add scores/points to reward cards."""
+    """Add scores/points to reward cards (manual points mode)."""
     gerente_name = action_data.gerente or current_user.get('name', '')
     comment_with_gerente = build_comment_with_gerente(action_data.comment, gerente_name)
     
@@ -697,6 +697,146 @@ async def add_scores(card_id: str, action_data: CardActionRequest, current_user:
     )
     
     return {"success": True, "card": mask_pii(card_data), "message": "Puntos agregados exitosamente"}
+
+@router.post("/cards/{card_id}/add-purchase")
+async def add_purchase(card_id: str, action_data: CardActionRequest, current_user: dict = Depends(get_current_user)):
+    """Add purchase to reward/stamp cards (spend mode - points calculated by system rules)."""
+    gerente_name = action_data.gerente or current_user.get('name', '')
+    comment_with_gerente = build_comment_with_gerente(action_data.comment, gerente_name)
+    
+    # For spend mode, the 'amount' field represents the purchase amount
+    purchase_amount = action_data.purchaseSum or action_data.amount or 0
+    
+    payload = {"amount": float(purchase_amount)}
+    if comment_with_gerente:
+        payload["comment"] = comment_with_gerente
+    # purchaseSum is the same as amount in this context
+    payload["purchaseSum"] = float(purchase_amount)
+    
+    response = await call_boomerang_api('POST', f'/cards/{card_id}/add-purchase', payload)
+    card_data = response.get('data', {})
+    
+    await log_operation(
+        card_id=card_id,
+        operation_type="add-purchase",
+        current_user=current_user,
+        card_data=card_data,
+        amount=purchase_amount,
+        balance=card_data.get('balance', {}).get('bonusBalance'),
+        purchase_sum=purchase_amount,
+        note=action_data.comment,
+        gerente_override=gerente_name
+    )
+    
+    return {"success": True, "card": mask_pii(card_data), "message": "Compra registrada exitosamente"}
+
+@router.post("/cards/{card_id}/add-visit-reward")
+async def add_visit_reward(card_id: str, action_data: CardActionRequest, current_user: dict = Depends(get_current_user)):
+    """Add visit to reward cards (visit mode - points calculated per visit)."""
+    gerente_name = action_data.gerente or current_user.get('name', '')
+    comment_with_gerente = build_comment_with_gerente(action_data.comment, gerente_name)
+    
+    payload = {"visits": int(action_data.amount or 1)}
+    if comment_with_gerente:
+        payload["comment"] = comment_with_gerente
+    if action_data.purchaseSum:
+        payload["purchaseSum"] = action_data.purchaseSum
+    
+    response = await call_boomerang_api('POST', f'/cards/{card_id}/add-visit', payload)
+    card_data = response.get('data', {})
+    
+    await log_operation(
+        card_id=card_id,
+        operation_type="add-visit",
+        current_user=current_user,
+        card_data=card_data,
+        amount=action_data.amount or 1,
+        balance=card_data.get('balance', {}).get('bonusBalance'),
+        purchase_sum=action_data.purchaseSum,
+        note=action_data.comment,
+        gerente_override=gerente_name
+    )
+    
+    return {"success": True, "card": mask_pii(card_data), "message": "Visita registrada exitosamente"}
+
+@router.post("/cards/{card_id}/add-points-auto")
+async def add_points_auto(card_id: str, action_data: CardActionRequest, current_user: dict = Depends(get_current_user)):
+    """
+    Auto-detect accrual type for reward cards and call appropriate endpoint.
+    Tries add-purchase (spend), add-visit, or add-scores based on template config.
+    """
+    gerente_name = action_data.gerente or current_user.get('name', '')
+    comment_with_gerente = build_comment_with_gerente(action_data.comment, gerente_name)
+    
+    # Determine the accrual program from request or try auto-detection
+    accrual_program = action_data.accrualProgram
+    
+    endpoints_to_try = []
+    
+    if accrual_program == 'spend':
+        endpoints_to_try = [('add-purchase', 'amount', float(action_data.purchaseSum or action_data.amount or 0))]
+    elif accrual_program == 'visit':
+        endpoints_to_try = [('add-visit', 'visits', int(action_data.amount or 1))]
+    elif accrual_program == 'points':
+        endpoints_to_try = [('add-scores', 'scores', int(action_data.amount or 1))]
+    else:
+        # Auto-detect: try spend first (most common), then visit, then manual points
+        endpoints_to_try = [
+            ('add-purchase', 'amount', float(action_data.purchaseSum or action_data.amount or 0)),
+            ('add-visit', 'visits', int(action_data.amount or 1)),
+            ('add-scores', 'scores', int(action_data.amount or 1))
+        ]
+    
+    last_error = None
+    for endpoint, param_name, param_value in endpoints_to_try:
+        try:
+            payload = {param_name: param_value}
+            if comment_with_gerente:
+                payload["comment"] = comment_with_gerente
+            if action_data.purchaseSum and endpoint != 'add-purchase':
+                payload["purchaseSum"] = action_data.purchaseSum
+            elif endpoint == 'add-purchase':
+                payload["purchaseSum"] = param_value
+            
+            response = await call_boomerang_api('POST', f'/cards/{card_id}/{endpoint}', payload)
+            
+            if response.get('code') == 200:
+                card_data = response.get('data', {})
+                
+                await log_operation(
+                    card_id=card_id,
+                    operation_type=endpoint,
+                    current_user=current_user,
+                    card_data=card_data,
+                    amount=param_value,
+                    balance=card_data.get('balance', {}).get('bonusBalance'),
+                    purchase_sum=action_data.purchaseSum if endpoint != 'add-purchase' else param_value,
+                    note=action_data.comment,
+                    gerente_override=gerente_name
+                )
+                
+                # Return detected program type for frontend caching
+                program_type = 'spend' if endpoint == 'add-purchase' else ('visit' if endpoint == 'add-visit' else 'points')
+                return {
+                    "success": True, 
+                    "card": mask_pii(card_data), 
+                    "message": "Puntos agregados exitosamente",
+                    "detectedProgram": program_type
+                }
+        except HTTPException as e:
+            # Check if it's an "irrelevant accrual type" error - continue trying
+            if "Irrelevant" in str(e.detail) or e.status_code == 422:
+                last_error = e
+                continue
+            raise e
+        except Exception as e:
+            last_error = e
+            continue
+    
+    # All attempts failed
+    if last_error:
+        raise last_error
+    raise HTTPException(status_code=400, detail="No se pudo determinar el tipo de acumulación")
 
 @router.post("/cards/{card_id}/subtract-scores")
 async def subtract_scores(card_id: str, action_data: CardActionRequest, current_user: dict = Depends(get_current_user)):

@@ -277,14 +277,15 @@ const ResultPage = () => {
       };
       
       // For reward card with spend mode, purchaseSum IS the amount
-      if (normalizedType === 'reward' && actionKey === 'agregarpuntos' && accrualMode === 'spend') {
+      const isRewardAccrualAction = (normalizedType === 'reward' && (actionKey === 'agregarpuntos' || actionKey === 'agregar'));
+      if (isRewardAccrualAction && accrualMode === 'spend') {
         payload.purchaseSum = parseFloat(purchaseAmount) || 0;
         payload.amount = parseFloat(purchaseAmount) || 0;
         payload.accrualProgram = 'spend';
-      } else if (normalizedType === 'reward' && actionKey === 'agregarpuntos' && accrualMode === 'visit') {
+      } else if (isRewardAccrualAction && accrualMode === 'visit') {
         payload.amount = actionAmount;
         payload.accrualProgram = 'visit';
-      } else if (normalizedType === 'reward' && actionKey === 'agregarpuntos' && accrualMode === 'points') {
+      } else if (isRewardAccrualAction && accrualMode === 'points') {
         payload.amount = actionAmount;
         payload.accrualProgram = 'points';
         payload.purchaseSum = parseFloat(purchaseAmount) || undefined;

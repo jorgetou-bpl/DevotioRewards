@@ -232,7 +232,7 @@ const ResultPage = () => {
       } else if (actionKey === 'canjearvisitas') {
         // "Redeem visit" = customer USES a visit = subtract-visit (decreases currentNumberOfUses/available)
         endpoint = `/cards/${card.id}/subtract-visit`;
-      } else if (actionKey === 'agregarpuntos') {
+      } else if (actionKey === 'agregarpuntos' || (normalizedType === 'reward' && actionKey === 'agregar')) {
         // For reward cards, use the accrual mode to determine endpoint
         if (normalizedType === 'reward') {
           if (accrualMode === 'spend') {

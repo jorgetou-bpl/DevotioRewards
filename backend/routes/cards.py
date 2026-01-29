@@ -222,6 +222,13 @@ async def add_stamp(card_id: str, action_data: CardActionRequest, current_user: 
     original_comment = action_data.comment
     gerente_name = action_data.gerente or current_user.get('name', '')
     
+    # Get current card state to detect new rewards
+    pre_response = await call_boomerang_api('GET', f'/cards/{card_id}', {}, raise_on_error=False)
+    old_rewards_unused = 0
+    if pre_response.get('code') == 200:
+        old_balance = pre_response.get('data', {}).get('balance', {})
+        old_rewards_unused = old_balance.get('numberRewardsUnused', 0)
+    
     comment_with_gerente = build_comment_with_gerente(original_comment, gerente_name)
     
     stamp_payload = {"stamps": stamps}
@@ -247,6 +254,26 @@ async def add_stamp(card_id: str, action_data: CardActionRequest, current_user: 
         if response.get('code') == 200:
             card_data = response.get('data', {})
             card_balance = card_data.get('balance', {})
+            new_rewards_unused = card_balance.get('numberRewardsUnused', 0)
+            
+            # Detect and log any new rewards earned
+            new_rewards = []
+            if new_rewards_unused > old_rewards_unused:
+                # Try to get template data for reward tier info
+                template_id = card_data.get('templateId')
+                template_data = None
+                if template_id:
+                    template_response = await call_boomerang_api('GET', f'/templates/{template_id}', {}, raise_on_error=False)
+                    if template_response.get('code') == 200:
+                        template_data = template_response.get('data', {})
+                
+                new_rewards = await detect_and_log_new_rewards(
+                    card_id=card_id,
+                    old_rewards_unused=old_rewards_unused,
+                    new_rewards_unused=new_rewards_unused,
+                    card_data=card_data,
+                    template_data=template_data
+                )
             
             await log_operation(
                 card_id=card_id,

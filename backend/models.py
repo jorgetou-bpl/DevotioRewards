@@ -53,6 +53,8 @@ class CardActionRequest(BaseModel):
     # For reward redemption with tracking
     reward_id: Optional[str] = None  # ID of specific earned reward to redeem
     reward_value: Optional[float] = None  # Optional monetary value of reward
+    # For reward card accrual type
+    accrualProgram: Optional[str] = None  # 'points', 'spend', or 'visit'
 
 class ScanRequest(BaseModel):
     qr_data: str

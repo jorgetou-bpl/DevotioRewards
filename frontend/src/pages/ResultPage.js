@@ -609,21 +609,6 @@ const ResultPage = () => {
         </div>
       );
     }
-            </Button>
-          ) : !loadingTemplate ? (
-            <div className="text-center p-6 bg-zinc-50 rounded-xl">
-              <Gift className="h-10 w-10 mx-auto text-zinc-300 mb-3" />
-              <p className="text-zinc-500 text-sm">
-                No hay recompensas disponibles para canjear.
-              </p>
-              <p className="text-zinc-400 text-xs mt-2">
-                Sigue acumulando sellos para ganar recompensas.
-              </p>
-            </div>
-          ) : null}
-        </div>
-      );
-    }
 
     // For Membership cards - show membership tier, status, and visits
     if (normalizedType === 'membership') {

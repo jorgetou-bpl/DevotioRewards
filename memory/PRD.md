@@ -137,6 +137,23 @@ All 8 Boomerangme card types now correctly recognized and rendered:
    - Date range filter for dashboard data
    - All UI in Spanish
 
+9. **Multi-Tier Reward Timestamp Tracking**
+   - New `rewards_earned` collection in MongoDB to track individual rewards
+   - Auto-detects when new rewards are earned after stamp actions
+   - Each reward tracked with:
+     - Unique ID
+     - Earned timestamp
+     - Status (pending/redeemed)
+     - Redemption info (when, by whom, value)
+   - New API endpoints:
+     - `GET /api/cards/{card_id}/pending-rewards` - List pending rewards (oldest first)
+   - Updated stamp card "Canjear" tab UI:
+     - Shows pending rewards list with timestamps
+     - "Recompensa - Ganado: [fecha]" format
+     - Selectable rewards (radio buttons)
+     - Optional "Valor del canje" input for monetary value
+   - Redemption flow marks specific reward as redeemed with timestamp
+
 ### Session 9 - Multi-Program Support & Reward Selection (January 25, 2026)
 1. **New Backend Endpoint: `/api/templates/{template_id}`**
    - Fetches template data from Boomerangme API

@@ -79,6 +79,28 @@ All 8 Boomerangme card types now correctly recognized and rendered:
 
 ## What's Been Implemented
 
+### Session 12 - Reward Cards Accrual Modes (January 29, 2026)
+1. **Multi-Mode Accrual System for Reward Cards**
+   - Implemented UI selector with 3 accrual modes: "Por Compra", "Por Visita", "Manual"
+   - **Spend Mode**: Only purchase amount field, points calculated by Boomerangme rules
+   - **Visit Mode**: Visit counter only, points calculated per visit
+   - **Manual Mode**: Both purchase amount and manual points fields
+
+2. **New Backend Endpoints**
+   - `POST /api/cards/{id}/add-purchase`: For spend-based accrual (reward/stamp cards)
+   - `POST /api/cards/{id}/add-visit-reward`: For visit-based accrual
+   - `POST /api/cards/{id}/add-points-auto`: Auto-detection endpoint (tries spend→visit→manual)
+
+3. **Frontend Updates**
+   - `/app/frontend/src/pages/ResultPage.js`: Added `accrualMode` state and mode selector UI
+   - Updated `handleAction` to route to correct endpoint based on mode
+   - Clean UI with mode-specific input fields and helpful descriptions
+
+4. **Technical Details**
+   - Spend mode calls Boomerangme `add-purchase` with `amount` (purchase value)
+   - Visit mode calls `add-visit` with `visits` count
+   - Manual mode calls `add-scores` with explicit `scores` value
+
 ### Session 11 - Card Type Tracking & Reporting Enhancements (January 29, 2026)
 1. **Card Type Tracking in All Operations**
    - All transaction logs now include `card_type` (normalized key like "stamp", "cashback")

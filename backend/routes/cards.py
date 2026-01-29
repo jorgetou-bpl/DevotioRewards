@@ -3,6 +3,9 @@
 from fastapi import APIRouter, HTTPException, Depends
 import re
 import logging
+import uuid
+from datetime import datetime, timezone
+from typing import Optional
 from models import CardActionRequest, ScanRequest
 from utils.auth import get_current_user
 from utils.config import db
@@ -18,6 +21,99 @@ from utils.boomerang import (
 
 logger = logging.getLogger(__name__)
 router = APIRouter(tags=["cards"])
+
+# ============ REWARD TRACKING HELPERS ============
+
+async def detect_and_log_new_rewards(
+    card_id: str,
+    old_rewards_unused: int,
+    new_rewards_unused: int,
+    card_data: dict,
+    template_data: dict = None
+):
+    """
+    Detect if new rewards were earned and log them with timestamps.
+    Called after stamp actions to track when rewards are earned.
+    """
+    rewards_earned = new_rewards_unused - old_rewards_unused
+    
+    if rewards_earned <= 0:
+        return []
+    
+    # Get customer info
+    customer = card_data.get('customer', {})
+    customer_name = f"{customer.get('firstName', '')} {customer.get('surname', '')}".strip()
+    template_id = card_data.get('templateId', '')
+    current_stamps = card_data.get('balance', {}).get('currentNumberOfUses', 0)
+    
+    # Get reward tiers from template if available
+    reward_tiers = []
+    if template_data:
+        reward_tiers = template_data.get('rewardTiers', [])
+    
+    # Log each new reward earned
+    new_rewards = []
+    for i in range(rewards_earned):
+        # Try to determine which tier this reward belongs to
+        # This is approximate - we use the current stamp count
+        threshold = "?"
+        if reward_tiers:
+            # Find the most likely tier based on current stamps
+            for tier in sorted(reward_tiers, key=lambda t: t.get('threshold', 0)):
+                tier_threshold = tier.get('threshold', 0)
+                if current_stamps >= tier_threshold:
+                    threshold = tier_threshold
+        
+        reward_record = {
+            "id": str(uuid.uuid4()),
+            "card_id": card_id,
+            "customer_name": customer_name,
+            "template_id": str(template_id),
+            "reward_threshold": threshold,
+            "earned_at": datetime.now(timezone.utc).isoformat(),
+            "stamps_at_earning": current_stamps,
+            "status": "pending",
+            "redeemed_at": None,
+            "redeemed_by": None,
+            "redeemed_value": None,
+            "redeemed_note": None
+        }
+        
+        await db.rewards_earned.insert_one(reward_record)
+        new_rewards.append(reward_record)
+        logger.info(f"Logged new reward earned for card {card_id} at {current_stamps} stamps")
+    
+    return new_rewards
+
+async def get_pending_rewards(card_id: str):
+    """Get all pending (unredeemed) rewards for a card, sorted by earned_at (oldest first)."""
+    cursor = db.rewards_earned.find(
+        {"card_id": card_id, "status": "pending"},
+        {"_id": 0}
+    ).sort("earned_at", 1)  # Oldest first
+    
+    rewards = await cursor.to_list(length=100)
+    return rewards
+
+async def redeem_specific_reward(
+    reward_id: str,
+    gerente_name: str,
+    gerente_email: str,
+    value: float = None,
+    note: str = None
+):
+    """Mark a specific earned reward as redeemed."""
+    result = await db.rewards_earned.update_one(
+        {"id": reward_id, "status": "pending"},
+        {"$set": {
+            "status": "redeemed",
+            "redeemed_at": datetime.now(timezone.utc).isoformat(),
+            "redeemed_by": gerente_name,
+            "redeemed_value": value,
+            "redeemed_note": note
+        }}
+    )
+    return result.modified_count > 0
 
 # ============ SEARCH HELPERS ============
 

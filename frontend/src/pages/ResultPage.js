@@ -53,7 +53,6 @@ const ResultPage = () => {
   const [pendingRewards, setPendingRewards] = useState([]);
   const [loadingPendingRewards, setLoadingPendingRewards] = useState(false);
   const [selectedRewardId, setSelectedRewardId] = useState(null);
-  const [rewardValue, setRewardValue] = useState(''); // Optional value for redemption
 
   const currencyInfo = getCurrencyInfo();
 

@@ -894,7 +894,7 @@ const OperationsPage = () => {
                         <p className="text-xs text-zinc-500 font-mono">{op.card_id}</p>
                       </div>
                       
-                      <div className="grid grid-cols-4 gap-2 mt-3 pt-3 border-t border-zinc-100">
+                      <div className="grid grid-cols-3 gap-2 mt-3 pt-3 border-t border-zinc-100">
                         <div>
                           <p className="text-xs text-zinc-400">Monto</p>
                           <p className="text-sm font-medium">{op.amount ?? '-'}</p>
@@ -906,10 +906,6 @@ const OperationsPage = () => {
                         <div>
                           <p className="text-xs text-zinc-400">Compra</p>
                           <p className="text-sm font-medium">{op.purchase_sum ? formatCurrency(op.purchase_sum) : '-'}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-zinc-400">Canje</p>
-                          <p className="text-sm font-medium">{op.redeemed_value ? formatCurrency(op.redeemed_value) : '-'}</p>
                         </div>
                       </div>
                       

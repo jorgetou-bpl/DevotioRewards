@@ -1938,29 +1938,54 @@ const ResultPage = () => {
                   <span className="font-medium text-sm">{formatCurrency(balance.totalSavings)}</span>
                 </div>
               )}
-              {card.countVisits !== undefined && (
+              {card.countVisits !== undefined && card.countVisits > 0 && (
                 <div className="flex justify-between p-3 sm:p-4">
-                  <span className="text-zinc-500 text-sm">Total de visitas</span>
+                  <span className="text-zinc-500 text-sm">Transacciones</span>
                   <span className="font-medium text-sm">{card.countVisits}</span>
                 </div>
               )}
-              {(card.totalRewardsRedeemed !== undefined && card.totalRewardsRedeemed !== null) && (
+              {(card.totalRewardsRedeemed !== undefined && card.totalRewardsRedeemed !== null && card.totalRewardsRedeemed > 0) && (
                 <div className="flex justify-between p-3 sm:p-4">
                   <span className="text-zinc-500 text-sm">Recompensas canjeadas</span>
                   <span className="font-medium text-sm">{card.totalRewardsRedeemed}</span>
                 </div>
               )}
+              {/* Card device/wallet */}
+              {card.device && (
+                <div className="flex justify-between p-3 sm:p-4">
+                  <span className="text-zinc-500 text-sm">Instalada en</span>
+                  <span className="font-medium text-sm">{card.device}</span>
+                </div>
+              )}
+              {/* Installation date from createdAt */}
+              {card.createdAt && (
+                <div className="flex justify-between p-3 sm:p-4">
+                  <span className="text-zinc-500 text-sm">Fecha de instalación</span>
+                  <span className="font-medium text-sm">
+                    {new Date(card.createdAt).toLocaleDateString('es-CR', { year: 'numeric', month: '2-digit', day: '2-digit' })}
+                  </span>
+                </div>
+              )}
+              {/* Last update */}
+              {card.updatedAt && (
+                <div className="flex justify-between p-3 sm:p-4">
+                  <span className="text-zinc-500 text-sm">Última actividad</span>
+                  <span className="font-medium text-sm">
+                    {new Date(card.updatedAt).toLocaleDateString('es-CR', { year: 'numeric', month: '2-digit', day: '2-digit' })}
+                  </span>
+                </div>
+              )}
               <div className="flex justify-between p-3 sm:p-4">
-                <span className="text-zinc-500 text-sm">ID de tarjeta</span>
+                <span className="text-zinc-500 text-sm">Número de serie</span>
                 <span className="text-mono text-xs sm:text-sm truncate ml-2">{card.id}</span>
               </div>
-              {card.serialNumber && (
+              {card.serialNumber && card.serialNumber !== card.id && (
                 <div className="flex justify-between p-3 sm:p-4">
-                  <span className="text-zinc-500 text-sm">Número de serie</span>
+                  <span className="text-zinc-500 text-sm">Serial adicional</span>
                   <span className="text-mono text-xs sm:text-sm">{card.serialNumber}</span>
                 </div>
               )}
-              {card.installDate && (
+              {card.installDate && !card.createdAt && (
                 <div className="flex justify-between p-3 sm:p-4">
                   <span className="text-zinc-500 text-sm">Fecha de instalación</span>
                   <span className="font-medium text-sm">{card.installDate}</span>

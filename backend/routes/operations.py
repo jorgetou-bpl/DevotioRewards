@@ -145,7 +145,6 @@ async def export_operations(
                 op.get("amount", ""),
                 op.get("balance", ""),
                 op.get("purchase_sum", ""),
-                op.get("redeemed_value", ""),
                 op.get("gerente", ""),
                 op.get("gerente_email", ""),
                 op.get("source", "scanner")

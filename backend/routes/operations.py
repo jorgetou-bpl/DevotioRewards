@@ -122,7 +122,6 @@ async def export_operations(
         "Monto",
         "Saldo",
         "Monto de compra",
-        "Valor del Canje",
         "Gerente",
         "Email Gerente",
         "Fuente"

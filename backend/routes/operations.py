@@ -192,10 +192,9 @@ async def export_operations(
                 ws.cell(row=row_idx, column=9, value=op.get("amount", ""))
                 ws.cell(row=row_idx, column=10, value=op.get("balance", ""))
                 ws.cell(row=row_idx, column=11, value=op.get("purchase_sum", ""))
-                ws.cell(row=row_idx, column=12, value=op.get("redeemed_value", ""))
-                ws.cell(row=row_idx, column=13, value=op.get("gerente", ""))
-                ws.cell(row=row_idx, column=14, value=op.get("gerente_email", ""))
-                ws.cell(row=row_idx, column=15, value=op.get("source", "scanner"))
+                ws.cell(row=row_idx, column=12, value=op.get("gerente", ""))
+                ws.cell(row=row_idx, column=13, value=op.get("gerente_email", ""))
+                ws.cell(row=row_idx, column=14, value=op.get("source", "scanner"))
             
             for col in ws.columns:
                 max_length = 0

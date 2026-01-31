@@ -1909,16 +1909,52 @@ const ResultPage = () => {
               {/* Discount card specific fields */}
               {(balance.discountPercentage !== undefined && balance.discountPercentage !== null) && (
                 <div className="flex justify-between p-3 sm:p-4">
-                  <span className="text-zinc-500 text-sm">Porcentaje de descuento</span>
+                  <span className="text-zinc-500 text-sm">Nivel de descuento actual</span>
                   <span className="font-medium text-sm">{balance.discountPercentage}%</span>
                 </div>
               )}
-              {/* Transaction amount for discount cards */}
+              {/* Discount tier name based on thresholds */}
+              {(balance.discountAmount !== undefined && balance.discountAmount !== null && cardType === 'discount') && (
+                <div className="flex justify-between p-3 sm:p-4">
+                  <span className="text-zinc-500 text-sm">Estado de descuento</span>
+                  <span className="font-medium text-sm">
+                    {(() => {
+                      const amount = balance.discountAmount / 100;
+                      if (amount >= 10000) return 'Oro';
+                      if (amount >= 5000) return 'Plata';
+                      return 'Bronce';
+                    })()}
+                  </span>
+                </div>
+              )}
+              {/* Transaction/spend amount for discount cards */}
               {(balance.discountAmount !== undefined && balance.discountAmount > 0 && cardType === 'discount') && (
                 <div className="flex justify-between p-3 sm:p-4">
                   <span className="text-zinc-500 text-sm">Importe de transacciones</span>
                   <span className="font-medium text-sm">{formatCurrency(balance.discountAmount / 100)}</span>
                 </div>
+              )}
+              {/* Until next tier for discount cards */}
+              {(balance.discountAmount !== undefined && cardType === 'discount') && (
+                (() => {
+                  const amount = balance.discountAmount / 100;
+                  let nextTier, amountNeeded;
+                  if (amount >= 10000) {
+                    return null; // Already at max tier
+                  } else if (amount >= 5000) {
+                    nextTier = 'Oro';
+                    amountNeeded = 10000 - amount;
+                  } else {
+                    nextTier = 'Plata';
+                    amountNeeded = 5000 - amount;
+                  }
+                  return (
+                    <div className="flex justify-between p-3 sm:p-4">
+                      <span className="text-zinc-500 text-sm">Para siguiente nivel ({nextTier})</span>
+                      <span className="font-medium text-sm">{formatCurrency(amountNeeded)}</span>
+                    </div>
+                  );
+                })()
               )}
               {/* Show "Until next level" for cashback cards if tier info available */}
               {(cardType === 'cashback' || cardType === 'cashback_card') && 

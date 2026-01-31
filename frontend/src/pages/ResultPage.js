@@ -1880,8 +1880,33 @@ const ResultPage = () => {
               {/* Discount card specific fields */}
               {(balance.discountPercentage !== undefined && balance.discountPercentage !== null) && (
                 <div className="flex justify-between p-3 sm:p-4">
-                  <span className="text-zinc-500 text-sm">Porcentaje de cashback</span>
+                  <span className="text-zinc-500 text-sm">Porcentaje de descuento</span>
                   <span className="font-medium text-sm">{balance.discountPercentage}%</span>
+                </div>
+              )}
+              {/* Discount tier based on percentage */}
+              {(balance.discountPercentage !== undefined && balance.discountPercentage !== null) && (
+                <div className="flex justify-between p-3 sm:p-4">
+                  <span className="text-zinc-500 text-sm">Nivel de descuento</span>
+                  <span className="font-medium text-sm">
+                    {balance.discountPercentage >= 10 ? 'Oro' : balance.discountPercentage >= 5 ? 'Plata' : 'Bronce'}
+                  </span>
+                </div>
+              )}
+              {/* Transaction amount for discount cards */}
+              {(balance.discountAmount !== undefined && balance.discountAmount > 0 && cardType === 'discount') && (
+                <div className="flex justify-between p-3 sm:p-4">
+                  <span className="text-zinc-500 text-sm">Importe de transacciones</span>
+                  <span className="font-medium text-sm">{formatCurrency(balance.discountAmount / 100)}</span>
+                </div>
+              )}
+              {/* Total savings for discount cards - calculated as transactions * discount% */}
+              {(balance.discountAmount !== undefined && balance.discountAmount > 0 && balance.discountPercentage && cardType === 'discount') && (
+                <div className="flex justify-between p-3 sm:p-4">
+                  <span className="text-zinc-500 text-sm">Ahorro total</span>
+                  <span className="font-medium text-sm text-green-600">
+                    {formatCurrency((balance.discountAmount / 100) * (balance.discountPercentage / 100))}
+                  </span>
                 </div>
               )}
               {/* Show "Until next level" for cashback cards if tier info available */}

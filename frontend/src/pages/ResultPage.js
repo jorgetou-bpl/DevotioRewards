@@ -366,7 +366,6 @@ const ResultPage = () => {
       // Clear selected reward and refresh pending rewards list
       if (actionKey === 'canjear' && normalizedType === 'stamp') {
         setSelectedRewardId(null);
-        setRewardValue('');
         // Refresh pending rewards
         try {
           const rewardsResponse = await axios.get(`${API}/cards/${card.id}/pending-rewards`);

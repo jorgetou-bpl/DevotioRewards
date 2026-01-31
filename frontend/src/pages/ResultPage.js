@@ -1126,16 +1126,6 @@ const ResultPage = () => {
                 {discountLevel}%
               </span>
               <p className="text-xs sm:text-sm text-zinc-500 mt-1">Descuento actual</p>
-              {tierStatus && (
-                <div className="mt-2">
-                  <span 
-                    className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold text-white"
-                    style={{ backgroundColor: tierStatus.color }}
-                  >
-                    Nivel: {tierStatus.name}
-                  </span>
-                </div>
-              )}
             </div>
           )}
           

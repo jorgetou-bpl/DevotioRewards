@@ -1125,21 +1125,16 @@ const ResultPage = () => {
               <span className="text-5xl sm:text-6xl font-mono font-bold gradient-text">
                 {discountLevel}%
               </span>
-              <p className="text-xs sm:text-sm text-zinc-500 mt-1">Nivel de descuento</p>
+              <p className="text-xs sm:text-sm text-zinc-500 mt-1">Descuento actual</p>
               {tierStatus && (
                 <div className="mt-2">
                   <span 
                     className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold text-white"
                     style={{ backgroundColor: tierStatus.color }}
                   >
-                    Estado: {tierStatus.name}
+                    Nivel: {tierStatus.name}
                   </span>
                 </div>
-              )}
-              {totalTransactions > 0 && (
-                <p className="text-xs text-zinc-400 mt-2">
-                  Total acumulado: {formatCurrency(totalTransactions / 100)}
-                </p>
               )}
             </div>
           )}

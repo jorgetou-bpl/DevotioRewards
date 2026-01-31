@@ -826,7 +826,6 @@ const OperationsPage = () => {
                         <th className="p-3 text-left text-xs font-semibold uppercase">Monto</th>
                         <th className="p-3 text-left text-xs font-semibold uppercase">Saldo</th>
                         <th className="p-3 text-left text-xs font-semibold uppercase">Compra</th>
-                        <th className="p-3 text-left text-xs font-semibold uppercase">Valor Canje</th>
                         <th className="p-3 text-left text-xs font-semibold uppercase">Gerente</th>
                         <th className="p-3 text-left text-xs font-semibold uppercase">Nota</th>
                       </tr>
@@ -856,9 +855,6 @@ const OperationsPage = () => {
                           <td className="p-3 text-sm text-zinc-600">{op.balance ?? '-'}</td>
                           <td className="p-3 text-sm text-zinc-600">
                             {op.purchase_sum ? formatCurrency(op.purchase_sum) : '-'}
-                          </td>
-                          <td className="p-3 text-sm text-zinc-600">
-                            {op.redeemed_value ? formatCurrency(op.redeemed_value) : '-'}
                           </td>
                           <td className="p-3">
                             <span className="inline-flex items-center gap-1">

@@ -1126,6 +1126,45 @@ const ResultPage = () => {
                 {discountLevel}%
               </span>
               <p className="text-xs sm:text-sm text-zinc-500 mt-1">Descuento actual</p>
+              {/* Calculate tier based on discountAmount thresholds */}
+              {totalTransactions !== undefined && (
+                <div className="mt-2">
+                  {(() => {
+                    const amount = totalTransactions / 100;
+                    let tierName, tierColor, nextTier, amountNeeded;
+                    if (amount >= 10000) {
+                      tierName = 'Oro';
+                      tierColor = '#FFD700';
+                      nextTier = null;
+                    } else if (amount >= 5000) {
+                      tierName = 'Plata';
+                      tierColor = '#C0C0C0';
+                      nextTier = 'Oro';
+                      amountNeeded = 10000 - amount;
+                    } else {
+                      tierName = 'Bronce';
+                      tierColor = '#CD7F32';
+                      nextTier = 'Plata';
+                      amountNeeded = 5000 - amount;
+                    }
+                    return (
+                      <>
+                        <span 
+                          className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold"
+                          style={{ backgroundColor: tierColor, color: tierName === 'Oro' ? '#000' : '#fff' }}
+                        >
+                          Nivel: {tierName}
+                        </span>
+                        {nextTier && amountNeeded > 0 && (
+                          <p className="text-xs text-zinc-400 mt-2">
+                            {formatCurrency(amountNeeded)} para {nextTier}
+                          </p>
+                        )}
+                      </>
+                    );
+                  })()}
+                </div>
+              )}
             </div>
           )}
           

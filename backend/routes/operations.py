@@ -255,8 +255,7 @@ async def get_operations_summary(
         {"$group": {
             "_id": "$gerente",
             "count": {"$sum": 1},
-            "total_purchase_sum": {"$sum": {"$ifNull": ["$purchase_sum", 0]}},
-            "total_redeemed_value": {"$sum": {"$ifNull": ["$redeemed_value", 0]}}
+            "total_purchase_sum": {"$sum": {"$ifNull": ["$purchase_sum", 0]}}
         }},
         {"$sort": {"count": -1}}
     ]

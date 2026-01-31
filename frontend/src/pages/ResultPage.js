@@ -336,9 +336,6 @@ const ResultPage = () => {
       // For stamp card reward redemption with pending rewards tracking
       if (actionKey === 'canjear' && normalizedType === 'stamp' && selectedRewardId) {
         payload.reward_id = selectedRewardId;
-        if (rewardValue) {
-          payload.reward_value = parseFloat(rewardValue);
-        }
       }
       
       // For receive-reward endpoint, pass the tier ID as amount
@@ -646,29 +643,6 @@ const ResultPage = () => {
                   data-testid="stamp-redeem-purchase-amount"
                 />
               </div>
-            </div>
-          )}
-          
-          {/* Reward value - OPTIONAL - only goes to our MongoDB */}
-          {(pendingRewards.length > 0 || numberRewardsUnused > 0) && (
-            <div className="card-brutalist">
-              <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500 block mb-2">
-                Valor del canje ({currencyInfo.code}) - Opcional
-              </label>
-              <div className="relative">
-                <span className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-zinc-400 text-lg sm:text-xl">{currencyInfo.symbol}</span>
-                <Input
-                  type="number"
-                  value={rewardValue}
-                  onChange={(e) => setRewardValue(e.target.value)}
-                  placeholder="0"
-                  className="input-brutalist pl-10 sm:pl-12 text-2xl sm:text-3xl font-mono h-14 sm:h-16 text-center"
-                  data-testid="reward-value-input"
-                />
-              </div>
-              <p className="text-xs text-zinc-400 mt-2">
-                Valor monetario de la recompensa canjeada (solo para registro interno)
-              </p>
             </div>
           )}
           

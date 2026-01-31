@@ -381,8 +381,7 @@ async def subtract_reward(card_id: str, action_data: CardActionRequest, current_
         balance=card_data.get('balance', {}).get('numberRewardsUnused'),
         purchase_sum=action_data.purchaseSum,
         note=action_data.comment,
-        gerente_override=gerente_name,
-        redeemed_value=action_data.reward_value
+        gerente_override=gerente_name
     )
     
     return {

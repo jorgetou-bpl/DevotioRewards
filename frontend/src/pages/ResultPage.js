@@ -220,11 +220,10 @@ const ResultPage = () => {
       if (detectedAccrualMode === 'spend') {
         details.push({ label: 'Monto de Compra', value: formatCurrency(parseFloat(purchaseAmount) || 0) });
       } else if (detectedAccrualMode === 'visit') {
+        details.push({ label: 'Monto de Compra', value: formatCurrency(parseFloat(purchaseAmount) || 0) });
         details.push({ label: 'Visitas a Agregar', value: actionAmount });
       } else if (detectedAccrualMode === 'points') {
-        if (purchaseAmount) {
-          details.push({ label: 'Monto de Compra', value: formatCurrency(parseFloat(purchaseAmount) || 0) });
-        }
+        details.push({ label: 'Monto de Compra', value: formatCurrency(parseFloat(purchaseAmount) || 0) });
         details.push({ label: 'Puntos a Agregar', value: actionAmount });
       }
     } else if (actionLower === 'agregar' && config.requiresPurchaseAmount) {

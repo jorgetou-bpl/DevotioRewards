@@ -1238,12 +1238,29 @@ const ResultPage = () => {
             </div>
           )}
           
-          {/* Mode indicator badge */}
+          {/* Mode indicator badge with manual change option */}
           {detectedAccrualMode && !detectingMode && (
-            <div className="flex justify-center">
-              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-[#120627]/10 text-[#120627]">
-                Modo: {modeLabels[detectedAccrualMode] || detectedAccrualMode}
-              </span>
+            <div className="flex flex-col items-center gap-2">
+              <div className="flex items-center gap-2">
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-[#120627]/10 text-[#120627]">
+                  Modo: {modeLabels[detectedAccrualMode] || detectedAccrualMode}
+                </span>
+                <button
+                  onClick={() => {
+                    // Cycle through modes: spend -> visit -> points -> spend
+                    const modes = ['spend', 'visit', 'points'];
+                    const currentIndex = modes.indexOf(detectedAccrualMode);
+                    const nextMode = modes[(currentIndex + 1) % modes.length];
+                    setDetectedAccrualMode(nextMode);
+                    // Clear cache so it can be re-detected next time
+                    localStorage.removeItem(`accrualMode_${card.templateId}`);
+                  }}
+                  className="text-xs text-[#ee478a] hover:underline"
+                  data-testid="change-accrual-mode"
+                >
+                  Cambiar
+                </button>
+              </div>
             </div>
           )}
           

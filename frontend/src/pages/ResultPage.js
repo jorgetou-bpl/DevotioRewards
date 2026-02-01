@@ -126,46 +126,59 @@ const ResultPage = () => {
     fetchPendingRewards();
   }, [card, cardType, activeTab, selectedRewardId]);
 
-  // Auto-detect accrual mode for reward cards
+  // Auto-detect accrual mode for reward cards - check DB preference first
   useEffect(() => {
-    const detectAccrualMode = async () => {
-      if (!card || cardType !== 'reward') return;
-      
-      // Check localStorage cache first
-      const cacheKey = `accrualMode_${card.templateId}`;
-      const cachedMode = localStorage.getItem(cacheKey);
-      if (cachedMode) {
-        setDetectedAccrualMode(cachedMode);
-        return;
-      }
+    const fetchAccrualMode = async () => {
+      if (!card || cardType !== 'reward' || !card.templateId) return;
       
       setDetectingMode(true);
+      setNeedsModeSelection(false);
       const token = localStorage.getItem('token');
       
-      // Use backend auto-detection endpoint
       try {
-        const response = await axios.post(`${API}/cards/${card.id}/detect-accrual-mode`, {}, {
+        // First, check if there's a saved preference in the database
+        const response = await axios.get(`${API}/templates/${card.templateId}/accrual-mode`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         
-        if (response.data.success && response.data.detectedMode) {
-          setDetectedAccrualMode(response.data.detectedMode);
-          localStorage.setItem(cacheKey, response.data.detectedMode);
+        if (response.data.success && response.data.mode) {
+          // Found saved preference - use it
+          setDetectedAccrualMode(response.data.mode);
+          setNeedsModeSelection(false);
         } else {
-          // Default to spend mode if detection fails
-          setDetectedAccrualMode('spend');
+          // No saved preference - show selector for user to choose
+          setDetectedAccrualMode(null);
+          setNeedsModeSelection(true);
         }
       } catch (e) {
-        console.log('Accrual mode detection failed, defaulting to spend:', e);
-        // Default to spend mode - most common for reward cards
-        setDetectedAccrualMode('spend');
+        console.log('Could not fetch accrual mode preference:', e);
+        // On error, show selector
+        setDetectedAccrualMode(null);
+        setNeedsModeSelection(true);
       } finally {
         setDetectingMode(false);
       }
     };
     
-    detectAccrualMode();
+    fetchAccrualMode();
   }, [card?.id, card?.templateId, cardType]);
+  
+  // Function to save accrual mode preference
+  const saveAccrualMode = async (mode) => {
+    const token = localStorage.getItem('token');
+    try {
+      await axios.post(`${API}/templates/${card.templateId}/accrual-mode`, 
+        { mode },
+        { headers: { Authorization: `Bearer ${token}` }}
+      );
+      setDetectedAccrualMode(mode);
+      setNeedsModeSelection(false);
+      toast.success(`Modo "${mode === 'spend' ? 'Por Compra' : mode === 'visit' ? 'Por Visita' : 'Manual'}" guardado para este programa`);
+    } catch (e) {
+      console.error('Error saving accrual mode:', e);
+      toast.error('Error al guardar el modo de acumulación');
+    }
+  };
 
   if (!card) {
     return (

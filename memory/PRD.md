@@ -79,6 +79,34 @@ All 8 Boomerangme card types now correctly recognized and rendered:
 
 ## What's Been Implemented
 
+### Session 13 - Reward Card Accrual Mode Selection (February 1, 2026)
+1. **Template-Based Accrual Mode Preferences**
+   - Implemented database-backed preference storage per template ID
+   - First-time setup: Shows selector with 3 options (Por Compra, Por Visita, Manual)
+   - Subsequent scans: Automatically loads saved preference for that template
+   - All cards using the same template share the same accrual mode
+
+2. **New Backend Endpoints**
+   - `GET /api/templates/{template_id}/accrual-mode`: Get saved preference
+   - `POST /api/templates/{template_id}/accrual-mode`: Save preference to MongoDB
+
+3. **Frontend Improvements**
+   - Clean mode selector UI with icons and descriptions
+   - Mode badge showing current mode with "Cambiar" option
+   - Context-aware confirmation modal (shows "Visitas a Agregar" for visit mode)
+   - Button text adapts: "Agregar Visita" for visit mode vs generic "Agregar Puntos"
+
+4. **Why This Solution?**
+   - Boomerangme API does NOT expose accrual program type in card/template data
+   - All reward cards accept all 3 accrual types (spend, visit, scores)
+   - The actual program type is a Boomerangme panel configuration not available via API
+   - Our solution: User selects once per template, saved for all future scans
+
+5. **Technical Details**
+   - New MongoDB collection: `template_accrual_modes`
+   - Frontend: Modified useEffect in ResultPage.js to check DB preference
+   - Removed old unreliable auto-detection logic that tried zero-value transactions
+
 ### Session 12 - Reward Cards Accrual Modes (January 29, 2026)
 1. **Multi-Mode Accrual System for Reward Cards**
    - Implemented UI selector with 3 accrual modes: "Por Compra", "Por Visita", "Manual"

@@ -836,23 +836,13 @@ const ResultPage = () => {
       if (activeTab === 'Visitas') {
         return (
           <div className="space-y-4 sm:space-y-6">
-            {/* Visual Stamp Grid for Multipass visits */}
+            {/* Visual Stamp Grid for Multipass visits - this shows the count visually */}
             <StampGrid 
               activeStamps={availableVisits} 
               stampsUntilReward={totalVisits - availableVisits}
               totalStampsForReward={totalVisits}
               numberStampsTotal={totalVisits}
             />
-            
-            {/* Visits balance display */}
-            <div className="text-center p-4 sm:p-6 bg-zinc-50 rounded-xl">
-              <span className="text-4xl sm:text-5xl font-mono font-bold gradient-text">
-                {availableVisits}
-              </span>
-              <p className="text-xs sm:text-sm text-zinc-500 mt-2">
-                Visitas disponibles
-              </p>
-            </div>
             
             {/* Purchase amount input for multipass */}
             <div className="card-brutalist">

@@ -100,12 +100,19 @@ All 8 Boomerangme card types now correctly recognized and rendered:
    - Boomerangme API does NOT expose accrual program type in card/template data
    - All reward cards accept all 3 accrual types (spend, visit, scores)
    - The actual program type is a Boomerangme panel configuration not available via API
-   - Our solution: User selects once per template, saved for all future scans
+   - Our solution: User selects once per CARD, saved for all future scans
 
 5. **Technical Details**
-   - New MongoDB collection: `template_accrual_modes`
-   - Frontend: Modified useEffect in ResultPage.js to check DB preference
+   - New MongoDB collection: `card_accrual_modes` (changed from template_accrual_modes)
+   - Frontend: Modified useEffect in ResultPage.js to check DB preference by Card ID
    - Removed old unreliable auto-detection logic that tried zero-value transactions
+
+6. **Purchase Amount Required for All Modes**
+   - Visit mode: Now requires purchase amount + visit count
+   - Manual mode: Now requires purchase amount + points to add
+   - Spend mode: Already required purchase amount (unchanged)
+   - Reward redemption (Canjear): Now requires purchase amount before selecting tier
+   - All amounts logged to operations for reporting
 
 ### Session 12 - Reward Cards Accrual Modes (January 29, 2026)
 1. **Multi-Mode Accrual System for Reward Cards**

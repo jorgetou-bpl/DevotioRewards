@@ -153,27 +153,23 @@ export const CARD_TYPE_CONFIG = {
       canjear: { label: 'Canjear Saldo', endpoint: 'subtract-point' }
     }
   },
-  // Membership card (type ID 6)
+  // Membership card (type ID 6) - Only redeem visits, no add functionality
   membership: {
     name: 'Membresía',
     icon: User,
     color: '#8A2BE2',
-    tabs: ['Agregar', 'Canjear'],
-    requiresPurchaseAmount: true,
+    tabs: ['Canjear'], // Only redeem - membership visits are pre-configured
     actions: {
-      agregar: { label: 'Agregar Visitas', endpoint: 'add-visit', amountLabel: 'Monto de compra' },
-      canjear: { label: 'Canjear Visita', endpoint: 'subtract-visit' }
+      canjearvisitas: { label: 'Canjear Visita', endpoint: 'subtract-visit' }
     }
   },
   membership_card: {
     name: 'Membresía',
     icon: User,
     color: '#8A2BE2',
-    tabs: ['Agregar', 'Canjear'],
-    requiresPurchaseAmount: true,
+    tabs: ['Canjear'], // Only redeem - membership visits are pre-configured
     actions: {
-      agregar: { label: 'Agregar Visitas', endpoint: 'add-visit', amountLabel: 'Monto de compra' },
-      canjear: { label: 'Canjear Visita', endpoint: 'subtract-visit' }
+      canjearvisitas: { label: 'Canjear Visita', endpoint: 'subtract-visit' }
     }
   },
   // Reward card (type ID 7)

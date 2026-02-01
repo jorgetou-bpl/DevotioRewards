@@ -126,18 +126,18 @@ const ResultPage = () => {
     fetchPendingRewards();
   }, [card, cardType, activeTab, selectedRewardId]);
 
-  // Auto-detect accrual mode for reward cards - check DB preference first
+  // Auto-detect accrual mode for reward cards - check DB preference by Card ID
   useEffect(() => {
     const fetchAccrualMode = async () => {
-      if (!card || cardType !== 'reward' || !card.templateId) return;
+      if (!card || cardType !== 'reward' || !card.id) return;
       
       setDetectingMode(true);
       setNeedsModeSelection(false);
       const token = localStorage.getItem('token');
       
       try {
-        // First, check if there's a saved preference in the database
-        const response = await axios.get(`${API}/templates/${card.templateId}/accrual-mode`, {
+        // Check if there's a saved preference for this specific card
+        const response = await axios.get(`${API}/cards/${card.id}/accrual-mode`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         
@@ -161,19 +161,19 @@ const ResultPage = () => {
     };
     
     fetchAccrualMode();
-  }, [card?.id, card?.templateId, cardType]);
+  }, [card?.id, cardType]);
   
-  // Function to save accrual mode preference
+  // Function to save accrual mode preference for this card
   const saveAccrualMode = async (mode) => {
     const token = localStorage.getItem('token');
     try {
-      await axios.post(`${API}/templates/${card.templateId}/accrual-mode`, 
+      await axios.post(`${API}/cards/${card.id}/accrual-mode`, 
         { mode },
         { headers: { Authorization: `Bearer ${token}` }}
       );
       setDetectedAccrualMode(mode);
       setNeedsModeSelection(false);
-      toast.success(`Modo "${mode === 'spend' ? 'Por Compra' : mode === 'visit' ? 'Por Visita' : 'Manual'}" guardado para este programa`);
+      toast.success(`Modo "${mode === 'spend' ? 'Por Compra' : mode === 'visit' ? 'Por Visita' : 'Manual'}" configurado para esta tarjeta`);
     } catch (e) {
       console.error('Error saving accrual mode:', e);
       toast.error('Error al guardar el modo de acumulación');

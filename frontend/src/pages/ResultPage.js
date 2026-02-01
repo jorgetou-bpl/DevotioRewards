@@ -233,7 +233,9 @@ const ResultPage = () => {
     } else if (actionLower === 'canjear') {
       if (rewardTier) {
         // For reward card tier redemption
+        details.push({ label: 'Monto de Compra', value: formatCurrency(parseFloat(purchaseAmount) || 0) });
         details.push({ label: 'Recompensa', value: rewardTier.name });
+        details.push({ label: 'Valor de Recompensa', value: `$${rewardTier.value}` });
         details.push({ label: 'Puntos requeridos', value: rewardTier.threshold });
       } else {
         details.push({ label: 'Cantidad a Canjear', value: actionAmount });

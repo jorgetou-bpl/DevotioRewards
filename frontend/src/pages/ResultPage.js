@@ -1354,48 +1354,69 @@ const ResultPage = () => {
             </div>
           )}
           
-          {/* Visit Mode - Visit Counter */}
+          {/* Visit Mode - Visit Counter + Purchase Amount */}
           {detectedAccrualMode === 'visit' && !detectingMode && !needsModeSelection && (
-            <div className="card-brutalist">
-              <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500 block mb-2">
-                Visitas a registrar
-              </label>
-              <p className="text-xs text-zinc-400 mb-3">Los puntos se calcularán automáticamente por cada visita</p>
-              <div className="flex items-center justify-center gap-4">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => setActionAmount(Math.max(1, actionAmount - 1))}
-                  className="h-14 w-14 border-2 rounded-lg bg-white hover:bg-[#ee478a] hover:border-[#ee478a] hover:text-white"
-                  style={{ borderColor: '#120627', color: '#120627' }}
-                  data-testid="decrease-visits"
-                >
-                  <Minus className="h-6 w-6" />
-                </Button>
-                <div className="text-center">
-                  <span className="text-4xl font-mono font-bold text-[#120627]">{actionAmount}</span>
-                  <p className="text-xs text-zinc-500 mt-1">visita{actionAmount > 1 ? 's' : ''}</p>
+            <>
+              {/* Purchase Amount Input */}
+              <div className="card-brutalist">
+                <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500 block mb-2">
+                  Monto de compra ({currencyInfo.code}) <span className="text-[#ee478a]">*</span>
+                </label>
+                <div className="relative">
+                  <span className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-zinc-400 text-lg sm:text-xl">{currencyInfo.symbol}</span>
+                  <Input
+                    type="number"
+                    value={purchaseAmount}
+                    onChange={(e) => setPurchaseAmount(e.target.value)}
+                    placeholder="0"
+                    className="input-brutalist pl-10 sm:pl-12 text-2xl sm:text-3xl font-mono h-14 sm:h-16 text-center"
+                    data-testid="reward-visit-purchase-amount"
+                  />
                 </div>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => setActionAmount(actionAmount + 1)}
-                  className="h-14 w-14 border-2 rounded-lg bg-white hover:bg-[#ee478a] hover:border-[#ee478a] hover:text-white"
-                  style={{ borderColor: '#120627', color: '#120627' }}
-                  data-testid="increase-visits"
-                >
-                  <Plus className="h-6 w-6" />
-                </Button>
               </div>
-            </div>
+              
+              {/* Visit Counter */}
+              <div className="card-brutalist">
+                <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500 block mb-2">
+                  Visitas a registrar
+                </label>
+                <p className="text-xs text-zinc-400 mb-3">Los puntos se calcularán automáticamente por cada visita</p>
+                <div className="flex items-center justify-center gap-4">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => setActionAmount(Math.max(1, actionAmount - 1))}
+                    className="h-14 w-14 border-2 rounded-lg bg-white hover:bg-[#ee478a] hover:border-[#ee478a] hover:text-white"
+                    style={{ borderColor: '#120627', color: '#120627' }}
+                    data-testid="decrease-visits"
+                  >
+                    <Minus className="h-6 w-6" />
+                  </Button>
+                  <div className="text-center">
+                    <span className="text-4xl font-mono font-bold text-[#120627]">{actionAmount}</span>
+                    <p className="text-xs text-zinc-500 mt-1">visita{actionAmount > 1 ? 's' : ''}</p>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => setActionAmount(actionAmount + 1)}
+                    className="h-14 w-14 border-2 rounded-lg bg-white hover:bg-[#ee478a] hover:border-[#ee478a] hover:text-white"
+                    style={{ borderColor: '#120627', color: '#120627' }}
+                    data-testid="increase-visits"
+                  >
+                    <Plus className="h-6 w-6" />
+                  </Button>
+                </div>
+              </div>
+            </>
           )}
           
-          {/* Manual Points Mode - Both fields */}
+          {/* Manual Points Mode - Purchase Amount + Points */}
           {detectedAccrualMode === 'points' && !detectingMode && !needsModeSelection && (
             <>
               <div className="card-brutalist">
                 <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500 block mb-2">
-                  Monto de compra ({currencyInfo.code})
+                  Monto de compra ({currencyInfo.code}) <span className="text-[#ee478a]">*</span>
                 </label>
                 <div className="relative">
                   <span className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-zinc-400 text-lg sm:text-xl">{currencyInfo.symbol}</span>

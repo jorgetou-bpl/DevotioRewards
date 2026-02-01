@@ -160,7 +160,7 @@ export const CARD_TYPE_CONFIG = {
     color: '#8A2BE2',
     tabs: ['Canjear'], // Only redeem - membership visits are pre-configured
     actions: {
-      canjearvisitas: { label: 'Canjear Visita', endpoint: 'subtract-visit' }
+      canjear: { label: 'Canjear Visita', endpoint: 'subtract-visit' }
     }
   },
   membership_card: {
@@ -169,7 +169,7 @@ export const CARD_TYPE_CONFIG = {
     color: '#8A2BE2',
     tabs: ['Canjear'], // Only redeem - membership visits are pre-configured
     actions: {
-      canjearvisitas: { label: 'Canjear Visita', endpoint: 'subtract-visit' }
+      canjear: { label: 'Canjear Visita', endpoint: 'subtract-visit' }
     }
   },
   // Reward card (type ID 7)

@@ -1324,21 +1324,12 @@ const ResultPage = () => {
             </div>
           )}
           
-          {/* Mode indicator badge with change option - only shown when mode is set */}
+          {/* Mode indicator badge - shown when mode is set (no change option) */}
           {detectedAccrualMode && !detectingMode && !needsModeSelection && (
-            <div className="flex flex-col items-center gap-2">
-              <div className="flex items-center gap-2">
-                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-[#120627]/10 text-[#120627]">
-                  Modo: {modeLabels[detectedAccrualMode] || detectedAccrualMode}
-                </span>
-                <button
-                  onClick={() => setNeedsModeSelection(true)}
-                  className="text-xs text-[#ee478a] hover:underline"
-                  data-testid="change-accrual-mode"
-                >
-                  Cambiar
-                </button>
-              </div>
+            <div className="flex justify-center">
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-[#120627]/10 text-[#120627]">
+                Modo: {modeLabels[detectedAccrualMode] || detectedAccrualMode}
+              </span>
             </div>
           )}
           

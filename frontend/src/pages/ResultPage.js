@@ -48,6 +48,7 @@ const ResultPage = () => {
   const [loadingTemplate, setLoadingTemplate] = useState(false);
   const [detectedAccrualMode, setDetectedAccrualMode] = useState(null); // Auto-detected: 'spend', 'visit', or 'points'
   const [detectingMode, setDetectingMode] = useState(false);
+  const [needsModeSelection, setNeedsModeSelection] = useState(false); // True when user needs to select mode for first time
   
   // Pending rewards state for timestamp-based tracking
   const [pendingRewards, setPendingRewards] = useState([]);

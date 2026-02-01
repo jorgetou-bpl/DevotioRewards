@@ -1555,6 +1555,25 @@ const ResultPage = () => {
               </p>
             </div>
             
+            {/* Purchase amount for redemption */}
+            <div className="card-brutalist">
+              <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500 block mb-2">
+                Monto de compra ({currencyInfo.code}) <span className="text-[#ee478a]">*</span>
+              </label>
+              <p className="text-xs text-zinc-400 mb-3">Ingrese el monto de la transacción del cliente</p>
+              <div className="relative">
+                <span className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-zinc-400 text-lg sm:text-xl">{currencyInfo.symbol}</span>
+                <Input
+                  type="number"
+                  value={purchaseAmount}
+                  onChange={(e) => setPurchaseAmount(e.target.value)}
+                  placeholder="0"
+                  className="input-brutalist pl-10 sm:pl-12 text-2xl sm:text-3xl font-mono h-14 sm:h-16 text-center"
+                  data-testid="reward-redeem-purchase-amount"
+                />
+              </div>
+            </div>
+            
             {/* Available reward tiers */}
             {availableRewardTiers.length > 0 ? (
               <div className="space-y-3">
@@ -1568,8 +1587,8 @@ const ResultPage = () => {
                       setActionAmount(tier.id); // Store the tier ID
                       openConfirmation('Canjear', tier);
                     }}
-                    disabled={loading}
-                    className="w-full p-4 border-2 rounded-xl text-left hover:border-[#120627] hover:bg-zinc-50 transition-all"
+                    disabled={loading || !purchaseAmount}
+                    className={`w-full p-4 border-2 rounded-xl text-left transition-all ${!purchaseAmount ? 'opacity-50 cursor-not-allowed' : 'hover:border-[#120627] hover:bg-zinc-50'}`}
                     style={{ borderColor: actionAmount === tier.id ? '#120627' : '#e4e4e7' }}
                     data-testid={`reward-tier-${tier.id}`}
                   >
@@ -1588,6 +1607,9 @@ const ResultPage = () => {
                     </div>
                   </button>
                 ))}
+                {!purchaseAmount && (
+                  <p className="text-xs text-[#ee478a] text-center">Ingrese el monto de compra para canjear una recompensa</p>
+                )}
               </div>
             ) : (
               <div className="text-center p-6 bg-zinc-50 rounded-xl">

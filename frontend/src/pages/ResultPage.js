@@ -1248,27 +1248,79 @@ const ResultPage = () => {
           {detectingMode && (
             <div className="card-brutalist text-center py-4">
               <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2 text-[#120627]" />
-              <p className="text-sm text-zinc-500">Detectando modo de acumulación...</p>
+              <p className="text-sm text-zinc-500">Cargando configuración...</p>
             </div>
           )}
           
-          {/* Mode indicator badge with manual change option */}
-          {detectedAccrualMode && !detectingMode && (
+          {/* Mode Selection - First time setup for this template */}
+          {needsModeSelection && !detectingMode && (
+            <div className="card-brutalist">
+              <div className="text-center mb-4">
+                <h3 className="text-base font-semibold text-[#120627] mb-1">Configurar Tipo de Acumulación</h3>
+                <p className="text-xs text-zinc-500">Seleccione cómo se acumulan puntos en este programa. Esta configuración se aplicará a todas las tarjetas de este tipo.</p>
+              </div>
+              <div className="grid grid-cols-1 gap-3">
+                <button
+                  onClick={() => saveAccrualMode('spend')}
+                  className="p-4 border-2 rounded-xl hover:border-[#ee478a] hover:bg-[#ee478a]/5 transition-all text-left"
+                  style={{ borderColor: '#e5e5e5' }}
+                  data-testid="select-mode-spend"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
+                      <CreditCard className="h-5 w-5 text-green-600" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-[#120627]">Por Compra</p>
+                      <p className="text-xs text-zinc-500">Puntos según monto de compra</p>
+                    </div>
+                  </div>
+                </button>
+                <button
+                  onClick={() => saveAccrualMode('visit')}
+                  className="p-4 border-2 rounded-xl hover:border-[#ee478a] hover:bg-[#ee478a]/5 transition-all text-left"
+                  style={{ borderColor: '#e5e5e5' }}
+                  data-testid="select-mode-visit"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+                      <User className="h-5 w-5 text-blue-600" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-[#120627]">Por Visita</p>
+                      <p className="text-xs text-zinc-500">Puntos por cada visita registrada</p>
+                    </div>
+                  </div>
+                </button>
+                <button
+                  onClick={() => saveAccrualMode('points')}
+                  className="p-4 border-2 rounded-xl hover:border-[#ee478a] hover:bg-[#ee478a]/5 transition-all text-left"
+                  style={{ borderColor: '#e5e5e5' }}
+                  data-testid="select-mode-points"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center">
+                      <Star className="h-5 w-5 text-purple-600" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-[#120627]">Manual</p>
+                      <p className="text-xs text-zinc-500">Ingresar puntos manualmente</p>
+                    </div>
+                  </div>
+                </button>
+              </div>
+            </div>
+          )}
+          
+          {/* Mode indicator badge with change option - only shown when mode is set */}
+          {detectedAccrualMode && !detectingMode && !needsModeSelection && (
             <div className="flex flex-col items-center gap-2">
               <div className="flex items-center gap-2">
                 <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-[#120627]/10 text-[#120627]">
                   Modo: {modeLabels[detectedAccrualMode] || detectedAccrualMode}
                 </span>
                 <button
-                  onClick={() => {
-                    // Cycle through modes: spend -> visit -> points -> spend
-                    const modes = ['spend', 'visit', 'points'];
-                    const currentIndex = modes.indexOf(detectedAccrualMode);
-                    const nextMode = modes[(currentIndex + 1) % modes.length];
-                    setDetectedAccrualMode(nextMode);
-                    // Clear cache so it can be re-detected next time
-                    localStorage.removeItem(`accrualMode_${card.templateId}`);
-                  }}
+                  onClick={() => setNeedsModeSelection(true)}
                   className="text-xs text-[#ee478a] hover:underline"
                   data-testid="change-accrual-mode"
                 >

@@ -215,6 +215,18 @@ const ResultPage = () => {
         details.push({ label: 'Monto de Compra', value: formatCurrency(parseFloat(purchaseAmount) || 0) });
       }
       details.push({ label: 'Cantidad de Sellos', value: actionAmount });
+    } else if (actionLower === 'agregar' && normalizedType === 'reward') {
+      // Reward card - show different details based on accrual mode
+      if (detectedAccrualMode === 'spend') {
+        details.push({ label: 'Monto de Compra', value: formatCurrency(parseFloat(purchaseAmount) || 0) });
+      } else if (detectedAccrualMode === 'visit') {
+        details.push({ label: 'Visitas a Agregar', value: actionAmount });
+      } else if (detectedAccrualMode === 'points') {
+        if (purchaseAmount) {
+          details.push({ label: 'Monto de Compra', value: formatCurrency(parseFloat(purchaseAmount) || 0) });
+        }
+        details.push({ label: 'Puntos a Agregar', value: actionAmount });
+      }
     } else if (actionLower === 'agregar' && config.requiresPurchaseAmount) {
       details.push({ label: 'Monto de Compra', value: formatCurrency(parseFloat(purchaseAmount) || 0) });
     } else if (actionLower === 'agregar') {

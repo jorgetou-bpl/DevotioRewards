@@ -328,10 +328,11 @@ const ResultPage = () => {
       const isMultipassPointsAction = ['agregarpuntos', 'canjearpuntos'].includes(actionKey);
       
       // Get the purchase amount from confirmation modal or state
-      // Include purchaseSum for: stamp cards, discount/cashback cards, coupon cards, multipass (visits and points)
+      // Include purchaseSum for: stamp cards, discount/cashback cards, coupon cards, multipass (visits and points), reward cards
       const shouldIncludePurchaseSum = config.requiresPurchaseAmount || 
                                         normalizedType === 'stamp' || 
                                         normalizedType === 'coupon' ||
+                                        normalizedType === 'reward' ||
                                         ['agregarvisitas', 'canjearvisitas', 'agregarpuntos', 'canjearpuntos'].includes(actionKey);
       
       const finalPurchaseAmount = confirmPurchaseAmount ? parseFloat(confirmPurchaseAmount) : 
@@ -352,11 +353,12 @@ const ResultPage = () => {
         payload.accrualProgram = 'spend';
       } else if (isRewardAccrualAction && detectedAccrualMode === 'visit') {
         payload.amount = actionAmount;
+        payload.purchaseSum = parseFloat(purchaseAmount) || 0;
         payload.accrualProgram = 'visit';
       } else if (isRewardAccrualAction && detectedAccrualMode === 'points') {
         payload.amount = actionAmount;
         payload.accrualProgram = 'points';
-        payload.purchaseSum = parseFloat(purchaseAmount) || undefined;
+        payload.purchaseSum = parseFloat(purchaseAmount) || 0;
       }
       
       // For stamp card reward redemption with pending rewards tracking
@@ -364,9 +366,11 @@ const ResultPage = () => {
         payload.reward_id = selectedRewardId;
       }
       
-      // For receive-reward endpoint, pass the tier ID as amount
+      // For receive-reward endpoint, pass the tier ID as amount and reward value
       if (rewardTier && endpoint.includes('receive-reward')) {
         payload.amount = rewardTier.id; // The tier ID is needed for receive-reward
+        payload.reward_value = rewardTier.value; // The monetary value of the reward
+        payload.purchaseSum = parseFloat(purchaseAmount) || 0;
       } else if (config.requiresPurchaseAmount && finalPurchaseAmount && endpoint.includes('add-point')) {
         // For discount/cashback cards: calculate points based on percentage
         // points = purchaseSum * (percentage / 100)

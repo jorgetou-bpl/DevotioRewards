@@ -919,12 +919,14 @@ async def receive_reward(card_id: str, action_data: CardActionRequest, current_u
     response = await call_boomerang_api('POST', f'/cards/{card_id}/receive-reward', payload)
     card_data = response.get('data', {})
     
+    # Log with reward_value as amount (not tier ID), and purchase_sum
     await log_operation(
         card_id=card_id,
         operation_type="receive-reward",
         current_user=current_user,
         card_data=card_data,
-        amount=action_data.amount or 1,
+        amount=action_data.reward_value or 0,  # Reward monetary value, not tier ID
+        purchase_sum=action_data.purchaseSum,
         note=action_data.comment,
         gerente_override=gerente_name
     )

@@ -1475,12 +1475,13 @@ const ResultPage = () => {
           {detectedAccrualMode && !needsModeSelection && (
             <Button
               onClick={() => openConfirmation('Agregar')}
-              disabled={loading || detectingMode || !detectedAccrualMode || (detectedAccrualMode === 'spend' && !purchaseAmount) || (detectedAccrualMode !== 'spend' && actionAmount < 1)}
+              disabled={loading || detectingMode || !detectedAccrualMode || !purchaseAmount || (detectedAccrualMode !== 'spend' && actionAmount < 1)}
               className="w-full h-12 sm:h-14 text-base sm:text-lg btn-primary disabled:opacity-50"
               data-testid="add-reward-points-button"
             >
               {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : 
-                detectedAccrualMode === 'visit' ? 'Agregar Visita' : actionConfig.label}
+                detectedAccrualMode === 'visit' ? 'Agregar Visita' : 
+                detectedAccrualMode === 'points' ? 'Agregar Puntos' : actionConfig.label}
             </Button>
           )}
         </div>

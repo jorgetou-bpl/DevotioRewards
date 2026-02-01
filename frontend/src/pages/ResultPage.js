@@ -1388,7 +1388,7 @@ const ResultPage = () => {
           )}
           
           {/* Manual Points Mode - Both fields */}
-          {detectedAccrualMode === 'points' && !detectingMode && (
+          {detectedAccrualMode === 'points' && !detectingMode && !needsModeSelection && (
             <>
               <div className="card-brutalist">
                 <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500 block mb-2">

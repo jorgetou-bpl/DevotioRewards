@@ -1269,12 +1269,12 @@ const ResultPage = () => {
             </div>
           )}
           
-          {/* Mode Selection - First time setup for this template */}
+          {/* Mode Selection - First time setup for this card */}
           {needsModeSelection && !detectingMode && (
             <div className="card-brutalist">
               <div className="text-center mb-4">
                 <h3 className="text-base font-semibold text-[#120627] mb-1">Configurar Tipo de Acumulación</h3>
-                <p className="text-xs text-zinc-500">Seleccione cómo se acumulan puntos en este programa. Esta configuración se aplicará a todas las tarjetas de este tipo.</p>
+                <p className="text-xs text-zinc-500">Seleccione cómo se acumulan puntos en esta tarjeta. Solo se configura una vez.</p>
               </div>
               <div className="grid grid-cols-1 gap-3">
                 <button

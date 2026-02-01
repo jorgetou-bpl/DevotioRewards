@@ -1331,7 +1331,7 @@ const ResultPage = () => {
           )}
           
           {/* Spend Mode - Only Purchase Amount */}
-          {detectedAccrualMode === 'spend' && !detectingMode && (
+          {detectedAccrualMode === 'spend' && !detectingMode && !needsModeSelection && (
             <div className="card-brutalist">
               <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500 block mb-2">
                 Monto de compra ({currencyInfo.code}) <span className="text-[#ee478a]">*</span>
@@ -1352,7 +1352,7 @@ const ResultPage = () => {
           )}
           
           {/* Visit Mode - Visit Counter */}
-          {detectedAccrualMode === 'visit' && !detectingMode && (
+          {detectedAccrualMode === 'visit' && !detectingMode && !needsModeSelection && (
             <div className="card-brutalist">
               <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500 block mb-2">
                 Visitas a registrar

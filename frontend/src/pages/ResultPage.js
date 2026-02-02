@@ -1044,16 +1044,6 @@ const ResultPage = () => {
               </span>
               <p className="text-xs sm:text-sm text-zinc-500 mt-1">Descuento actual</p>
               
-              {/* Total Savings display */}
-              {discountAmount > 0 && (
-                <div className="mt-4 pt-4 border-t border-zinc-200">
-                  <span className="text-2xl sm:text-3xl font-mono font-bold text-[#10b981]">
-                    {formatCurrency(discountAmount / 100)}
-                  </span>
-                  <p className="text-xs sm:text-sm text-zinc-500 mt-1">Ahorro Total</p>
-                </div>
-              )}
-              
               {/* Calculate tier based on discountAmount thresholds */}
               {totalTransactions !== undefined && (
                 <div className="mt-2">

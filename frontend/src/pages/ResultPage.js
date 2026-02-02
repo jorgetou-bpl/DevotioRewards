@@ -1430,8 +1430,14 @@ const ResultPage = () => {
           // Reward cards use bonusBalance for scores
           availableAmount = balance.bonusBalance || 0;
         } else if (normalizedType === 'membership') {
-          // Membership cards - currentNumberOfUses tracks available visits
-          availableAmount = balance.currentNumberOfUses || 0;
+          // Membership cards - calculate available visits from limit minus used
+          const membershipTier = card.membershipTier || {};
+          const customerSubscription = card.customerSubscription || {};
+          const period = customerSubscription.period || 'month';
+          const periodParams = membershipTier[`${period}lyParameters`] || membershipTier.monthlyParameters || {};
+          const visitLimit = periodParams.limit || 0;
+          const usedVisits = balance.currentNumberOfUses || 0;
+          availableAmount = Math.max(0, visitLimit - usedVisits);
         } else if (normalizedType === 'multipass' || normalizedType === 'subscription') {
           // Multipass/Subscription cards use currentNumberOfUses for available visits
           availableAmount = balance.currentNumberOfUses || 0;

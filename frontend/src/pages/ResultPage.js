@@ -955,44 +955,28 @@ const ResultPage = () => {
               </div>
             </div>
             
-            {/* Counter for points */}
+            {/* Counter for points - free input field */}
             <div className="card-brutalist">
               <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500 block mb-2">
                 Cantidad de puntos
               </label>
-              <div className="flex items-center gap-3">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => setActionAmount(Math.max(1, actionAmount - 1))}
-                  className="h-12 w-12 sm:h-14 sm:w-14 border-2 rounded-lg bg-white hover:bg-[#ee478a] hover:border-[#ee478a] hover:text-white flex-shrink-0"
-                  style={{ borderColor: '#120627', color: '#120627' }}
-                  data-testid="decrease-points"
-                >
-                  <Minus className="h-5 w-5 sm:h-6 sm:w-6" />
-                </Button>
-                <Input
-                  type="number"
-                  value={actionAmount}
-                  onChange={(e) => {
-                    const val = parseInt(e.target.value) || 1;
-                    setActionAmount(Math.max(1, val));
-                  }}
-                  min="1"
-                  className="input-brutalist text-2xl sm:text-3xl font-mono h-12 sm:h-14 text-center flex-1"
-                  data-testid="points-amount-input"
-                />
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => setActionAmount(actionAmount + 1)}
-                  className="h-12 w-12 sm:h-14 sm:w-14 border-2 rounded-lg bg-white hover:bg-[#ee478a] hover:border-[#ee478a] hover:text-white flex-shrink-0"
-                  style={{ borderColor: '#120627', color: '#120627' }}
-                  data-testid="increase-points"
-                >
-                  <Plus className="h-5 w-5 sm:h-6 sm:w-6" />
-                </Button>
-              </div>
+              <Input
+                type="number"
+                value={actionAmount}
+                onChange={(e) => {
+                  const val = parseInt(e.target.value) || 0;
+                  setActionAmount(Math.max(0, val));
+                }}
+                min="0"
+                placeholder="0"
+                className="input-brutalist text-2xl sm:text-3xl font-mono h-14 sm:h-16 text-center"
+                data-testid="points-amount-input"
+              />
+              {actionAmount > bonusPoints && (
+                <p className="text-xs text-red-500 mt-2 text-center">
+                  Solo hay {bonusPoints} puntos disponibles para canjear
+                </p>
+              )}
             </div>
             
             {/* Two action buttons: Add points and Redeem points */}
@@ -1007,9 +991,13 @@ const ResultPage = () => {
               </Button>
               <Button
                 onClick={() => openConfirmation('CanjearPuntos')}
-                disabled={loading || bonusPoints <= 0 || actionAmount > bonusPoints || actionAmount < 1}
-                className="w-full h-12 sm:h-14 text-base sm:text-lg border-2 bg-white hover:bg-[#ee478a] hover:border-[#ee478a] hover:text-white"
-                style={{ borderColor: '#120627', color: '#120627' }}
+                disabled={loading || actionAmount < 1 || actionAmount > bonusPoints}
+                className={`w-full h-12 sm:h-14 text-base sm:text-lg border-2 bg-white ${
+                  actionAmount > bonusPoints 
+                    ? 'border-red-300 text-red-400 cursor-not-allowed' 
+                    : 'hover:bg-[#ee478a] hover:border-[#ee478a] hover:text-white'
+                }`}
+                style={actionAmount > bonusPoints ? {} : { borderColor: '#120627', color: '#120627' }}
                 data-testid="redeem-points-button"
               >
                 {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Canjear Puntos'}

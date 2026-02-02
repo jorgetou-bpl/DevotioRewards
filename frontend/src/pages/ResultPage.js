@@ -372,10 +372,9 @@ const ResultPage = () => {
         payload.reward_value = rewardTier.value; // The monetary value of the reward
         payload.purchaseSum = parseFloat(purchaseAmount) || 0;
       } else if (config.requiresPurchaseAmount && finalPurchaseAmount && endpoint.includes('add-point')) {
-        // For discount/cashback cards: calculate points based on percentage
-        // points = purchaseSum * (percentage / 100)
-        const percentage = balance.discountPercentage || balance.cashbackPercent || 1;
-        payload.amount = Math.round(finalPurchaseAmount * (percentage / 100));
+        // For discount/cashback cards: pass the purchase amount directly
+        // Boomerangme API calculates the points/cashback internally based on configured rules
+        payload.amount = finalPurchaseAmount;
       } else if (!payload.amount) {
         payload.amount = actionAmount;
       }

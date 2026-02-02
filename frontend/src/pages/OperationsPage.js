@@ -912,7 +912,7 @@ const OperationsPage = () => {
                       <div className="grid grid-cols-3 gap-2 mt-3 pt-3 border-t border-zinc-100">
                         <div>
                           <p className="text-xs text-zinc-400">Monto</p>
-                          <p className="text-sm font-medium">{op.amount ?? '-'}</p>
+                          <p className="text-sm font-medium">{formatAmount(op)}</p>
                         </div>
                         <div>
                           <p className="text-xs text-zinc-400">Saldo</p>

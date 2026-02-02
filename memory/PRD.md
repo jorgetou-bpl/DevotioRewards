@@ -79,6 +79,27 @@ All 8 Boomerangme card types now correctly recognized and rendered:
 
 ## What's Been Implemented
 
+### Session 14 - UI Fixes for Membership & Multipass Cards (February 2, 2026)
+1. **Fixed Membership Card Visit Display**
+   - Changed from using `customerSubscription.balance` (incorrect value: 15) to `balance.currentNumberOfUses` (correct value: 7)
+   - Membership cards now display visits the same way as Multipass cards
+   - Avatar with initials, tier badge (Bronce), status indicator, and "Canjear Visita" action all working
+
+2. **Fixed Multipass Card Redundant Text**
+   - Removed redundant "X sellos activos" text from StampGrid component
+   - Added `hideLabel` prop to StampGrid component
+   - Added clear "X Visitas disponibles" display below the star grid for better UX
+
+3. **Fixed Operations History Display for Legacy Data**
+   - Added `formatAmount()` helper function in OperationsPage.js
+   - Detects `receive-reward` operations with large tier IDs (>9999) and displays "N/A"
+   - Prevents confusing tier ID numbers from showing in the "Monto" column
+
+4. **Updated Files**
+   - `/app/frontend/src/pages/ResultPage.js`: Fixed membership visit calculation
+   - `/app/frontend/src/components/cards/StampGrid.jsx`: Added hideLabel prop
+   - `/app/frontend/src/pages/OperationsPage.js`: Added formatAmount() helper
+
 ### Session 13 - Reward Card Accrual Mode Selection (February 1, 2026)
 1. **Template-Based Accrual Mode Preferences**
    - Implemented database-backed preference storage per template ID

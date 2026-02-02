@@ -7,71 +7,86 @@ The user wants to build a custom scanner web app for Devotio Rewards, connecting
 -   **Branding & UI:** Brand for Devotio Rewards with a Spanish UI and mobile-first design.
 -   **User Management & Attribution:** Custom user registration/login and attribution of transactions to a Gerente (Manager).
 -   **Reporting & Analytics:** An Operations page with filterable, exportable transaction history and a Dashboard with performance metrics.
--   **Card-Specific Logic:** Implement unique UI and backend logic for each card type, including stamp card reward tracking, reward card accumulation modes (spend, visit, manual), and discount card tier display.
+-   **Card-Specific Logic:** Implement unique UI and backend logic for each card type, including stamp card reward tracking, reward card accumulation modes, and discount card tier display.
 -   **POS Integration Consultation:** Provide technical guidance on integrating a third-party POS system directly with the Boomerangme API.
 
 **User's preferred language**: The user communicates in Spanish for UI/business context and English for some technical aspects. The next agent **must** respond primarily in **Spanish**, as the application UI and user-facing text must be in Spanish.
 
 **what currently exists?**
-A full-stack application with a React frontend, FastAPI backend, and MongoDB database. It includes custom JWT authentication, a modular backend structure, and several key features:
--   A scanner page () for finding cards.
--   A complex results page () that displays card details and actions for all card types.
--   An operations page () with two tabs: a filterable/exportable transaction Historial and an analytics Dashboard.
--   Logic for attributing transactions to a manager (Gerente).
--   **Reward Cards:** A UI that *attempts* to auto-detect the accumulation mode (Por Compra, Por Visita, Manual) and show relevant fields. A manual override was added as a workaround for faulty detection.
--   **Discount Cards:** An improved UI that correctly displays the membership tier (Bronce, Plata, Oro) and shows the amount needed to reach the next tier.
--   A technical document () outlining how to integrate a POS with the Boomerangme API was created.
+A full-stack application with a React frontend, FastAPI backend, and MongoDB. It features JWT-based authentication and a modular backend.
+-   The core issue of faulty reward-card accumulation mode detection has been **resolved**. The system now saves the mode (, , ) on a **per-card basis** in the local database the first time a card is used.
+-   UI and backend logic now mandate a  for all reward card actions (, , ) and for redeeming membership visits, ensuring complete transaction data.
+-   The  provides transaction history and analytics.
+-   The  component renders different UIs based on card type, including custom displays for Multipass and Membership cards.
+-   A new DB collection  stores the mode for each .
 
 **Last working item**:
--   **Last item agent was working:** The user reported that the auto-detection for **Reward Cards** is not working correctly. For a card configured with a visit based accumulation program, the UI incorrectly shows the manual points interface instead of the add visit interface. The agent implemented a manual override button as a temporary workaround but did not fix the root cause of the detection failure.
+-   **Last item agent was working:** The user requested UI changes for Multipass and Membership cards and reported a data discrepancy with a new Membership card.
+    -   **Multipass:** Remove the redundant X sellos activos text from the UI.
+    -   **Membership (New Card ID: 551608-563-657):** The agent was about to investigate why the app shows 16 available visits when it should be 8. The user also requested UI finalizations (avatar style, no stamps, only Redeem Visit action).
 -   **Status:** IN PROGRESS
 -   **Agent Testing Done:** N
--   **Which testing method agent to use?** Both.
-    1.  **Backend:** Use  to test the  endpoint once the user provides the ID for the visit type card.
-    2.  **Frontend:** Use the  tool to verify that  displays the correct UI automatically for the visit card.
+-   **Which testing method agent to use?** both
+    1.  **Backend:** Use  to test the  endpoint to inspect the raw data from the Boomerangme API and identify the source of the visit count discrepancy.
+    2.  **Frontend:** Use the  tool on  to verify the UI changes for both Multipass and Membership cards once the data issue is resolved.
 -   **User Testing Done:** N
 
 **All Pending/In progress Issue list**:
--   **Issue 1:** Reward Card accumulation mode auto-detection is faulty (P0)
+-   **Issue 1:** Data discrepancy for Membership cards (P0)
+-   **Issue 2:** Incorrect Amount for historical reward redemptions in the Operations report (P1)
 
 **Issues Detail:**
 -   **Issue 1:**
-    -   **Description:** The backend logic in  fails to correctly identify reward cards with a visit based accumulation program. It defaults to showing the spend or manual UI. The desired behavior is for the application to automatically detect the mode from the card's configuration and display the corresponding UI (e.g., just an Add Visit button for visit-based cards).
-    -   **Attempted fixes:**
-        -   The agent created the  endpoint which tries to send zero-value transactions to different Boomerangme endpoints (, , ) and interpret the errors. This approach was unreliable.
-        -   As a workaround, the agent added a manual mode-selector button to the UI. This is not the user's desired solution.
+    -   **Description:** For the new Membership card (), the UI in the preview environment displays 16 available visits, while the user's screenshot of the deployed app indicates it should be 8. The root cause is likely in the backend logic that interprets the data from the Boomerangme API for membership cards.
+    -   **Attempted fixes:** None. The agent was just about to investigate.
     -   **Next debug checklist:**
-        1.  **Get Information:** Ask the user for the **Card ID** of the Demorecompensa visita card to have a reliable test case.
-        2.  **Investigate Backend:** In , review the  function. The current trial-and-error method is flawed. The next agent should re-examine the full Boomerangme API response for both the card () and its template () to find any field that indicates the  (e.g., , , ). The previous agent could not find it, but a deeper look is warranted.
-        3.  **Fix Detection Logic:** If a direct field isn't available, the error handling in  must be improved. Instead of assuming a mode on any error, it should look for specific error messages or codes from Boomerangme that uniquely identify an irrelevant accrual type error.
-        4.  **Verify Frontend:** Once the backend detection is reliable, ensure the  hook in  that calls this endpoint correctly sets the state and displays the right UI without needing the manual override. The manual override button should be a fallback, not the primary flow.
-    -   **Why fix this issue and what will be achieved with the fix?** To meet the user's requirement of a seamless, intelligent UI that adapts automatically to the card's configuration, improving user experience and reducing operational errors.
-    -   **Status:** IN PROGRESS
+        1.  In , examine the  function.
+        2.  Call the endpoint  and analyze the full JSON response.
+        3.  Identify which field(s) correctly represent the available visits (e.g., , , etc.) and ensure the backend is parsing and returning the correct one. The discrepancy might be due to summing multiple fields incorrectly.
+        4.  Once the backend returns the correct data, verify it's displayed correctly in .
+    -   **Why fix this issue and what will be achieved with the fix?** To display accurate card information, which is critical for the app's reliability and user trust.
+    -   **Status:** NOT STARTED
     -   **Is recurring issue?** Y
     -   **Should Test frontend/backend/both after fix?** Both.
-    -   **Blocked on other issue:** Blocked on receiving the **Card ID** for the visit type card from the user.
+    -   **Blocked on other issue:** The UI task for the Membership card is blocked on this.
+
+-   **Issue 2:**
+    -   **Description:** In the Operations history page, transactions for Recompensa recibida (Reward Redeemed) show a long numeric ID in the Monto (Amount) column instead of the reward's actual value. This was fixed for *new* transactions, but historical data is still displayed incorrectly.
+    -   **Attempted fixes:** The agent corrected the backend logging for new  transactions.
+    -   **Next debug checklist:**
+        1.  Review the frontend component for the operations history table ().
+        2.  Add display logic: if  is  and the  field looks like a tier ID (i.e., a long integer), display N/A or do not render it to avoid showing confusing data to the user. A data migration is overkill; a simple frontend fix is sufficient.
+    -   **Why fix this issue and what will be achieved with the fix?** To ensure the transaction history report is accurate and not confusing for the user.
+    -   **Status:** NOT STARTED
+    -   **Is recurring issue?** Y
+    -   **Should Test frontend/backend/both after fix?** Frontend.
+    -   **Blocked on other issue:** none
 
 **In progress Task List**:
--   None.
+-   **Task 1:** UI/UX finalization for Multipass and Membership cards (P0)
+    -   **Where to resume:** .
+    -   **What will be achieved with this?**
+        -   **Multipass:** A cleaner UI without redundant text.
+        -   **Membership:** A final UI that matches the user's request (avatar style, no stamps, Redeem Visit action only, with purchase amount field).
+    -   **Status:** BLOCKED
+    -   **Should Test frontend/backend/both after fix?** Frontend.
+    -   **Blocked on something:** Issue 1 (Membership card data discrepancy).
 
 **Upcoming and Future Tasks**
 -   **Upcoming Tasks:**
-    -   **P1: Final UAT & Deployment:** After the Reward Card bug is fixed and verified by the user.
+    -   **P1: Final UAT & Deployment:** After all pending issues and tasks are resolved and verified by the user.
 -   **Future Tasks (Backlog):**
-    -   **P2: Refactor **: This component is now ~1,900 lines and is a significant piece of technical debt.
-    -   **P2: Phase 2 POS Integration Gateway**: A multi-tenant API gateway for enterprise clients.
+    -   **P2: Refactor **: This component is now extremely large and complex.
     -   **P2: Full Forgot Password flow**.
     -   **P2: Multi-Tenant Admin Panel**.
+    -   **P2: Phase 2 POS Integration Gateway**.
 
 **Completed work in this session**
--   **Reporting & Dashboard Enhancements:** Added  to logs, reports, and exports. Implemented a  filter and a new By Card Type analytics chart.
--   **Removal of :** Removed the separate Valor del Canje field from the stamp card redemption UI, database logs, and reports as requested by the user.
--   **Stamp Card Bug Fix:** Fixed a UI crash that occurred after redeeming a stamp reward, caused by a lingering reference to the removed  state.
--   **Discount Card UI Overhaul:**
-    -   Reworked the UI to correctly display the membership tier (Bronce, Plata, Oro) based on defined spending thresholds.
-    -   Added a progress indicator showing the amount needed to reach the next tier.
-    -   Standardized the card details panel across all card types for a consistent look and feel.
--   **POS Integration Consultation:** Researched and created a technical document () for the user to share with a client interested in a direct POS integration.
+-   **Reward Card Accumulation Mode FIXED:** Solved the main problem by implementing a new system where the accumulation mode (, , ) is selected by the user and saved **per card ID** in the local database. This replaced the unreliable API-based auto-detection.
+-   **Required Purchase Amount:** Updated the UI and backend to require a  for all reward card accumulation actions and membership visit redemptions.
+-   **Reward Redemption Logging Fixed:** Corrected the backend to log the  and  accurately for new reward redemption transactions.
+-   **Mode Configuration Logic:** Removed the Change Mode button, making the first selection permanent for that card, as per the user's business logic.
+-   **UI/Modal Improvements:** Enhanced the confirmation modal to show context-specific details (e.g., Visitas a Agregar vs. Puntos a Agregar).
 
 **Earlier issues found/mentioned but not fixed**
 -   None.
@@ -83,58 +98,60 @@ A full-stack application with a React frontend, FastAPI backend, and MongoDB dat
 
 
 **Key Technical Concepts**
--   **Frontend:** React, React Router, Tailwind CSS, Shadcn UI, 
--   **Backend:** FastAPI, Pydantic, 
+-   **Frontend:** React, React Router, Tailwind CSS, Shadcn UI
+-   **Backend:** FastAPI, Pydantic
 -   **Database:** MongoDB
--   **Authentication:** JWT with  scheme
+-   **Authentication:** JWT
 
 **key DB schema**
+-   **accrual_mode_preferences:** (NEW) 
 -   **users:** 
 -   **scan_logs:** 
--   **rewards_earned:** 
 
 **changes in tech stack**
 -   None.
 
 **All files of reference**
--   : Contains the faulty  endpoint and the logic for all card transactions.
--   : The monolithic frontend component containing the UI logic for all card types, including the reward card mode detection and the discount card tier display.
--   : The new technical document for POS integration.
+-   : Heavily modified; contains all card-specific UI logic.
+-   : Contains the transaction history table that needs a display fix.
+-   : Contains new endpoints for accrual mode preferences.
+-   : Contains logic for getting card details and processing transactions.
+-   : Defines the  model.
+-   : Defines UI configurations for different card types.
 
 **Areas that need refactoring**:
--   : This file is now over 1900 lines and extremely complex, making it difficult to maintain and a high risk for regressions. The user has agreed to postpone refactoring it.
+-   : This monolithic file is over 1,900 lines and is a major source of technical debt, making it difficult and risky to modify.
 
 **key api endpoints**
--   : **(NEW & FAULTY)** Tries to detect the reward card accumulation mode.
--   : **(NEW)** Adds a purchase to a reward card (spend mode).
--   : **(NEW)** Adds a visit to a reward card (visit mode).
+-   : (NEW) Gets the saved accrual mode for a card.
+-   : (NEW) Saves the accrual mode for a card.
+-   : Endpoint for redeeming visits. Works for Multipass but not for Membership cards.
+-   : Gets card details from the Boomerangme API.
 
 **Critical Info for New Agent**
--   **Your immediate priority is to fix the reward card accumulation mode auto-detection.** The user does not want to manually select the mode; it should be automatic.
--   **You MUST ask the user for the Card ID of their visit type reward card.** You cannot debug the issue without it. The card is likely named Demorecompensa visita.
--   The current detection logic in  is unreliable. Do not try to patch it; investigate a more robust method by re-examining the Boomerangme API documentation and the full card/template object responses.
--   Be extremely cautious when editing . Due to its size and complexity, changes can have unintended side effects.
+-   Your immediate priority is to resolve the **data discrepancy for the new Membership card (551608-563-657)**. The UI task for this card is blocked until the correct data (8 visits) is fetched.
+-   The  API endpoint **does not work** for Membership cards. Do not attempt to use it. The previous agent confirmed this is a limitation of the Boomerangme API's handling of subscription balances. Any redeem visit action must be logged locally if it cannot be pushed to their API. However, test with the new card ID just in case its configuration is different.
+-   The main problem from the previous fork (Reward Card accumulation mode) is **solved**. The current logic (save preference per card ID) is the correct and final approach.
 
 **documents and test reports created in this job**
--   
--   
--   
+-    (updated)
 
 **Last 10 User Messages and any pending HUMAN messages**
-10. **User:** Provides a screenshot showing the correct tier and savings data from the original Boomerangme scanner app, asking the agent to match it. (Status: Completed)
-9.  **User:** Requests that the agent check the discount card data again as it seems incorrect compared to the original scanner app. (Status: Completed)
-8.  **User:** Asks to remove the Valor del Canje (Redemption Value) field from the UI and reports for stamp card redemptions. (Status: Completed)
-7.  **User:** Asks the agent to create a complete technical document for the POS integration. (Status: Completed)
-6.  **User:** Clarifies that a potential client needs to integrate their own POS directly with the Boomerangme API, without using the scanner app as middleware. (Status: Info Provided)
-5.  **User:** Asks about the feasibility of a POS integration for cashback cards for a potential client. (Status: Info Provided)
-4.  **User:** Confirms the fix for the stamp card redemption bug is working. (Status: Completed)
-3.  **User:** Reports a bug where redeeming a stamp reward completes the action but causes a UI error and fails to navigate back. (Status: Completed)
-2.  **User:** Asks to improve the UI for the discount card to make it clearer and more aligned with the original Boomerangme app, providing screenshots. (Status: Completed)
-1.  **LATEST/PENDING:** User reports that the reward card UI does not adapt for visit based programs and remains stuck on the manual points interface. They want the UI to change automatically based on the program type (spend, visit, or manual).
+-   **LATEST/PENDING:** User requests UI changes for Multipass (remove redundant text) and Membership cards. For Membership, user provides a new card ID (), reports a data discrepancy (app shows 16 visits, should be 8), and requests a final UI with an avatar, no stamps, and a single Redeem Visit action with a purchase amount field. (Status: In Progress)
+-   User asks about the  endpoint and provides context on the Membership card's limits. (Status: Resolved/Info Provided)
+-   User clarifies that  for Membership cards should work as it does in the deployed version. (Status: Investigated)
+-   User requests UI cleanup for the Membership card (remove redundant name/date) and to add a purchase amount to the redeem action. (Status: Completed)
+-   User provides screenshots comparing the original scanner with the current UI for Multipass and Membership cards, requesting changes. (Status: In Progress)
+-   User confirms the per-card-ID accumulation mode logic is correct. (Status: Completed)
+-   User points out the issue with the per-template logic, leading to the per-card solution. (Status: Completed)
+-   User asks about the manual reward card, which helped identify the flaw in the per-template logic. (Status: Completed)
+-   User reports incorrect data in the Operations report and requests the purchase amount field for all reward modes. (Status: Partially Completed, Issue #2 remains)
+-   User requests removing the Change Mode button. (Status: Completed)
 
 **Project Health Check:**
 -   **Broken:**
-    -   The auto-detection logic for Reward Card accumulation modes in .
+    -   Data fetching logic for Membership card visit counts.
+    -   Display of amount for historical reward redemptions in the Operations report.
 -   **Mocked:**
     -   Fallback logic for  cards.
 
@@ -142,18 +159,17 @@ A full-stack application with a React frontend, FastAPI backend, and MongoDB dat
 -   **Boomerangme API:** Live integration for all loyalty card operations.
 
 **Testing status**
--   **Testing agent used after significant changes:** YES (for reporting enhancements)
+-   **Testing agent used after significant changes:** NO
 -   **Troubleshoot agent used after agent stuck in loop:** NO
 -   **Test files created:** None
 -   **Known regressions:** None
 
 **Credentials to test flow:**
 -   **Login:**  / 
--   **Stamp Card:** 
--   **Reward Card (Spend Mode):** 
--   **Discount Card (Oro/Gold):** 
--   **Discount Card (Bronce/Bronze):** 
--   **Reward Card (Visit Mode):** **ID must be requested from the user.**
+-   **Multipass Card:** 
+-   **Membership Card (NEW - with data bug):** 
+-   **Reward Card (Visit mode configured):** 
+-   **Reward Card (Manual mode configured):** 
 
 **What agent forgot to execute**
--   The agent did not insist on getting the **Card ID** for the visit type reward card. Instead of gathering the necessary information to fix the root cause of the detection failure, the agent implemented a workaround (manual override button) which does not align with the user's explicit requirement for automatic detection.</analysis>
+-   The agent did not address the incorrect display of historical data in the Operations report that the user pointed out with a screenshot. The fix was only applied to new transactions, leaving the report partially inaccurate.</analysis>

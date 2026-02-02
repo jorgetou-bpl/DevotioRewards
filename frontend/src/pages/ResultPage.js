@@ -714,31 +714,21 @@ const ResultPage = () => {
         : 'Cliente';
       const initials = customerName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
       
-      // Calculate expiration date
-      let expiresAt = null;
-      if (customerSubscription.expiredAt) {
-        expiresAt = new Date(customerSubscription.expiredAt * 1000).toLocaleDateString('es-ES', {
-          day: 'numeric',
-          month: 'long',
-          year: 'numeric'
-        });
-      }
-      
       // Membership cards only have REDEEM functionality - no "Agregar" tab
       return (
         <div className="space-y-4 sm:space-y-6">
-          {/* Member profile card - similar to original scanner */}
+          {/* Member profile card - simplified without redundant name and expiry */}
           <div className="text-center p-4 sm:p-6 bg-gradient-to-br from-zinc-50 to-zinc-100 rounded-2xl border border-zinc-200">
             {/* Avatar with initials */}
-            <div className="w-20 h-20 sm:w-24 sm:h-24 mx-auto mb-4 rounded-full bg-gradient-to-br from-[#120627] to-[#ee478a] flex items-center justify-center shadow-lg">
+            <div className="w-20 h-20 sm:w-24 sm:h-24 mx-auto mb-3 rounded-full bg-gradient-to-br from-[#120627] to-[#ee478a] flex items-center justify-center shadow-lg">
               <span className="text-2xl sm:text-3xl font-bold text-white">{initials}</span>
             </div>
             
-            {/* Customer name */}
-            <h3 className="text-xl sm:text-2xl font-bold text-[#120627] mb-2">{customerName}</h3>
+            {/* Customer name - only here, not duplicated */}
+            <h3 className="text-xl sm:text-2xl font-bold text-[#120627] mb-3">{customerName}</h3>
             
             {/* Tier badge */}
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#120627] text-white text-sm font-semibold mb-3">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#120627] text-white text-sm font-semibold mb-2">
               <Star className="h-4 w-4" />
               {membershipTier.name || 'Membresía'}
             </div>
@@ -751,10 +741,6 @@ const ResultPage = () => {
                 {subscriptionStatus}
               </span>
             </div>
-            
-            {expiresAt && (
-              <p className="text-xs text-zinc-400 mt-3">Vence: {expiresAt}</p>
-            )}
           </div>
           
           {/* Available visits - prominent display */}
@@ -768,6 +754,25 @@ const ResultPage = () => {
           {/* Redeem section */}
           {availableVisits > 0 ? (
             <>
+              {/* Purchase amount for transaction tracking */}
+              <div className="card-brutalist">
+                <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500 block mb-2">
+                  Monto de compra ({currencyInfo.code}) <span className="text-[#ee478a]">*</span>
+                </label>
+                <p className="text-xs text-zinc-400 mb-3">Monto de la transacción del cliente</p>
+                <div className="relative">
+                  <span className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-zinc-400 text-lg sm:text-xl">{currencyInfo.symbol}</span>
+                  <Input
+                    type="number"
+                    value={purchaseAmount}
+                    onChange={(e) => setPurchaseAmount(e.target.value)}
+                    placeholder="0"
+                    className="input-brutalist pl-10 sm:pl-12 text-2xl sm:text-3xl font-mono h-14 sm:h-16 text-center"
+                    data-testid="membership-redeem-purchase-amount"
+                  />
+                </div>
+              </div>
+              
               <div className="card-brutalist">
                 <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500 block mb-2">
                   Visitas a canjear
@@ -810,7 +815,7 @@ const ResultPage = () => {
               
               <Button
                 onClick={() => openConfirmation('CanjearVisitas')}
-                disabled={loading || availableVisits <= 0 || actionAmount < 1 || actionAmount > availableVisits}
+                disabled={loading || availableVisits <= 0 || actionAmount < 1 || actionAmount > availableVisits || !purchaseAmount}
                 className="w-full h-12 sm:h-14 text-base sm:text-lg btn-primary disabled:opacity-50"
                 data-testid="redeem-membership-visits-button"
               >

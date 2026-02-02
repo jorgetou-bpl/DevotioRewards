@@ -1,7 +1,7 @@
 import React from 'react';
 import { Star } from 'lucide-react';
 
-const StampGrid = ({ activeStamps, stampsUntilReward, totalStampsForReward = 10, numberStampsTotal }) => {
+const StampGrid = ({ activeStamps, stampsUntilReward, totalStampsForReward = 10, numberStampsTotal, hideLabel = false, label = 'sellos activos' }) => {
   // Always show 10 stars (or the actual total from the API)
   const displayTotal = numberStampsTotal || 10;
   // Calculate how many to fill based on stamps earned towards the current reward
@@ -31,11 +31,13 @@ const StampGrid = ({ activeStamps, stampsUntilReward, totalStampsForReward = 10,
       <div className="grid grid-cols-5 gap-2 sm:gap-3 justify-items-center" data-testid="stamp-grid">
         {stamps}
       </div>
-      {/* Show only active stamp count - no "2/12" format */}
-      <div className="text-center">
-        <span className="text-3xl sm:text-4xl font-mono font-bold text-[#120627]">{fillCount}</span>
-        <span className="text-lg text-zinc-400 ml-2">sellos activos</span>
-      </div>
+      {/* Show label count - can be hidden for multipass */}
+      {!hideLabel && (
+        <div className="text-center">
+          <span className="text-3xl sm:text-4xl font-mono font-bold text-[#120627]">{fillCount}</span>
+          <span className="text-lg text-zinc-400 ml-2">{label}</span>
+        </div>
+      )}
     </div>
   );
 };

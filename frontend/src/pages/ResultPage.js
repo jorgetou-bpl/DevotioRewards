@@ -709,16 +709,9 @@ const ResultPage = () => {
       const customerSubscription = card.customerSubscription || {};
       const subscriptionStatus = customerSubscription.status === 1 ? 'Activo' : 'Inactivo';
       
-      // Calculate available visits based on subscription period and tier limits
-      // Get the period parameters (daily, weekly, monthly, yearly)
-      const period = customerSubscription.period || 'month';
-      const periodParams = membershipTier[`${period}lyParameters`] || membershipTier.monthlyParameters || {};
-      const visitLimit = periodParams.limit || 0;
-      
-      // currentNumberOfUses represents visits used in current period
-      // Available visits = limit - used visits
-      const usedVisits = balance.currentNumberOfUses || 0;
-      const availableVisits = Math.max(0, visitLimit - usedVisits);
+      // For Membership cards, currentNumberOfUses represents available visits (same as Multipass)
+      // This is consistent with the Boomerangme API behavior
+      const availableVisits = balance.currentNumberOfUses || 0;
       const customerName = card.customer?.firstName 
         ? `${card.customer.firstName} ${card.customer.surname || ''}`.trim()
         : 'Cliente';

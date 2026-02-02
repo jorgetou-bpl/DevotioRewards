@@ -462,13 +462,15 @@ BOOMERANG_API_KEY="542bcbc61866b65b2e63851267128679"  # UAT key
 
 ## Test Cards for Verification
 - **Multipass/Subscription**: `638920-251-210`
+- **Membership**: `551608-563-657` *(NEW - for UI testing)*
+- **Membership (legacy)**: `314919-560-256`
 - **Discount**: `955355-486-631`
 - **Coupon**: `312015-782-634`
 - **Gift/Certificate**: `100541-970-624`
-- **Reward**: `320292-721-660`
+- **Reward (Visit mode)**: `896844-833-112`
+- **Reward (Manual mode)**: `199706-114-876`
 - **Stamp (new)**: `820551-447-797`
 - **Stamp (used)**: `192362-969-247`
-- **Membership**: `314919-560-256`
 - **Cashback**: `591682-351-613`
 
 ## PWA Configuration

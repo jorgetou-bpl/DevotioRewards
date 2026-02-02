@@ -871,44 +871,28 @@ const ResultPage = () => {
               </div>
             </div>
             
-            {/* Counter */}
+            {/* Counter - free input field */}
             <div className="card-brutalist">
               <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500 block mb-2">
                 Cantidad de visitas
               </label>
-              <div className="flex items-center gap-3">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => setActionAmount(Math.max(1, actionAmount - 1))}
-                  className="h-12 w-12 sm:h-14 sm:w-14 border-2 rounded-lg bg-white hover:bg-[#ee478a] hover:border-[#ee478a] hover:text-white flex-shrink-0"
-                  style={{ borderColor: '#120627', color: '#120627' }}
-                  data-testid="decrease-visits"
-                >
-                  <Minus className="h-5 w-5 sm:h-6 sm:w-6" />
-                </Button>
-                <Input
-                  type="number"
-                  value={actionAmount}
-                  onChange={(e) => {
-                    const val = parseInt(e.target.value) || 1;
-                    setActionAmount(Math.max(1, val));
-                  }}
-                  min="1"
-                  className="input-brutalist text-2xl sm:text-3xl font-mono h-12 sm:h-14 text-center flex-1"
-                  data-testid="visits-amount-input"
-                />
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => setActionAmount(actionAmount + 1)}
-                  className="h-12 w-12 sm:h-14 sm:w-14 border-2 rounded-lg bg-white hover:bg-[#ee478a] hover:border-[#ee478a] hover:text-white flex-shrink-0"
-                  style={{ borderColor: '#120627', color: '#120627' }}
-                  data-testid="increase-visits"
-                >
-                  <Plus className="h-5 w-5 sm:h-6 sm:w-6" />
-                </Button>
-              </div>
+              <Input
+                type="number"
+                value={actionAmount}
+                onChange={(e) => {
+                  const val = parseInt(e.target.value) || 0;
+                  setActionAmount(Math.max(0, val));
+                }}
+                min="0"
+                placeholder="0"
+                className="input-brutalist text-2xl sm:text-3xl font-mono h-14 sm:h-16 text-center"
+                data-testid="visits-amount-input"
+              />
+              {actionAmount > availableVisits && (
+                <p className="text-xs text-red-500 mt-2 text-center">
+                  Solo hay {availableVisits} visitas disponibles para canjear
+                </p>
+              )}
             </div>
             
             {/* Two action buttons: Add visits and Redeem visits */}
@@ -924,8 +908,12 @@ const ResultPage = () => {
               <Button
                 onClick={() => openConfirmation('CanjearVisitas')}
                 disabled={loading || actionAmount < 1 || actionAmount > availableVisits}
-                className="w-full h-12 sm:h-14 text-base sm:text-lg border-2 bg-white hover:bg-[#ee478a] hover:border-[#ee478a] hover:text-white"
-                style={{ borderColor: '#120627', color: '#120627' }}
+                className={`w-full h-12 sm:h-14 text-base sm:text-lg border-2 bg-white ${
+                  actionAmount > availableVisits 
+                    ? 'border-red-300 text-red-400 cursor-not-allowed' 
+                    : 'hover:bg-[#ee478a] hover:border-[#ee478a] hover:text-white'
+                }`}
+                style={actionAmount > availableVisits ? {} : { borderColor: '#120627', color: '#120627' }}
                 data-testid="redeem-visits-button"
               >
                 {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Canjear Visitas'}

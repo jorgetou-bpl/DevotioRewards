@@ -190,6 +190,21 @@ const OperationsPage = () => {
     }
   };
 
+  // Helper to format amount - handles legacy receive-reward entries with tier IDs
+  const formatAmount = (op) => {
+    const amount = op.amount;
+    // If no amount, return dash
+    if (amount === null || amount === undefined) return '-';
+    
+    // For receive-reward operations, check if amount looks like a tier ID (very large number)
+    // Tier IDs are typically 5+ digits (e.g., 98061), while actual amounts are smaller
+    if (op.operation_type === 'receive-reward' && amount > 9999) {
+      return 'N/A';
+    }
+    
+    return amount;
+  };
+
   const hasActiveFilters = startDate || endDate || selectedGerente || selectedOperationType || selectedCardType;
 
   // Calculate total sales from dashboard data

@@ -707,8 +707,18 @@ const ResultPage = () => {
     if (normalizedType === 'membership') {
       const membershipTier = card.membershipTier || {};
       const customerSubscription = card.customerSubscription || {};
-      const availableVisits = customerSubscription.balance || 0; // Subscription balance is available visits
       const subscriptionStatus = customerSubscription.status === 1 ? 'Activo' : 'Inactivo';
+      
+      // Calculate available visits based on subscription period and tier limits
+      // Get the period parameters (daily, weekly, monthly, yearly)
+      const period = customerSubscription.period || 'month';
+      const periodParams = membershipTier[`${period}lyParameters`] || membershipTier.monthlyParameters || {};
+      const visitLimit = periodParams.limit || 0;
+      
+      // currentNumberOfUses represents visits used in current period
+      // Available visits = limit - used visits
+      const usedVisits = balance.currentNumberOfUses || 0;
+      const availableVisits = Math.max(0, visitLimit - usedVisits);
       const customerName = card.customer?.firstName 
         ? `${card.customer.firstName} ${card.customer.surname || ''}`.trim()
         : 'Cliente';

@@ -853,16 +853,6 @@ const ResultPage = () => {
               hideLabel={true}
             />
             
-            {/* Visits available display */}
-            <div className="text-center p-4 sm:p-6 bg-zinc-50 rounded-xl">
-              <span className="text-4xl sm:text-5xl font-mono font-bold gradient-text">
-                {availableVisits}
-              </span>
-              <p className="text-xs sm:text-sm text-zinc-500 mt-2">
-                Visitas disponibles
-              </p>
-            </div>
-            
             {/* Purchase amount input for multipass */}
             <div className="card-brutalist">
               <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500 block mb-2">

@@ -1830,13 +1830,15 @@ const ResultPage = () => {
           </div>
         </div>
 
-        {/* Customer Name (VISIBLE - not masked) */}
-        <div className="text-center mb-4 sm:mb-6">
-          <p className="text-xs sm:text-sm text-zinc-500">Cliente:</p>
-          <h2 className="text-heading text-xl sm:text-2xl" data-testid="customer-display-name">
-            {card.customer?.firstName || 'N/A'} {card.customer?.surname || ''}
-          </h2>
-        </div>
+        {/* Customer Name (VISIBLE - not masked) - Hide for membership cards since name is shown in avatar */}
+        {cardType !== 'membership' && (
+          <div className="text-center mb-4 sm:mb-6">
+            <p className="text-xs sm:text-sm text-zinc-500">Cliente:</p>
+            <h2 className="text-heading text-xl sm:text-2xl" data-testid="customer-display-name">
+              {card.customer?.firstName || 'N/A'} {card.customer?.surname || ''}
+            </h2>
+          </div>
+        )}
 
         {/* Tabs - Hide for single-tab cards like coupon */}
         {config.tabs.length > 1 && (

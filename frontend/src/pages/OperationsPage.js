@@ -866,7 +866,7 @@ const OperationsPage = () => {
                               {op.operation_label || op.operation_type}
                             </span>
                           </td>
-                          <td className="p-3 text-sm text-zinc-600">{op.amount ?? '-'}</td>
+                          <td className="p-3 text-sm text-zinc-600">{formatAmount(op)}</td>
                           <td className="p-3 text-sm text-zinc-600">{op.balance ?? '-'}</td>
                           <td className="p-3 text-sm text-zinc-600">
                             {op.purchase_sum ? formatCurrency(op.purchase_sum) : '-'}

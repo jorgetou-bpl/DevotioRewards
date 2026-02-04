@@ -112,6 +112,8 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
+      {/* Admin Setup - Hidden route, no authentication required */}
+      <Route path="/admin/setup" element={<AdminSetupPage />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

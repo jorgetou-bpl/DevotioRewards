@@ -1,7 +1,7 @@
 # Backend Models - Pydantic models for API requests/responses
 
 from pydantic import BaseModel, EmailStr
-from typing import Optional
+from typing import Optional, Literal
 
 # ============ USER MODELS ============
 
@@ -9,6 +9,7 @@ class UserCreate(BaseModel):
     email: EmailStr
     password: str
     name: Optional[str] = None
+    role: Literal["admin", "user"] = "user"
 
 class UserLogin(BaseModel):
     email: EmailStr
@@ -18,10 +19,22 @@ class TokenResponse(BaseModel):
     token: str
     email: str
     name: Optional[str] = None
+    role: Optional[str] = "user"
 
 class UserResponse(BaseModel):
     email: str
     name: Optional[str] = None
+    role: Optional[str] = "user"
+
+# ============ ADMIN SETUP MODELS ============
+
+class AdminUserCreate(BaseModel):
+    """Model for creating users via admin setup"""
+    master_code: str
+    email: EmailStr
+    password: str
+    name: str
+    role: Literal["admin", "user"] = "user"
 
 # ============ SETTINGS MODELS ============
 

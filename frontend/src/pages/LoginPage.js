@@ -8,14 +8,12 @@ import { toast } from 'sonner';
 import { Mail, Lock, Eye, EyeOff, Loader2 } from 'lucide-react';
 
 const LoginPage = () => {
-  const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [name, setName] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   
-  const { login, register } = useAuth();
+  const { login } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -23,13 +21,8 @@ const LoginPage = () => {
     setLoading(true);
 
     try {
-      if (isLogin) {
-        await login(email, password);
-        toast.success('¡Bienvenido de nuevo!');
-      } else {
-        await register(email, password, name);
-        toast.success('¡Cuenta creada exitosamente!');
-      }
+      await login(email, password);
+      toast.success('¡Bienvenido de nuevo!');
       navigate('/');
     } catch (error) {
       let message = 'Error de autenticación';
@@ -63,31 +56,13 @@ const LoginPage = () => {
         {/* Form Card */}
         <div className="card-brutalist p-4 sm:p-6">
           <h2 className="text-xl sm:text-2xl text-heading text-center mb-2" data-testid="form-title">
-            {isLogin ? 'Iniciar Sesión' : 'Crear Cuenta'}
+            Iniciar Sesión
           </h2>
           <p className="text-center text-zinc-500 text-xs sm:text-sm mb-6 sm:mb-8">
             Bienvenido al escáner de tarjetas de fidelidad
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
-            {!isLogin && (
-              <div className="space-y-2">
-                <Label htmlFor="name" className="text-xs sm:text-sm font-medium uppercase tracking-wider">
-                  Nombre
-                </Label>
-                <Input
-                  id="name"
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="Tu nombre"
-                  className="input-brutalist text-sm sm:text-base"
-                  required={!isLogin}
-                  data-testid="name-input"
-                />
-              </div>
-            )}
-
             <div className="space-y-2">
               <Label htmlFor="email" className="text-xs sm:text-sm font-medium uppercase tracking-wider">
                 Correo Electrónico
@@ -144,42 +119,16 @@ const LoginPage = () => {
             >
               {loading ? (
                 <Loader2 className="h-5 w-5 animate-spin" />
-              ) : isLogin ? (
-                'Iniciar Sesión'
               ) : (
-                'Crear Cuenta'
+                'Iniciar Sesión'
               )}
             </Button>
           </form>
 
-          {/* Forgot Password Link */}
-          {isLogin && (
-            <div className="text-center mt-4">
-              <button
-                type="button"
-                onClick={() => toast.info('Por favor contacte al administrador de Devotio Rewards para restablecer su contraseña.')}
-                className="text-xs sm:text-sm text-zinc-500 hover:text-[#120627] transition-colors underline"
-                data-testid="forgot-password-link"
-              >
-                ¿Olvidaste tu contraseña?
-              </button>
-            </div>
-          )}
-
-          {/* Toggle between Login and Register */}
-          <div className="text-center mt-6 pt-4 border-t border-zinc-200">
-            <p className="text-xs sm:text-sm text-zinc-500">
-              {isLogin ? '¿No tienes una cuenta?' : '¿Ya tienes una cuenta?'}
-              <button
-                type="button"
-                onClick={() => setIsLogin(!isLogin)}
-                className="ml-2 text-[#120627] font-semibold hover:underline"
-                data-testid="toggle-auth-mode"
-              >
-                {isLogin ? 'Crear cuenta' : 'Iniciar sesión'}
-              </button>
-            </p>
-          </div>
+          {/* Help text */}
+          <p className="text-center text-xs text-zinc-400 mt-6">
+            ¿Necesitas una cuenta? Contacta al administrador de Devotio Rewards.
+          </p>
         </div>
 
         {/* Footer */}

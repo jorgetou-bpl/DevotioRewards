@@ -34,7 +34,7 @@ Content-Type: application/json
 ### Ejemplo cURL
 
 ```bash
-curl -X GET "https://api.boomerangme.cards/cards/123456-789-012" \
+curl -X GET "https://api.digitalwallet.cards/api/v2/cards/123456-789-012" \
   -H "X-Api-Key: TU_API_KEY" \
   -H "Content-Type: application/json"
 ```
@@ -46,7 +46,7 @@ curl -X GET "https://api.boomerangme.cards/cards/123456-789-012" \
 ## URL Base
 
 ```
-https://api.boomerangme.cards
+https://api.digitalwallet.cards/api/v2
 ```
 
 Todos los endpoints documentados a continuación usan esta URL base.
@@ -85,12 +85,12 @@ GET /customers/{customer_id}/cards
 
 ```bash
 # Paso 1: Buscar cliente
-curl -X GET "https://api.boomerangme.cards/customers?phone=50688881234" \
+curl -X GET "https://api.digitalwallet.cards/api/v2/customers?phone=50688881234" \
   -H "X-Api-Key: TU_API_KEY"
 
 # Respuesta incluye customer_id, luego:
 # Paso 2: Obtener tarjetas
-curl -X GET "https://api.boomerangme.cards/customers/{customer_id}/cards" \
+curl -X GET "https://api.digitalwallet.cards/api/v2/customers/{customer_id}/cards" \
   -H "X-Api-Key: TU_API_KEY"
 ```
 
@@ -596,12 +596,12 @@ Su endpoint debe responder con código `200 OK` para confirmar recepción.
 
 ```bash
 # 1. Consultar estado de la tarjeta
-curl -X GET "https://api.boomerangme.cards/cards/638920-251-210" \
+curl -X GET "https://api.digitalwallet.cards/api/v2/cards/638920-251-210" \
   -H "X-Api-Key: TU_API_KEY" \
   -H "Content-Type: application/json"
 
 # 2. Agregar un sello
-curl -X POST "https://api.boomerangme.cards/cards/638920-251-210/add-stamp" \
+curl -X POST "https://api.digitalwallet.cards/api/v2/cards/638920-251-210/add-stamp" \
   -H "X-Api-Key: TU_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -611,7 +611,7 @@ curl -X POST "https://api.boomerangme.cards/cards/638920-251-210/add-stamp" \
   }'
 
 # 3. Si tiene recompensas disponibles, canjear
-curl -X POST "https://api.boomerangme.cards/cards/638920-251-210/subtract-reward" \
+curl -X POST "https://api.digitalwallet.cards/api/v2/cards/638920-251-210/subtract-reward" \
   -H "X-Api-Key: TU_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -624,12 +624,12 @@ curl -X POST "https://api.boomerangme.cards/cards/638920-251-210/subtract-reward
 
 ```bash
 # 1. Consultar tarjeta y ver recompensas disponibles
-curl -X GET "https://api.boomerangme.cards/cards/896844-833-112" \
+curl -X GET "https://api.digitalwallet.cards/api/v2/cards/896844-833-112" \
   -H "X-Api-Key: TU_API_KEY" \
   -H "Content-Type: application/json"
 
 # 2. Agregar puntos (modo visita)
-curl -X POST "https://api.boomerangme.cards/cards/896844-833-112/add-visit" \
+curl -X POST "https://api.digitalwallet.cards/api/v2/cards/896844-833-112/add-visit" \
   -H "X-Api-Key: TU_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -639,7 +639,7 @@ curl -X POST "https://api.boomerangme.cards/cards/896844-833-112/add-visit" \
   }'
 
 # 3. Canjear recompensa (usando tier id de availableRewardTiers)
-curl -X POST "https://api.boomerangme.cards/cards/896844-833-112/receive-reward" \
+curl -X POST "https://api.digitalwallet.cards/api/v2/cards/896844-833-112/receive-reward" \
   -H "X-Api-Key: TU_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -652,12 +652,12 @@ curl -X POST "https://api.boomerangme.cards/cards/896844-833-112/receive-reward"
 
 ```bash
 # 1. Consultar tarjeta y ver descuento actual
-curl -X GET "https://api.boomerangme.cards/cards/185504-436-130" \
+curl -X GET "https://api.digitalwallet.cards/api/v2/cards/185504-436-130" \
   -H "X-Api-Key: TU_API_KEY" \
   -H "Content-Type: application/json"
 
 # 2. Registrar compra (para avanzar en tiers)
-curl -X POST "https://api.boomerangme.cards/cards/185504-436-130/add-point" \
+curl -X POST "https://api.digitalwallet.cards/api/v2/cards/185504-436-130/add-point" \
   -H "X-Api-Key: TU_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -667,7 +667,7 @@ curl -X POST "https://api.boomerangme.cards/cards/185504-436-130/add-point" \
   }'
 
 # 3. Consultar nuevo estado (verificar si subió de tier)
-curl -X GET "https://api.boomerangme.cards/cards/185504-436-130" \
+curl -X GET "https://api.digitalwallet.cards/api/v2/cards/185504-436-130" \
   -H "X-Api-Key: TU_API_KEY" \
   -H "Content-Type: application/json"
 ```

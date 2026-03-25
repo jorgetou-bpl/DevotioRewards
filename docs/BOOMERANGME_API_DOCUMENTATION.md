@@ -67,31 +67,101 @@ Se obtiene:
 GET /cards/{card_id}
 ```
 
-### Método 2: Por Teléfono del Cliente
+### Método 2: Por Teléfono o Email del Cliente
 
-Primero buscar el cliente por teléfono, luego obtener sus tarjetas.
+Primero buscar el cliente, luego obtener sus tarjetas usando el endpoint de cards con filtro.
 
 **Paso 1: Buscar cliente**
 ```
 GET /customers?phone={numero_telefono}
 ```
+o
+```
+GET /customers?email={email}
+```
 
 **Paso 2: Obtener tarjetas del cliente**
 ```
-GET /customers/{customer_id}/cards
+GET /cards?customerId={customer_id}
 ```
+
+> **⚠️ IMPORTANTE:** El endpoint `/customers/{id}/cards` NO existe y devuelve 404. Usar siempre `/cards?customerId={id}` para obtener las tarjetas de un cliente.
 
 ### Ejemplo Búsqueda por Teléfono
 
 ```bash
-# Paso 1: Buscar cliente
+# Paso 1: Buscar cliente por teléfono
 curl -X GET "https://api.digitalwallet.cards/api/v2/customers?phone=50688881234" \
-  -H "X-Api-Key: TU_API_KEY"
+  -H "X-Api-Key: TU_API_KEY" \
+  -H "Content-Type: application/json"
 
-# Respuesta incluye customer_id, luego:
-# Paso 2: Obtener tarjetas
-curl -X GET "https://api.digitalwallet.cards/api/v2/customers/{customer_id}/cards" \
-  -H "X-Api-Key: TU_API_KEY"
+# Respuesta:
+# {
+#   "code": 200,
+#   "data": [
+#     {
+#       "id": "019bbf9f-55d7-7005-bdb1-45d0aadbd0ae",
+#       "firstName": "Juan",
+#       "surname": "Pérez",
+#       ...
+#     }
+#   ]
+# }
+
+# Paso 2: Obtener tarjetas del cliente (usando el customer_id obtenido)
+curl -X GET "https://api.digitalwallet.cards/api/v2/cards?customerId=019bbf9f-55d7-7005-bdb1-45d0aadbd0ae" \
+  -H "X-Api-Key: TU_API_KEY" \
+  -H "Content-Type: application/json"
+
+# Respuesta:
+# {
+#   "code": 200,
+#   "data": [
+#     {
+#       "id": "638920-251-210",
+#       "type": "subscription",
+#       "status": "installed",
+#       "customerId": "019bbf9f-55d7-7005-bdb1-45d0aadbd0ae"
+#     }
+#   ]
+# }
+
+# Paso 3 (Opcional): Obtener detalles completos de la tarjeta
+curl -X GET "https://api.digitalwallet.cards/api/v2/cards/638920-251-210" \
+  -H "X-Api-Key: TU_API_KEY" \
+  -H "Content-Type: application/json"
+```
+
+### Obtener Todas las Tarjetas (Listado Global)
+
+Para obtener un listado de todas las tarjetas (con paginación):
+
+```bash
+curl -X GET "https://api.digitalwallet.cards/api/v2/cards?page=1&per_page=100" \
+  -H "X-Api-Key: TU_API_KEY" \
+  -H "Content-Type: application/json"
+```
+
+**Respuesta:**
+```json
+{
+  "responseId": "...",
+  "code": 200,
+  "meta": {
+    "totalItems": 150,
+    "itemsPerPage": 100,
+    "currentPage": 1
+  },
+  "data": [
+    {
+      "id": "638920-251-210",
+      "type": "subscription",
+      "status": "installed",
+      "customerId": "019bbf9f-55d7-7005-bdb1-45d0aadbd0ae"
+    },
+    ...
+  ]
+}
 ```
 
 ---

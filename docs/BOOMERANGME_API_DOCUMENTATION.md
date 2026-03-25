@@ -750,10 +750,14 @@ curl -X GET "https://api.digitalwallet.cards/api/v2/cards/185504-436-130" \
 
 | Endpoint | Descripción |
 |----------|-------------|
-| `GET /cards/{card_id}` | Obtener detalles de una tarjeta |
+| `GET /cards/{card_id}` | Obtener detalles completos de una tarjeta |
+| `GET /cards?customerId={id}` | Obtener tarjetas de un cliente específico |
+| `GET /cards?page=1&per_page=100` | Listado global de tarjetas (paginado) |
 | `GET /customers?phone={phone}` | Buscar cliente por teléfono |
 | `GET /customers?email={email}` | Buscar cliente por email |
-| `GET /customers/{customer_id}/cards` | Obtener tarjetas de un cliente |
+| `GET /customers?page=1&per_page=100` | Listado de clientes (paginado) |
+
+> **⚠️ NOTA:** El endpoint `/customers/{id}/cards` NO existe. Usar `/cards?customerId={id}` en su lugar.
 
 ### Acciones en Tarjetas de Sellos (POST)
 

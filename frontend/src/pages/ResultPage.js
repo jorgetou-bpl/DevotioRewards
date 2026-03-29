@@ -431,6 +431,18 @@ const ResultPage = () => {
       const detail = error.response?.data?.detail;
       if (typeof detail === 'string') {
         message = detail;
+        // Translate common Boomerangme error messages to Spanish
+        if (detail.toLowerCase().includes('reward has already been redeemed') || 
+            detail.toLowerCase().includes('already redeemed') ||
+            detail.toLowerCase().includes('limit reached') ||
+            detail.toLowerCase().includes('daily limit') ||
+            detail.toLowerCase().includes('check-in limit')) {
+          message = 'Límite de check-in diario alcanzado';
+        } else if (detail.toLowerCase().includes('irrelevant accrual type')) {
+          message = 'Tipo de acumulación no compatible con esta tarjeta';
+        } else if (detail.toLowerCase().includes('not enough')) {
+          message = 'Saldo insuficiente para esta operación';
+        }
       } else if (Array.isArray(detail) && detail.length > 0) {
         // Pydantic validation errors come as array
         message = detail[0]?.msg || 'Error de validación';

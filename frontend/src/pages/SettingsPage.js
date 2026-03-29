@@ -1,8 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSettings, CURRENCIES } from '../context/SettingsContext';
 import { Switch } from '../components/ui/switch';
+import { Input } from '../components/ui/input';
+import { Button } from '../components/ui/button';
 import { toast } from 'sonner';
+import axios from 'axios';
 import { 
   ArrowLeft, 
   Vibrate, 
@@ -14,13 +17,68 @@ import {
   ChevronDown,
   Check,
   MessageSquare,
-  Search
+  Search,
+  Stamp,
+  Save
 } from 'lucide-react';
+
+const API = process.env.REACT_APP_BACKEND_URL;
 
 const SettingsPage = () => {
   const navigate = useNavigate();
   const { settings, updateSettings, loading } = useSettings();
   const [currencyOpen, setCurrencyOpen] = useState(false);
+  
+  // Stamp configuration state
+  const [stampConfig, setStampConfig] = useState({
+    stamp_mode: null,
+    spend_threshold: 10000
+  });
+  const [stampConfigLoading, setStampConfigLoading] = useState(true);
+  const [savingStampConfig, setSavingStampConfig] = useState(false);
+
+  // Load stamp configuration on mount
+  useEffect(() => {
+    const loadStampConfig = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const response = await axios.get(`${API}/api/stamp-config`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (response.data.stamp_mode) {
+          setStampConfig({
+            stamp_mode: response.data.stamp_mode,
+            spend_threshold: response.data.spend_threshold || 10000
+          });
+        }
+      } catch (error) {
+        console.error('Error loading stamp config:', error);
+      } finally {
+        setStampConfigLoading(false);
+      }
+    };
+    loadStampConfig();
+  }, []);
+
+  const handleSaveStampConfig = async () => {
+    if (!stampConfig.stamp_mode) {
+      toast.error('Seleccione un modo de acumulación');
+      return;
+    }
+    
+    setSavingStampConfig(true);
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post(`${API}/api/stamp-config`, stampConfig, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success('Configuración de sellos guardada');
+    } catch (error) {
+      toast.error('Error al guardar configuración');
+    } finally {
+      setSavingStampConfig(false);
+    }
+  };
 
   const handleToggle = async (key, value) => {
     try {
@@ -40,6 +98,12 @@ const SettingsPage = () => {
       toast.error('Error al actualizar moneda');
     }
   };
+
+  const stampModes = [
+    { value: 'manual', label: 'Manual', description: 'El gerente ingresa la cantidad de sellos manualmente' },
+    { value: 'visit', label: 'Por Visita', description: '1 sello por cada visita/transacción' },
+    { value: 'spend', label: 'Por Gasto', description: 'Sellos basados en el monto de compra' }
+  ];
 
   const settingsItems = [
     {

@@ -374,14 +374,18 @@ const ResultPage = () => {
         // Different logic for discount vs cashback cards:
         // - Discount: Send purchase amount directly (Boomerangme calculates tier progression internally)
         // - Cashback: Calculate percentage of purchase amount and send that as the cashback to accumulate
+        //             BUT also send purchaseSum for tier progression tracking
         const cardType = (card.type || '').toLowerCase();
         if (cardType === 'cashback' || cardType === 'cashback_card') {
-          // Cashback: calculate percentage of purchase amount
+          // Cashback: calculate percentage of purchase amount for the cashback amount
           const cashbackPercent = balance.discountPercentage || balance.cashbackPercent || 1;
           payload.amount = Math.round(finalPurchaseAmount * (cashbackPercent / 100));
+          // IMPORTANT: Also send purchaseSum as the full purchase amount for tier progression
+          payload.purchaseSum = finalPurchaseAmount;
         } else {
           // Discount and other cards: pass purchase amount directly
           payload.amount = finalPurchaseAmount;
+          payload.purchaseSum = finalPurchaseAmount;
         }
       } else if (!payload.amount) {
         payload.amount = actionAmount;

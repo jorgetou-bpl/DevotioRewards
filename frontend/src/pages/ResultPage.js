@@ -131,6 +131,50 @@ const ResultPage = () => {
     fetchPendingRewards();
   }, [card, cardType, activeTab, selectedRewardId]);
 
+  // Load stamp configuration for stamp cards
+  useEffect(() => {
+    const fetchStampConfig = async () => {
+      const normalizedType = cardType ? cardType.replace('_card', '') : '';
+      if (normalizedType !== 'stamp' || !card?.id) return;
+      
+      setLoadingStampConfig(true);
+      const token = localStorage.getItem('token');
+      
+      try {
+        // Fetch global stamp configuration
+        const configResponse = await axios.get(`${API}/stamp-config`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (configResponse.data.stamp_mode) {
+          setStampConfig({
+            stamp_mode: configResponse.data.stamp_mode,
+            spend_threshold: configResponse.data.spend_threshold || 10000
+          });
+        }
+        
+        // Fetch progress for this card (only relevant for spend mode)
+        if (configResponse.data.stamp_mode === 'spend') {
+          const progressResponse = await axios.get(`${API}/stamp-progress/${card.id}`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          if (progressResponse.data) {
+            setStampProgress({
+              accumulated_amount: progressResponse.data.accumulated_amount || 0,
+              threshold: progressResponse.data.threshold || 10000,
+              progress_percent: progressResponse.data.progress_percent || 0
+            });
+          }
+        }
+      } catch (error) {
+        console.log('Could not fetch stamp config:', error);
+      } finally {
+        setLoadingStampConfig(false);
+      }
+    };
+    
+    fetchStampConfig();
+  }, [card?.id, cardType]);
+
   // Auto-detect accrual mode for reward cards - check DB preference by Card ID
   useEffect(() => {
     const fetchAccrualMode = async () => {

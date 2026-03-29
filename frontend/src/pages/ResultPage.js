@@ -784,12 +784,12 @@ const ResultPage = () => {
           {/* Redeem section */}
           {availableVisits > 0 ? (
             <>
-              {/* Purchase amount for transaction tracking */}
+              {/* Purchase amount for transaction tracking - OPTIONAL for membership */}
               <div className="card-brutalist">
                 <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500 block mb-2">
-                  Monto de compra ({currencyInfo.code}) <span className="text-[#ee478a]">*</span>
+                  Monto de compra ({currencyInfo.code}) <span className="text-zinc-400">(opcional)</span>
                 </label>
-                <p className="text-xs text-zinc-400 mb-3">Monto de la transacción del cliente</p>
+                <p className="text-xs text-zinc-400 mb-3">Monto de la transacción del cliente (si aplica)</p>
                 <div className="relative">
                   <span className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-zinc-400 text-lg sm:text-xl">{currencyInfo.symbol}</span>
                   <Input
@@ -845,7 +845,7 @@ const ResultPage = () => {
               
               <Button
                 onClick={() => openConfirmation('CanjearVisitas')}
-                disabled={loading || availableVisits <= 0 || actionAmount < 1 || actionAmount > availableVisits || !purchaseAmount}
+                disabled={loading || availableVisits <= 0 || actionAmount < 1 || actionAmount > availableVisits}
                 className="w-full h-12 sm:h-14 text-base sm:text-lg btn-primary disabled:opacity-50"
                 data-testid="redeem-membership-visits-button"
               >

@@ -55,6 +55,11 @@ const ResultPage = () => {
   const [loadingPendingRewards, setLoadingPendingRewards] = useState(false);
   const [selectedRewardId, setSelectedRewardId] = useState(null);
 
+  // Stamp configuration state (global for the business)
+  const [stampConfig, setStampConfig] = useState({ stamp_mode: null, spend_threshold: 10000 });
+  const [stampProgress, setStampProgress] = useState({ accumulated_amount: 0, threshold: 10000, progress_percent: 0 });
+  const [loadingStampConfig, setLoadingStampConfig] = useState(false);
+
   const currencyInfo = getCurrencyInfo();
 
   // Get card type and config (needed for useEffect)

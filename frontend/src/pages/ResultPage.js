@@ -456,19 +456,20 @@ const ResultPage = () => {
     // For stamp cards, show stamp grid
     if ((normalizedType === 'stamp') && activeTab === 'Agregar') {
       // Stamp card display logic:
-      // - ALWAYS display 10 stars (standard Boomerang "Recuento de estampillas")
+      // - Display the correct number of stars based on card configuration
+      // - Calculate total from currentNumberOfUses + stampsBeforeReward
       // - currentNumberOfUses = active stamps in current cycle (resets after reward)
       // - stampsBeforeReward = stamps remaining until NEXT reward
-      // 
-      // The card can be configured for rewards at any interval (e.g., every 2 stamps or every 10)
-      // We use currentNumberOfUses as the source of truth for active stamps
       
-      const displayTotal = 10; // Always show 10 stars for visual display
-      const stampsBeforeReward = balance.stampsBeforeReward ?? displayTotal;
-      
-      // Use currentNumberOfUses as the active stamps - this is the correct field from Boomerang
-      // It represents stamps collected in the current cycle, resetting after each reward
       const activeStamps = balance.currentNumberOfUses ?? 0;
+      const stampsBeforeReward = balance.stampsBeforeReward ?? 0;
+      
+      // Calculate the total stamps needed for reward (active + remaining)
+      // This gives us the actual configured value from Boomerang
+      const displayTotal = activeStamps + stampsBeforeReward || 10;
+      
+      // Check if purchase amount is required (must be > 0 for adding stamps)
+      const isPurchaseValid = parseFloat(purchaseAmount) > 0;
       
       return (
         <div className="space-y-4 sm:space-y-6">
@@ -481,7 +482,7 @@ const ResultPage = () => {
           
           <div className="text-center">
             <p className="text-xs sm:text-sm text-zinc-500">
-              Sellos activos: {activeStamps}
+              Sellos activos: {activeStamps} de {displayTotal}
             </p>
             <p className="text-xs sm:text-sm text-zinc-500 mt-1">
               {stampsBeforeReward > 0 
@@ -490,10 +491,10 @@ const ResultPage = () => {
             </p>
           </div>
           
-          {/* Purchase amount input for stamp cards */}
+          {/* Purchase amount input for stamp cards - REQUIRED for adding stamps */}
           <div className="card-brutalist">
             <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500 block mb-2">
-              Monto de compra ({currencyInfo.code})
+              Monto de compra ({currencyInfo.code}) <span className="text-red-500">*</span>
             </label>
             <div className="relative">
               <span className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-zinc-400 text-lg sm:text-xl">{currencyInfo.symbol}</span>
@@ -502,10 +503,13 @@ const ResultPage = () => {
                 value={purchaseAmount}
                 onChange={(e) => setPurchaseAmount(e.target.value)}
                 placeholder="0"
-                className="input-brutalist pl-10 sm:pl-12 text-2xl sm:text-3xl font-mono h-14 sm:h-16 text-center"
+                className={`input-brutalist pl-10 sm:pl-12 text-2xl sm:text-3xl font-mono h-14 sm:h-16 text-center ${!isPurchaseValid && purchaseAmount !== '' ? 'border-red-300' : ''}`}
                 data-testid="stamp-purchase-amount"
               />
             </div>
+            {!isPurchaseValid && purchaseAmount !== '' && (
+              <p className="text-xs text-red-500 mt-1">El monto de compra debe ser mayor a 0</p>
+            )}
           </div>
           
           {/* Stamp counter - with keyboard input */}
@@ -550,7 +554,7 @@ const ResultPage = () => {
           
           <Button
             onClick={() => openConfirmation('Agregar')}
-            disabled={loading || actionAmount < 1}
+            disabled={loading || actionAmount < 1 || !isPurchaseValid}
             className="w-full h-12 sm:h-14 text-base sm:text-lg btn-primary"
             data-testid="add-stamp-button"
           >

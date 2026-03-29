@@ -268,6 +268,102 @@ const SettingsPage = () => {
                 Esta moneda se usará para mostrar los montos de compra y transacciones
               </p>
             </div>
+
+            {/* Stamp Card Configuration */}
+            <div className="card-brutalist mt-6">
+              <div className="flex items-center gap-3 mb-4">
+                <Stamp className="h-5 w-5 text-[#120627]" />
+                <p className="text-xs sm:text-sm font-semibold uppercase tracking-widest text-zinc-500">
+                  Tarjetas de Sellos
+                </p>
+              </div>
+
+              {stampConfigLoading ? (
+                <div className="flex justify-center py-6">
+                  <Loader2 className="h-6 w-6 animate-spin text-[#120627]" />
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div>
+                    <p className="text-sm font-medium text-[#120627] mb-2">Modo de acumulación</p>
+                    <p className="text-xs text-zinc-500 mb-3">Cómo se ganan los sellos en las tarjetas de estampillas</p>
+                    
+                    <div className="space-y-2">
+                      {stampModes.map((mode) => (
+                        <button
+                          key={mode.value}
+                          onClick={() => setStampConfig({ ...stampConfig, stamp_mode: mode.value })}
+                          className={`w-full flex items-center gap-3 p-3 border-2 rounded-xl transition-all ${
+                            stampConfig.stamp_mode === mode.value 
+                              ? 'border-[#120627] bg-purple-50' 
+                              : 'border-zinc-200 hover:border-zinc-300'
+                          }`}
+                          data-testid={`stamp-mode-${mode.value}`}
+                        >
+                          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                            stampConfig.stamp_mode === mode.value 
+                              ? 'border-[#120627] bg-[#120627]' 
+                              : 'border-zinc-300'
+                          }`}>
+                            {stampConfig.stamp_mode === mode.value && (
+                              <Check className="h-3 w-3 text-white" />
+                            )}
+                          </div>
+                          <div className="text-left">
+                            <p className="font-medium text-[#120627] text-sm">{mode.label}</p>
+                            <p className="text-xs text-zinc-500">{mode.description}</p>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Spend threshold - only show when spend mode is selected */}
+                  {stampConfig.stamp_mode === 'spend' && (
+                    <div className="pt-4 border-t border-zinc-200">
+                      <p className="text-sm font-medium text-[#120627] mb-2">Monto por sello</p>
+                      <p className="text-xs text-zinc-500 mb-3">Cuánto debe gastar el cliente para ganar 1 sello</p>
+                      <div className="relative">
+                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400">{currentCurrency.symbol}</span>
+                        <Input
+                          type="number"
+                          value={stampConfig.spend_threshold}
+                          onChange={(e) => setStampConfig({ ...stampConfig, spend_threshold: parseFloat(e.target.value) || 0 })}
+                          className="pl-12 h-12 border-2 border-zinc-200 rounded-xl"
+                          placeholder="10000"
+                          data-testid="stamp-spend-threshold"
+                        />
+                      </div>
+                      <p className="text-xs text-zinc-400 mt-2">
+                        El progreso se acumula entre transacciones hasta alcanzar este monto
+                      </p>
+                    </div>
+                  )}
+
+                  <Button
+                    onClick={handleSaveStampConfig}
+                    disabled={savingStampConfig || !stampConfig.stamp_mode}
+                    className="w-full h-12 bg-[#120627] hover:bg-[#1e0a3d] text-white"
+                    data-testid="save-stamp-config"
+                  >
+                    {savingStampConfig ? (
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                    ) : (
+                      <>
+                        <Save className="h-4 w-4 mr-2" />
+                        Guardar Configuración
+                      </>
+                    )}
+                  </Button>
+
+                  {!stampConfig.stamp_mode && (
+                    <p className="text-xs text-amber-600 text-center">
+                      ⚠️ Configure el modo de sellos para habilitar la funcionalidad
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
           </>
         )}
 

@@ -1270,7 +1270,7 @@ const ResultPage = () => {
             </div>
           )}
           
-          {/* Visit Mode - Visit Counter + Purchase Amount */}
+          {/* Visit Mode - Fixed at 1 visit + Purchase Amount */}
           {detectedAccrualMode === 'visit' && !detectingMode && !needsModeSelection && (
             <>
               {/* Purchase Amount Input */}
@@ -1291,38 +1291,18 @@ const ResultPage = () => {
                 </div>
               </div>
               
-              {/* Visit Counter */}
-              <div className="card-brutalist">
-                <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500 block mb-2">
-                  Visitas a registrar
-                </label>
-                <p className="text-xs text-zinc-400 mb-3">Los puntos se calcularán automáticamente por cada visita</p>
-                <div className="flex items-center justify-center gap-4">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => setActionAmount(Math.max(1, actionAmount - 1))}
-                    className="h-14 w-14 border-2 rounded-lg bg-white hover:bg-[#ee478a] hover:border-[#ee478a] hover:text-white"
-                    style={{ borderColor: '#120627', color: '#120627' }}
-                    data-testid="decrease-visits"
-                  >
-                    <Minus className="h-6 w-6" />
-                  </Button>
+              {/* Visit indicator - fixed at 1 */}
+              <div className="card-brutalist bg-blue-50">
+                <div className="flex items-center justify-center gap-3">
+                  <User className="h-6 w-6 text-blue-600" />
                   <div className="text-center">
-                    <span className="text-4xl font-mono font-bold text-[#120627]">{actionAmount}</span>
-                    <p className="text-xs text-zinc-500 mt-1">visita{actionAmount > 1 ? 's' : ''}</p>
+                    <span className="text-3xl font-mono font-bold text-[#120627]">1</span>
+                    <p className="text-xs text-zinc-500">visita por transacción</p>
                   </div>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => setActionAmount(actionAmount + 1)}
-                    className="h-14 w-14 border-2 rounded-lg bg-white hover:bg-[#ee478a] hover:border-[#ee478a] hover:text-white"
-                    style={{ borderColor: '#120627', color: '#120627' }}
-                    data-testid="increase-visits"
-                  >
-                    <Plus className="h-6 w-6" />
-                  </Button>
                 </div>
+                <p className="text-xs text-zinc-400 text-center mt-2">
+                  En modo visita, cada escaneo registra 1 visita
+                </p>
               </div>
             </>
           )}

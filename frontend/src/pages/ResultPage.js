@@ -535,6 +535,12 @@ const ResultPage = () => {
       // Check if purchase amount is required (must be > 0 for adding stamps)
       const isPurchaseValid = parseFloat(purchaseAmount) > 0;
       
+      // Get stamp mode from global config
+      const stampMode = stampConfig.stamp_mode;
+      const isSpendMode = stampMode === 'spend';
+      const isVisitMode = stampMode === 'visit';
+      const isManualMode = stampMode === 'manual' || !stampMode; // Default to manual if not configured
+      
       return (
         <div className="space-y-4 sm:space-y-6">
           <StampGrid 
@@ -555,7 +561,25 @@ const ResultPage = () => {
             </p>
           </div>
           
-          {/* Purchase amount input for stamp cards - REQUIRED for adding stamps */}
+          {/* Show progress bar for spend mode */}
+          {isSpendMode && stampProgress.accumulated_amount > 0 && (
+            <div className="card-brutalist bg-blue-50">
+              <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-2">
+                Progreso hacia próximo sello
+              </p>
+              <div className="w-full bg-zinc-200 rounded-full h-3 mb-2">
+                <div 
+                  className="bg-gradient-to-r from-[#F040A0] to-[#120627] h-3 rounded-full transition-all"
+                  style={{ width: `${stampProgress.progress_percent}%` }}
+                />
+              </div>
+              <p className="text-xs text-zinc-600 text-center">
+                {formatCurrency(stampProgress.accumulated_amount)} de {formatCurrency(stampProgress.threshold)} ({stampProgress.progress_percent}%)
+              </p>
+            </div>
+          )}
+          
+          {/* Purchase amount input - REQUIRED for all modes */}
           <div className="card-brutalist">
             <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500 block mb-2">
               Monto de compra ({currencyInfo.code}) <span className="text-red-500">*</span>
@@ -574,56 +598,83 @@ const ResultPage = () => {
             {!isPurchaseValid && purchaseAmount !== '' && (
               <p className="text-xs text-red-500 mt-1">El monto de compra debe ser mayor a 0</p>
             )}
+            {isSpendMode && (
+              <p className="text-xs text-zinc-400 mt-2">
+                Se gana 1 sello cada {formatCurrency(stampConfig.spend_threshold)}. El progreso se acumula entre compras.
+              </p>
+            )}
           </div>
           
-          {/* Stamp counter - with keyboard input */}
-          <div className="card-brutalist">
-            <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500 block mb-2">
-              Cantidad de sellos
-            </label>
-            <div className="flex items-center gap-3">
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => setActionAmount(Math.max(1, actionAmount - 1))}
-                className="h-12 w-12 sm:h-14 sm:w-14 border-2 rounded-lg bg-white hover:bg-[#ee478a] hover:border-[#ee478a] hover:text-white flex-shrink-0"
-                style={{ borderColor: '#120627', color: '#120627' }}
-                data-testid="decrease-amount"
-              >
-                <Minus className="h-5 w-5 sm:h-6 sm:w-6" />
-              </Button>
-              <Input
-                type="number"
-                value={actionAmount}
-                onChange={(e) => {
-                  const val = parseInt(e.target.value) || 1;
-                  setActionAmount(Math.max(1, val));
-                }}
-                min="1"
-                className="input-brutalist text-2xl sm:text-3xl font-mono h-12 sm:h-14 text-center flex-1"
-                data-testid="action-amount-input"
-              />
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => setActionAmount(actionAmount + 1)}
-                className="h-12 w-12 sm:h-14 sm:w-14 border-2 rounded-lg bg-white hover:bg-[#ee478a] hover:border-[#ee478a] hover:text-white flex-shrink-0"
-                style={{ borderColor: '#120627', color: '#120627' }}
-                data-testid="increase-amount"
-              >
-                <Plus className="h-5 w-5 sm:h-6 sm:w-6" />
-              </Button>
+          {/* Stamp counter - ONLY show for manual mode */}
+          {isManualMode && (
+            <div className="card-brutalist">
+              <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500 block mb-2">
+                Cantidad de sellos
+              </label>
+              <div className="flex items-center gap-3">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setActionAmount(Math.max(1, actionAmount - 1))}
+                  className="h-12 w-12 sm:h-14 sm:w-14 border-2 rounded-lg bg-white hover:bg-[#ee478a] hover:border-[#ee478a] hover:text-white flex-shrink-0"
+                  style={{ borderColor: '#120627', color: '#120627' }}
+                  data-testid="decrease-amount"
+                >
+                  <Minus className="h-5 w-5 sm:h-6 sm:w-6" />
+                </Button>
+                <Input
+                  type="number"
+                  value={actionAmount}
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value) || 1;
+                    setActionAmount(Math.max(1, val));
+                  }}
+                  min="1"
+                  className="input-brutalist text-2xl sm:text-3xl font-mono h-12 sm:h-14 text-center flex-1"
+                  data-testid="action-amount-input"
+                />
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setActionAmount(actionAmount + 1)}
+                  className="h-12 w-12 sm:h-14 sm:w-14 border-2 rounded-lg bg-white hover:bg-[#ee478a] hover:border-[#ee478a] hover:text-white flex-shrink-0"
+                  style={{ borderColor: '#120627', color: '#120627' }}
+                  data-testid="increase-amount"
+                >
+                  <Plus className="h-5 w-5 sm:h-6 sm:w-6" />
+                </Button>
+              </div>
             </div>
-          </div>
+          )}
+          
+          {/* Visit mode indicator */}
+          {isVisitMode && (
+            <div className="card-brutalist bg-green-50">
+              <div className="flex items-center justify-center gap-3">
+                <User className="h-6 w-6 text-green-600" />
+                <div className="text-center">
+                  <span className="text-3xl font-mono font-bold text-[#120627]">1</span>
+                  <p className="text-xs text-zinc-500">sello por visita</p>
+                </div>
+              </div>
+            </div>
+          )}
           
           <Button
             onClick={() => openConfirmation('Agregar')}
-            disabled={loading || actionAmount < 1 || !isPurchaseValid}
+            disabled={loading || (isManualMode && actionAmount < 1) || !isPurchaseValid}
             className="w-full h-12 sm:h-14 text-base sm:text-lg btn-primary"
             data-testid="add-stamp-button"
           >
             {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : actionConfig.label}
           </Button>
+          
+          {/* Warning if stamp mode not configured */}
+          {!stampMode && (
+            <p className="text-xs text-amber-600 text-center">
+              ⚠️ Configure el modo de sellos en Configuración para optimizar la experiencia
+            </p>
+          )}
         </div>
       );
     }

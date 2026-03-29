@@ -2,11 +2,20 @@ import React from 'react';
 import { Star } from 'lucide-react';
 
 const StampGrid = ({ activeStamps, stampsUntilReward, totalStampsForReward = 10, numberStampsTotal, hideLabel = false, label = 'sellos activos' }) => {
-  // Always show 10 stars (or the actual total from the API)
-  const displayTotal = numberStampsTotal || 10;
+  // Use the actual total from the card configuration
+  const displayTotal = numberStampsTotal || totalStampsForReward || 10;
   // Calculate how many to fill based on stamps earned towards the current reward
   // If activeStamps is explicitly 0 or undefined, show 0 filled
   const fillCount = Math.min(Math.max(0, activeStamps || 0), displayTotal);
+  
+  // Calculate grid columns based on total stamps
+  // For small numbers (<=5): show all in one row
+  // For 6-10: show 5 per row
+  // For >10: show 5 per row with multiple rows
+  const getGridCols = () => {
+    if (displayTotal <= 5) return displayTotal;
+    return 5;
+  };
   
   const stamps = [];
   for (let i = 0; i < displayTotal; i++) {
@@ -28,7 +37,11 @@ const StampGrid = ({ activeStamps, stampsUntilReward, totalStampsForReward = 10,
   
   return (
     <div className="space-y-3">
-      <div className="grid grid-cols-5 gap-2 sm:gap-3 justify-items-center" data-testid="stamp-grid">
+      <div 
+        className="grid gap-2 sm:gap-3 justify-items-center" 
+        style={{ gridTemplateColumns: `repeat(${getGridCols()}, minmax(0, 1fr))` }}
+        data-testid="stamp-grid"
+      >
         {stamps}
       </div>
       {/* Show label count - can be hidden for multipass */}

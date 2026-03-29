@@ -1068,43 +1068,12 @@ const ResultPage = () => {
               </span>
               <p className="text-xs sm:text-sm text-zinc-500 mt-1">Descuento actual</p>
               
-              {/* Calculate tier based on discountAmount thresholds */}
-              {totalTransactions !== undefined && (
-                <div className="mt-2">
-                  {(() => {
-                    const amount = totalTransactions / 100;
-                    let tierName, tierColor, nextTier, amountNeeded;
-                    if (amount >= 10000) {
-                      tierName = 'Oro';
-                      tierColor = '#FFD700';
-                      nextTier = null;
-                    } else if (amount >= 5000) {
-                      tierName = 'Plata';
-                      tierColor = '#C0C0C0';
-                      nextTier = 'Oro';
-                      amountNeeded = 10000 - amount;
-                    } else {
-                      tierName = 'Bronce';
-                      tierColor = '#CD7F32';
-                      nextTier = 'Plata';
-                      amountNeeded = 5000 - amount;
-                    }
-                    return (
-                      <>
-                        <span 
-                          className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold"
-                          style={{ backgroundColor: tierColor, color: tierName === 'Oro' ? '#000' : '#fff' }}
-                        >
-                          Nivel: {tierName}
-                        </span>
-                        {nextTier && amountNeeded > 0 && (
-                          <p className="text-xs text-zinc-400 mt-2">
-                            {formatCurrency(amountNeeded)} para {nextTier}
-                          </p>
-                        )}
-                      </>
-                    );
-                  })()}
+              {/* Show accumulated amount if available */}
+              {totalTransactions !== undefined && totalTransactions > 0 && (
+                <div className="mt-3 pt-3 border-t border-zinc-200">
+                  <p className="text-sm text-zinc-600">
+                    Monto acumulado: <span className="font-semibold">{formatCurrency(totalTransactions / 100)}</span>
+                  </p>
                 </div>
               )}
             </div>

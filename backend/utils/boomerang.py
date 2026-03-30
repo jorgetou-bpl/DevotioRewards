@@ -26,6 +26,7 @@ def get_user_friendly_error(error_type: str, technical_error: str = None) -> str
         "already_redeemed": "Esta recompensa ya fue canjeada.",
         "expired_card": "Esta tarjeta ha expirado.",
         "blocked_card": "Esta tarjeta está bloqueada. " + SUPPORT_MESSAGE,
+        "checkin_limit": "Límite de check-in diario alcanzado",
         "api_error": "Error de conexión. Por favor intente nuevamente.",
         "general_error": "Ocurrió un error. Por favor intente nuevamente.",
         "search_no_results": "No se encontró ninguna tarjeta. Verifique los datos e intente nuevamente.",
@@ -50,6 +51,8 @@ def parse_api_error(error_message: str) -> str:
         return get_user_friendly_error("blocked_card")
     if "already" in error_lower or "ya" in error_lower:
         return get_user_friendly_error("already_redeemed")
+    if "limit" in error_lower or "check-in" in error_lower or "checkin" in error_lower or "daily" in error_lower:
+        return get_user_friendly_error("checkin_limit")
     
     return get_user_friendly_error("action_failed")
 

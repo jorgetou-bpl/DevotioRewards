@@ -260,10 +260,17 @@ const ResultPage = () => {
     
     // Include purchase amount for stamp cards when adding stamps
     if (actionLower === 'agregar' && normalizedType === 'stamp') {
+      const stampMode = stampConfig.stamp_mode;
       if (purchaseAmount) {
         details.push({ label: 'Monto de Compra', value: formatCurrency(parseFloat(purchaseAmount) || 0) });
       }
-      details.push({ label: 'Cantidad de Sellos', value: actionAmount });
+      if (stampMode === 'spend') {
+        details.push({ label: 'Modo', value: `Por Compra (1 sello cada ${formatCurrency(stampConfig.spend_threshold)})` });
+      } else if (stampMode === 'visit') {
+        details.push({ label: 'Sellos', value: '1 (por visita)' });
+      } else {
+        details.push({ label: 'Cantidad de Sellos', value: actionAmount });
+      }
     } else if (actionLower === 'agregar' && normalizedType === 'reward') {
       // Reward card - show different details based on accrual mode
       if (detectedAccrualMode === 'spend') {
@@ -336,6 +343,113 @@ const ResultPage = () => {
     
     try {
       const actionKey = action.toLowerCase();
+      const token = localStorage.getItem('token');
+      const gerente_name = user?.name || '';
+      
+      // ========== STAMP CARD SPEND MODE: Local partial accumulation ==========
+      if (normalizedType === 'stamp' && actionKey === 'agregar' && stampConfig.stamp_mode === 'spend') {
+        const amount = parseFloat(confirmPurchaseAmount || purchaseAmount) || 0;
+        if (amount <= 0) {
+          toast.error('El monto de compra debe ser mayor a 0');
+          setLoading(false);
+          return;
+        }
+        
+        // Step 1: Add to local progress tracker
+        const progressResponse = await axios.post(
+          `${API}/stamp-progress/${card.id}/add?amount=${amount}`,
+          {},
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        
+        const { stamps_to_add, accumulated_amount, threshold, progress_percent } = progressResponse.data;
+        
+        // Step 2: If threshold reached, send stamps to Boomerangme
+        if (stamps_to_add > 0) {
+          const comment_with_gerente = gerente_name ? `[Gerente: ${gerente_name}] ${comment || ''}`.trim() : (comment || '');
+          const boomerangPayload = {
+            comment: comment_with_gerente || undefined,
+            purchaseSum: amount,
+            amount: stamps_to_add,
+            gerente: gerente_name
+          };
+          
+          const boomerangResponse = await axios.post(`${API}/cards/${card.id}/add-stamp`, boomerangPayload);
+          
+          triggerVibration();
+          triggerBeep();
+          
+          if (boomerangResponse.data.card) {
+            setCard(prevCard => ({
+              ...prevCard,
+              ...boomerangResponse.data.card,
+              balance: { ...prevCard.balance, ...boomerangResponse.data.card.balance }
+            }));
+          }
+          
+          setSuccessModal({
+            open: true,
+            message: `¡${stamps_to_add} sello${stamps_to_add > 1 ? 's' : ''} agregado${stamps_to_add > 1 ? 's' : ''}! Compra de ${formatCurrency(amount)} registrada.`
+          });
+        } else {
+          // No stamps earned yet, just progress saved
+          triggerVibration();
+          
+          setSuccessModal({
+            open: true,
+            message: `Compra de ${formatCurrency(amount)} registrada. Progreso: ${formatCurrency(accumulated_amount)} de ${formatCurrency(threshold)} (${progress_percent}%)`
+          });
+        }
+        
+        // Update local progress state
+        setStampProgress({
+          accumulated_amount,
+          threshold,
+          progress_percent
+        });
+        
+        setConfirmModal({ open: false, action: null, details: [], purchaseAmount: '' });
+        setActionAmount(1);
+        setPurchaseAmount('');
+        setLoading(false);
+        return;
+      }
+      
+      // ========== STAMP CARD VISIT MODE: Auto 1 stamp per visit ==========
+      if (normalizedType === 'stamp' && actionKey === 'agregar' && stampConfig.stamp_mode === 'visit') {
+        const amount = parseFloat(confirmPurchaseAmount || purchaseAmount) || 0;
+        const comment_with_gerente = gerente_name ? `[Gerente: ${gerente_name}] ${comment || ''}`.trim() : (comment || '');
+        
+        const boomerangPayload = {
+          comment: comment_with_gerente || undefined,
+          purchaseSum: amount,
+          amount: 1, // Always 1 stamp per visit
+          gerente: gerente_name
+        };
+        
+        const boomerangResponse = await axios.post(`${API}/cards/${card.id}/add-stamp`, boomerangPayload);
+        
+        triggerVibration();
+        triggerBeep();
+        
+        if (boomerangResponse.data.card) {
+          setCard(prevCard => ({
+            ...prevCard,
+            ...boomerangResponse.data.card,
+            balance: { ...prevCard.balance, ...boomerangResponse.data.card.balance }
+          }));
+        }
+        
+        setConfirmModal({ open: false, action: null, details: [], purchaseAmount: '' });
+        setSuccessModal({
+          open: true,
+          message: boomerangResponse.data.message || '¡Visita registrada exitosamente!'
+        });
+        setActionAmount(1);
+        setPurchaseAmount('');
+        setLoading(false);
+        return;
+      }
       
       // Map multipass-specific actions to their endpoints
       // currentNumberOfUses = available visits

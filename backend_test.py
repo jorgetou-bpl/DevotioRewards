@@ -7,7 +7,7 @@ from datetime import datetime
 import uuid
 
 class BoomerangScannerAPITester:
-    def __init__(self, base_url="https://loyalscan.preview.emergentagent.com/api"):
+    def __init__(self, base_url="https://card-accrual.preview.emergentagent.com/api"):
         self.base_url = base_url
         self.token = None
         self.user_id = None

@@ -109,7 +109,7 @@ curl -X GET "https://api.digitalwallet.cards/api/v2/customers?phone=50688881234"
 # }
 
 # Paso 2: Obtener tarjetas del cliente (usando el customer_id obtenido)
-curl -X GET "https://api.digitalwallet.cards/api/v2/cards?customerId=019bbf9f-55d7-7005-bdb1-45d0aadbd0ae" \
+curl -X GET "https://api.digitalwallet.cards/api/v2/cards?customerId=card-accrual" \
   -H "X-Api-Key: TU_API_KEY" \
   -H "Content-Type: application/json"
 

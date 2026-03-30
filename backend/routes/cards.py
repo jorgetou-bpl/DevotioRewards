@@ -301,15 +301,23 @@ async def add_stamp(card_id: str, action_data: CardActionRequest, current_user: 
             return response_data
         
         error_msg = response.get('message', '')
+        logger.info(f"Card {card_id}: {endpoint} error (code={response.get('code')}): {error_msg}")
         if 'Irrelevant accrual type' in str(error_msg):
             logger.info(f"Card {card_id}: {endpoint} not supported, trying next accrual type")
+            last_error = error_msg
+            continue
+        
+        # For limit-related errors, save and continue to try next endpoint
+        # (in case this endpoint type is wrong but limit error is shared)
+        error_lower = str(error_msg).lower()
+        if 'limit' in error_lower or 'check-in' in error_lower or 'checkin' in error_lower or 'daily' in error_lower:
             last_error = error_msg
             continue
         
         user_error = parse_api_error(error_msg)
         raise HTTPException(status_code=response.get('code', 400), detail=user_error)
     
-    raise HTTPException(status_code=400, detail=get_user_friendly_error("action_failed", last_error))
+    raise HTTPException(status_code=400, detail=parse_api_error(last_error or "action_failed"))
 
 @router.get("/cards/{card_id}/pending-rewards")
 async def get_card_pending_rewards(card_id: str, current_user: dict = Depends(get_current_user)):

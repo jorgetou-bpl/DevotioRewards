@@ -49,10 +49,12 @@ def parse_api_error(error_message: str) -> str:
         return get_user_friendly_error("expired_card")
     if "blocked" in error_lower or "bloqueado" in error_lower:
         return get_user_friendly_error("blocked_card")
+    # Check daily limit BEFORE "already redeemed" since Boomerangme returns
+    # "A visit has already been registered today" for daily limits
+    if "limit" in error_lower or "check-in" in error_lower or "checkin" in error_lower or "daily" in error_lower or "today" in error_lower or "already been registered" in error_lower:
+        return get_user_friendly_error("checkin_limit")
     if "already" in error_lower or "ya" in error_lower:
         return get_user_friendly_error("already_redeemed")
-    if "limit" in error_lower or "check-in" in error_lower or "checkin" in error_lower or "daily" in error_lower:
-        return get_user_friendly_error("checkin_limit")
     
     return get_user_friendly_error("action_failed")
 

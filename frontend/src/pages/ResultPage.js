@@ -364,17 +364,20 @@ const ResultPage = () => {
         
         const { stamps_to_add, accumulated_amount, threshold, progress_percent } = progressResponse.data;
         
-        // Step 2: If threshold reached, send stamps to Boomerangme
+        // Step 2: If threshold reached, send accumulated amount to Boomerangme via add-purchase
         if (stamps_to_add > 0) {
           const comment_with_gerente = gerente_name ? `[Gerente: ${gerente_name}] ${comment || ''}`.trim() : (comment || '');
+          // Send the FULL threshold amount per stamp earned so Boomerangme grants the stamp(s)
+          const purchaseForBoomerangme = threshold * stamps_to_add;
           const boomerangPayload = {
             comment: comment_with_gerente || undefined,
-            purchaseSum: amount,
-            amount: stamps_to_add,
+            purchaseSum: purchaseForBoomerangme,
+            amount: purchaseForBoomerangme,
             gerente: gerente_name
           };
           
-          const boomerangResponse = await axios.post(`${API}/cards/${card.id}/add-stamp`, boomerangPayload);
+          // Use add-purchase directly (not add-stamp) since we know this card uses spend mode
+          const boomerangResponse = await axios.post(`${API}/cards/${card.id}/add-purchase`, boomerangPayload);
           
           triggerVibration();
           triggerBeep();

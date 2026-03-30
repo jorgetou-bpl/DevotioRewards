@@ -479,10 +479,27 @@ BOOMERANG_API_KEY="542bcbc61866b65b2e63851267128679"  # UAT key
 - Apple touch icon configured (uses logo.png)
 - To change the icon: replace `/app/frontend/public/logo.png` with your custom icon (recommended 512x512 PNG)
 
+### Session 15 - Stamp Card Spend Mode: Partial Accumulation (March 30, 2026)
+1. **Completed Partial Spend Accumulation for Stamp Cards (P0)**
+   - Implemented local tracking of partial spends in MongoDB `stamp_progress` collection
+   - When stamp mode is "spend" with threshold 10000: spending 5000 + 7000 = 12000 grants 1 stamp with 2000 remaining
+   - Frontend `handleAction` in `ResultPage.js` now has dedicated flow for spend mode:
+     - Calls `POST /api/stamp-progress/{card_id}/add?amount=X` first
+     - If `stamps_to_add > 0`, sends stamps to Boomerangme API via `add-stamp`
+     - Updates local progress bar and shows appropriate success messages
+   - Spend mode: No manual stamp counter shown, only purchase amount input
+   - Visit mode: Auto-sends 1 stamp per visit with purchase amount
+   - Manual mode: Existing behavior (manual stamp count + purchase amount)
+   - Confirmation modal now shows mode-specific details (e.g., "Por Compra (1 sello cada ₡10.000,00)")
+   - All tests passed: 100% backend (12/12) and frontend (9/9 features verified)
+
+2. **Updated Files**
+   - `/app/frontend/src/pages/ResultPage.js`: handleAction spend/visit mode, openConfirmation mode details
+   - `/app/backend/tests/test_stamp_spend_mode.py`: Automated test suite created by testing agent
+
 ## Backlog (P2)
-- Refactor server.py into smaller modules
 - Refactor ResultPage.js into card-type components
-- Multi-tenant admin panel
+- Multi-tenant admin panel (Phase 2)
 - Analytics dashboard
 - Webhook integration
 - App store publishing

@@ -1260,15 +1260,6 @@ const ResultPage = () => {
       const discountAmount = balance.discountAmount ?? 0;
       const totalTransactions = balance.transactionsAmount ?? discountAmount;
       
-      // Determine tier status based on discount percentage
-      const getTierStatus = (percentage) => {
-        if (!percentage) return null;
-        if (percentage >= 10) return { name: 'Oro', color: '#FFD700' };
-        if (percentage >= 5) return { name: 'Plata', color: '#C0C0C0' };
-        return { name: 'Bronce', color: '#CD7F32' };
-      };
-      const tierStatus = getTierStatus(discountLevel);
-      
       return (
         <div className="space-y-4 sm:space-y-6">
           {/* Cashback balance display - show current balance in currency */}

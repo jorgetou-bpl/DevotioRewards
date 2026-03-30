@@ -497,6 +497,24 @@ BOOMERANG_API_KEY="542bcbc61866b65b2e63851267128679"  # UAT key
    - `/app/frontend/src/pages/ResultPage.js`: handleAction spend/visit mode, openConfirmation mode details
    - `/app/backend/tests/test_stamp_spend_mode.py`: Automated test suite created by testing agent
 
+### Session 15b - Bug Fix: Daily Limit Error Message (March 30, 2026)
+1. **Fixed daily limit error showing wrong message**
+   - Boomerangme returns "A visit has already been registered today." for daily limits
+   - The word "already" was caught by the "already_redeemed" check before the "limit" check
+   - Reordered `parse_api_error` in `boomerang.py` to check for "today"/"already been registered" BEFORE generic "already"
+   - Now correctly shows "Límite de check-in diario alcanzado"
+   - Also improved `add-stamp` endpoint to continue trying next endpoint on limit errors
+
+2. **UAT Verification Pass - All Card Types (100% pass)**
+   - Discount (185504-436-130): No hardcoded Bronce/Plata/Oro tier names ✅
+   - Cashback (591682-351-613): Balance in currency (₡10.110), correct purchaseSum ✅
+   - Membership (551608-563-657): Optional purchase amount, correct visit count ✅
+   - Reward (896844-833-112): Mode selector persists, purchase required ✅
+   - Stamp (353530-676-963): Dynamic grid, daily limit message, spend accumulation ✅
+
+3. **Code Cleanup**
+   - Removed dead `getTierStatus` function from ResultPage.js (hardcoded Bronce/Plata/Oro)
+
 ## Backlog (P2)
 - Refactor ResultPage.js into card-type components
 - Multi-tenant admin panel (Phase 2)

@@ -517,7 +517,7 @@ const ResultPage = () => {
         payload.amount = parseFloat(purchaseAmount) || 0;
         payload.accrualProgram = 'spend';
       } else if (isRewardAccrualAction && detectedAccrualMode === 'visit') {
-        payload.amount = actionAmount;
+        payload.amount = 1; // Always 1 visit per scan
         payload.purchaseSum = parseFloat(purchaseAmount) || 0;
         payload.accrualProgram = 'visit';
       } else if (isRewardAccrualAction && detectedAccrualMode === 'points') {
@@ -1678,9 +1678,7 @@ const ResultPage = () => {
                         </p>
                       </div>
                       <div className="text-right">
-                        <span className="text-lg font-bold text-[#120627]">
-                          {tier.value > 0 ? `$${tier.value}` : 'Gratis'}
-                        </span>
+                        <Gift className="h-5 w-5 text-[#120627]" />
                       </div>
                     </div>
                   </button>

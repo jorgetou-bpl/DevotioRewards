@@ -60,6 +60,9 @@ const ResultPage = () => {
   const [stampProgress, setStampProgress] = useState({ accumulated_amount: 0, threshold: 10000, progress_percent: 0 });
   const [loadingStampConfig, setLoadingStampConfig] = useState(false);
 
+  // Discount tier configuration state
+  const [discountTiers, setDiscountTiers] = useState([]);
+
   const currencyInfo = getCurrencyInfo();
 
   // Get card type and config (needed for useEffect)
@@ -173,6 +176,27 @@ const ResultPage = () => {
     };
     
     fetchStampConfig();
+  }, [card?.id, cardType]);
+
+  // Load discount tier configuration for discount cards
+  useEffect(() => {
+    const fetchDiscountTiers = async () => {
+      const normalizedType = cardType ? cardType.replace('_card', '') : '';
+      if (normalizedType !== 'discount' || !card?.id) return;
+      
+      const token = localStorage.getItem('token');
+      try {
+        const response = await axios.get(`${API}/discount-tiers`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (response.data.tiers) {
+          setDiscountTiers(response.data.tiers);
+        }
+      } catch (error) {
+        console.log('Could not fetch discount tiers:', error);
+      }
+    };
+    fetchDiscountTiers();
   }, [card?.id, cardType]);
 
   // Auto-detect accrual mode for reward cards - check DB preference by Card ID
@@ -1273,23 +1297,85 @@ const ResultPage = () => {
           )}
           
           {/* Discount level display - only for discount cards */}
-          {discountLevel && normalizedType !== 'cashback' && normalizedType !== 'cashback_card' && (
-            <div className="text-center p-4 sm:p-6 bg-zinc-50 rounded-xl">
-              <span className="text-5xl sm:text-6xl font-mono font-bold gradient-text">
-                {discountLevel}%
-              </span>
-              <p className="text-xs sm:text-sm text-zinc-500 mt-1">Descuento actual</p>
-              
-              {/* Show accumulated amount if available */}
-              {totalTransactions !== undefined && totalTransactions > 0 && (
-                <div className="mt-3 pt-3 border-t border-zinc-200">
-                  <p className="text-sm text-zinc-600">
-                    Monto acumulado: <span className="font-semibold">{formatCurrency(totalTransactions / 100)}</span>
-                  </p>
-                </div>
-              )}
-            </div>
-          )}
+          {discountLevel && normalizedType !== 'cashback' && normalizedType !== 'cashback_card' && (() => {
+            const accumulatedAmount = totalTransactions / 100;
+            // Find current tier and next tier based on discount tiers config
+            let currentTierName = null;
+            let nextTier = null;
+            
+            if (discountTiers.length > 0) {
+              // Find the current tier by matching discount percentage
+              const sortedTiers = [...discountTiers].sort((a, b) => a.threshold - b.threshold);
+              for (let i = sortedTiers.length - 1; i >= 0; i--) {
+                if (discountLevel >= sortedTiers[i].percentage) {
+                  currentTierName = sortedTiers[i].name;
+                  if (i < sortedTiers.length - 1) {
+                    nextTier = sortedTiers[i + 1];
+                  }
+                  break;
+                }
+              }
+              // If no match by percentage, try by threshold
+              if (!currentTierName) {
+                for (let i = sortedTiers.length - 1; i >= 0; i--) {
+                  if (accumulatedAmount >= sortedTiers[i].threshold) {
+                    currentTierName = sortedTiers[i].name;
+                    if (i < sortedTiers.length - 1) {
+                      nextTier = sortedTiers[i + 1];
+                    }
+                    break;
+                  }
+                }
+              }
+              if (!currentTierName) {
+                currentTierName = sortedTiers[0]?.name;
+                nextTier = sortedTiers.length > 1 ? sortedTiers[1] : null;
+              }
+            }
+            
+            return (
+              <div className="text-center p-4 sm:p-6 bg-zinc-50 rounded-xl">
+                <span className="text-5xl sm:text-6xl font-mono font-bold gradient-text">
+                  {discountLevel}%
+                </span>
+                {currentTierName && (
+                  <p className="text-sm font-semibold text-[#120627] mt-1">{currentTierName}</p>
+                )}
+                <p className="text-xs sm:text-sm text-zinc-500 mt-1">Descuento actual</p>
+                
+                {/* Show accumulated amount */}
+                {totalTransactions > 0 && (
+                  <div className="mt-3 pt-3 border-t border-zinc-200">
+                    <p className="text-sm text-zinc-600">
+                      Monto acumulado: <span className="font-semibold">{formatCurrency(accumulatedAmount)}</span>
+                    </p>
+                  </div>
+                )}
+                
+                {/* Progress to next tier - only show if there IS a next tier */}
+                {nextTier && (
+                  <div className="mt-3 pt-3 border-t border-zinc-200">
+                    <p className="text-xs text-zinc-500">
+                      Falta {formatCurrency(Math.max(0, nextTier.threshold - accumulatedAmount))} para <span className="font-semibold">{nextTier.name}</span> ({nextTier.percentage}%)
+                    </p>
+                    <div className="w-full bg-zinc-200 rounded-full h-2 mt-2">
+                      <div
+                        className="bg-gradient-to-r from-[#F040A0] to-[#120627] h-2 rounded-full transition-all"
+                        style={{ width: `${Math.min(100, (accumulatedAmount / nextTier.threshold) * 100)}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
+                
+                {/* At max tier */}
+                {discountTiers.length > 0 && !nextTier && currentTierName && (
+                  <div className="mt-3 pt-3 border-t border-zinc-200">
+                    <p className="text-xs text-emerald-600 font-medium">Nivel máximo alcanzado</p>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
           
           {/* Purchase amount input */}
           <div className="card-brutalist">
@@ -2118,12 +2204,26 @@ const ResultPage = () => {
                 </div>
               )}
               {/* Discount card specific fields */}
-              {(balance.discountPercentage !== undefined && balance.discountPercentage !== null) && (
-                <div className="flex justify-between p-3 sm:p-4">
-                  <span className="text-zinc-500 text-sm">Nivel de descuento actual</span>
-                  <span className="font-medium text-sm">{balance.discountPercentage}%</span>
-                </div>
-              )}
+              {(balance.discountPercentage !== undefined && balance.discountPercentage !== null) && (() => {
+                let tierName = null;
+                if (discountTiers.length > 0) {
+                  const sorted = [...discountTiers].sort((a, b) => a.threshold - b.threshold);
+                  for (let i = sorted.length - 1; i >= 0; i--) {
+                    if (balance.discountPercentage >= sorted[i].percentage) {
+                      tierName = sorted[i].name;
+                      break;
+                    }
+                  }
+                }
+                return (
+                  <div className="flex justify-between p-3 sm:p-4">
+                    <span className="text-zinc-500 text-sm">Nivel de descuento actual</span>
+                    <span className="font-medium text-sm">
+                      {tierName ? `${tierName} (${balance.discountPercentage}%)` : `${balance.discountPercentage}%`}
+                    </span>
+                  </div>
+                );
+              })()}
               {/* Transaction/spend amount for discount cards */}
               {(balance.discountAmount !== undefined && balance.discountAmount > 0 && cardType === 'discount') && (
                 <div className="flex justify-between p-3 sm:p-4">

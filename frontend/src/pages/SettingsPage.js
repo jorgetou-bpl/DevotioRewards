@@ -19,7 +19,10 @@ import {
   MessageSquare,
   Search,
   Stamp,
-  Save
+  Save,
+  Percent,
+  Plus,
+  Trash2
 } from 'lucide-react';
 
 const API = process.env.REACT_APP_BACKEND_URL;
@@ -36,6 +39,11 @@ const SettingsPage = () => {
   });
   const [stampConfigLoading, setStampConfigLoading] = useState(true);
   const [savingStampConfig, setSavingStampConfig] = useState(false);
+
+  // Discount tier configuration state
+  const [discountTiers, setDiscountTiers] = useState([]);
+  const [discountTiersLoading, setDiscountTiersLoading] = useState(true);
+  const [savingDiscountTiers, setSavingDiscountTiers] = useState(false);
 
   // Load stamp configuration on mount
   useEffect(() => {
@@ -60,6 +68,26 @@ const SettingsPage = () => {
     loadStampConfig();
   }, []);
 
+  // Load discount tier configuration on mount
+  useEffect(() => {
+    const loadDiscountTiers = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const response = await axios.get(`${API}/api/discount-tiers`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (response.data.tiers && response.data.tiers.length > 0) {
+          setDiscountTiers(response.data.tiers);
+        }
+      } catch (error) {
+        console.error('Error loading discount tiers:', error);
+      } finally {
+        setDiscountTiersLoading(false);
+      }
+    };
+    loadDiscountTiers();
+  }, []);
+
   const handleSaveStampConfig = async () => {
     if (!stampConfig.stamp_mode) {
       toast.error('Seleccione un modo de acumulación');
@@ -77,6 +105,49 @@ const SettingsPage = () => {
       toast.error('Error al guardar configuración');
     } finally {
       setSavingStampConfig(false);
+    }
+  };
+
+  const handleAddDiscountTier = () => {
+    const lastTier = discountTiers[discountTiers.length - 1];
+    setDiscountTiers([...discountTiers, {
+      name: '',
+      threshold: lastTier ? lastTier.threshold + 5000 : 0,
+      percentage: lastTier ? lastTier.percentage + 2 : 1
+    }]);
+  };
+
+  const handleUpdateDiscountTier = (index, field, value) => {
+    const updated = [...discountTiers];
+    updated[index] = { ...updated[index], [field]: field === 'name' ? value : (parseFloat(value) || 0) };
+    setDiscountTiers(updated);
+  };
+
+  const handleRemoveDiscountTier = (index) => {
+    setDiscountTiers(discountTiers.filter((_, i) => i !== index));
+  };
+
+  const handleSaveDiscountTiers = async () => {
+    if (discountTiers.length === 0) {
+      toast.error('Agregue al menos un nivel');
+      return;
+    }
+    if (discountTiers.some(t => !t.name.trim())) {
+      toast.error('Todos los niveles necesitan un nombre');
+      return;
+    }
+    
+    setSavingDiscountTiers(true);
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post(`${API}/api/discount-tiers`, { tiers: discountTiers }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success('Niveles de descuento guardados');
+    } catch (error) {
+      toast.error('Error al guardar niveles');
+    } finally {
+      setSavingDiscountTiers(false);
     }
   };
 
@@ -361,6 +432,105 @@ const SettingsPage = () => {
                       ⚠️ Configure el modo de sellos para habilitar la funcionalidad
                     </p>
                   )}
+                </div>
+              )}
+            </div>
+
+            {/* Discount Tier Configuration */}
+            <div className="card-brutalist mt-6">
+              <div className="flex items-center gap-3 mb-4">
+                <Percent className="h-5 w-5 text-[#120627]" />
+                <p className="text-xs sm:text-sm font-semibold uppercase tracking-widest text-zinc-500">
+                  Niveles de Descuento
+                </p>
+              </div>
+
+              {discountTiersLoading ? (
+                <div className="flex justify-center py-6">
+                  <Loader2 className="h-6 w-6 animate-spin text-[#120627]" />
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <p className="text-xs text-zinc-500">
+                    Configure los niveles de descuento que coincidan con su configuración en Boomerangme
+                  </p>
+
+                  {discountTiers.map((tier, index) => (
+                    <div key={index} className="flex gap-2 items-start" data-testid={`discount-tier-${index}`}>
+                      <div className="flex-1">
+                        <Input
+                          value={tier.name}
+                          onChange={(e) => handleUpdateDiscountTier(index, 'name', e.target.value)}
+                          placeholder="Nombre"
+                          className="h-10 border-2 border-zinc-200 rounded-lg text-sm"
+                          data-testid={`discount-tier-name-${index}`}
+                        />
+                      </div>
+                      <div className="w-24">
+                        <Input
+                          type="number"
+                          value={tier.threshold}
+                          onChange={(e) => handleUpdateDiscountTier(index, 'threshold', e.target.value)}
+                          placeholder="Gasto"
+                          className="h-10 border-2 border-zinc-200 rounded-lg text-sm"
+                          disabled={index === 0}
+                          data-testid={`discount-tier-threshold-${index}`}
+                        />
+                      </div>
+                      <div className="w-16">
+                        <div className="relative">
+                          <Input
+                            type="number"
+                            value={tier.percentage}
+                            onChange={(e) => handleUpdateDiscountTier(index, 'percentage', e.target.value)}
+                            placeholder="%"
+                            className="h-10 border-2 border-zinc-200 rounded-lg text-sm pr-6"
+                            data-testid={`discount-tier-percentage-${index}`}
+                          />
+                          <span className="absolute right-2 top-1/2 -translate-y-1/2 text-zinc-400 text-xs">%</span>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => handleRemoveDiscountTier(index)}
+                        className="p-2 text-zinc-400 hover:text-red-500 transition-colors"
+                        data-testid={`discount-tier-remove-${index}`}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ))}
+
+                  <Button
+                    onClick={handleAddDiscountTier}
+                    variant="outline"
+                    className="w-full h-10 border-2 border-dashed border-zinc-300 text-zinc-500 hover:border-[#120627] hover:text-[#120627]"
+                    data-testid="add-discount-tier"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Agregar nivel
+                  </Button>
+
+                  {discountTiers.length > 0 && (
+                    <Button
+                      onClick={handleSaveDiscountTiers}
+                      disabled={savingDiscountTiers}
+                      className="w-full h-12 bg-[#120627] hover:bg-[#1e0a3d] text-white"
+                      data-testid="save-discount-tiers"
+                    >
+                      {savingDiscountTiers ? (
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                      ) : (
+                        <>
+                          <Save className="h-4 w-4 mr-2" />
+                          Guardar Niveles
+                        </>
+                      )}
+                    </Button>
+                  )}
+
+                  <p className="text-xs text-zinc-400">
+                    Los nombres y umbrales deben coincidir con la configuración de Boomerangme
+                  </p>
                 </div>
               )}
             </div>

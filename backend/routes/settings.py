@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
 from models import SettingsUpdate, SettingsResponse
 from utils.config import db
 from utils.auth import get_current_user
@@ -206,3 +206,45 @@ async def set_card_accrual_mode(
         upsert=True
     )
     return AccrualModeResponse(success=True, card_id=str(card_id), mode=request.mode)
+
+
+# ============ DISCOUNT TIER CONFIGURATION ============
+
+class DiscountTier(BaseModel):
+    name: str
+    threshold: float  # Amount to spend to reach this tier
+    percentage: float  # Discount percentage for this tier
+
+class DiscountTiersRequest(BaseModel):
+    tiers: List[DiscountTier]
+
+class DiscountTiersResponse(BaseModel):
+    success: bool
+    tiers: List[dict] = []
+
+@router.get("/discount-tiers")
+async def get_discount_tiers(current_user: dict = Depends(get_current_user)):
+    """Get the discount tier configuration for the business."""
+    config = await db.discount_tiers.find_one({"type": "global"}, {"_id": 0})
+    if config and config.get("tiers"):
+        return DiscountTiersResponse(success=True, tiers=config["tiers"])
+    return DiscountTiersResponse(success=True, tiers=[])
+
+@router.post("/discount-tiers")
+async def save_discount_tiers(request: DiscountTiersRequest, current_user: dict = Depends(get_current_user)):
+    """Save the discount tier configuration for the business."""
+    tiers_data = [t.model_dump() for t in request.tiers]
+    # Sort by threshold ascending
+    tiers_data.sort(key=lambda x: x["threshold"])
+    
+    await db.discount_tiers.update_one(
+        {"type": "global"},
+        {"$set": {
+            "type": "global",
+            "tiers": tiers_data,
+            "updated_by": current_user.get("email", ""),
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }},
+        upsert=True
+    )
+    return DiscountTiersResponse(success=True, tiers=tiers_data)

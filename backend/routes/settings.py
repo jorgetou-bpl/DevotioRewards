@@ -248,3 +248,109 @@ async def save_discount_tiers(request: DiscountTiersRequest, current_user: dict 
         upsert=True
     )
     return DiscountTiersResponse(success=True, tiers=tiers_data)
+
+
+# ============ TIER PROGRESS TRACKING (for discount/cashback cards) ============
+
+class TierProgressResponse(BaseModel):
+    success: bool
+    card_id: str
+    accumulated_amount: float = 0
+    current_tier: Optional[str] = None
+    next_tier: Optional[str] = None
+    next_threshold: Optional[float] = None
+    amount_to_next: Optional[float] = None
+
+@router.get("/tier-progress/{card_id}")
+async def get_tier_progress(card_id: str, current_user: dict = Depends(get_current_user)):
+    """Get accumulated purchase amount for a card (for tier tracking)."""
+    progress = await db.tier_progress.find_one({"card_id": str(card_id)}, {"_id": 0})
+    accumulated = progress.get("accumulated_amount", 0) if progress else 0
+    
+    # Get tier config to calculate current/next tier
+    config = await db.discount_tiers.find_one({"type": "global"}, {"_id": 0})
+    tiers = sorted(config.get("tiers", []), key=lambda x: x["threshold"]) if config else []
+    
+    current_tier = None
+    next_tier = None
+    next_threshold = None
+    amount_to_next = None
+    
+    for i in range(len(tiers) - 1, -1, -1):
+        if accumulated >= tiers[i]["threshold"]:
+            current_tier = tiers[i]["name"]
+            if i < len(tiers) - 1:
+                next_tier = tiers[i + 1]["name"]
+                next_threshold = tiers[i + 1]["threshold"]
+                amount_to_next = max(0, tiers[i + 1]["threshold"] - accumulated)
+            break
+    
+    if not current_tier and tiers:
+        current_tier = tiers[0]["name"]
+        if len(tiers) > 1:
+            next_tier = tiers[1]["name"]
+            next_threshold = tiers[1]["threshold"]
+            amount_to_next = max(0, tiers[1]["threshold"] - accumulated)
+    
+    return TierProgressResponse(
+        success=True,
+        card_id=str(card_id),
+        accumulated_amount=accumulated,
+        current_tier=current_tier,
+        next_tier=next_tier,
+        next_threshold=next_threshold,
+        amount_to_next=amount_to_next
+    )
+
+@router.post("/tier-progress/{card_id}/add")
+async def add_tier_progress(card_id: str, amount: float, current_user: dict = Depends(get_current_user)):
+    """Add a purchase amount to the tier progress tracker."""
+    progress = await db.tier_progress.find_one({"card_id": str(card_id)})
+    current_amount = progress.get("accumulated_amount", 0) if progress else 0
+    new_amount = current_amount + amount
+    
+    await db.tier_progress.update_one(
+        {"card_id": str(card_id)},
+        {"$set": {
+            "card_id": str(card_id),
+            "accumulated_amount": new_amount,
+            "updated_by": current_user.get("email", ""),
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }},
+        upsert=True
+    )
+    
+    # Get tier config to return current status
+    config = await db.discount_tiers.find_one({"type": "global"}, {"_id": 0})
+    tiers = sorted(config.get("tiers", []), key=lambda x: x["threshold"]) if config else []
+    
+    current_tier = None
+    next_tier = None
+    next_threshold = None
+    amount_to_next = None
+    
+    for i in range(len(tiers) - 1, -1, -1):
+        if new_amount >= tiers[i]["threshold"]:
+            current_tier = tiers[i]["name"]
+            if i < len(tiers) - 1:
+                next_tier = tiers[i + 1]["name"]
+                next_threshold = tiers[i + 1]["threshold"]
+                amount_to_next = max(0, tiers[i + 1]["threshold"] - new_amount)
+            break
+    
+    if not current_tier and tiers:
+        current_tier = tiers[0]["name"]
+        if len(tiers) > 1:
+            next_tier = tiers[1]["name"]
+            next_threshold = tiers[1]["threshold"]
+            amount_to_next = max(0, tiers[1]["threshold"] - new_amount)
+    
+    return TierProgressResponse(
+        success=True,
+        card_id=str(card_id),
+        accumulated_amount=new_amount,
+        current_tier=current_tier,
+        next_tier=next_tier,
+        next_threshold=next_threshold,
+        amount_to_next=amount_to_next
+    )

@@ -178,11 +178,12 @@ const ResultPage = () => {
     fetchStampConfig();
   }, [card?.id, cardType]);
 
-  // Load discount tier configuration for discount cards
+  // Load discount tier configuration for discount/cashback cards
   useEffect(() => {
     const fetchDiscountTiers = async () => {
       const normalizedType = cardType ? cardType.replace('_card', '') : '';
-      if (normalizedType !== 'discount' || !card?.id) return;
+      if (normalizedType !== 'discount' && normalizedType !== 'cashback') return;
+      if (!card?.id) return;
       
       const token = localStorage.getItem('token');
       try {
@@ -1286,7 +1287,7 @@ const ResultPage = () => {
       
       return (
         <div className="space-y-4 sm:space-y-6">
-          {/* Cashback balance display - show current balance in currency */}
+          {/* Cashback balance display */}
           {(normalizedType === 'cashback' || normalizedType === 'cashback_card') && (
             <div className="text-center p-4 sm:p-6 bg-zinc-50 rounded-xl">
               <span className="text-4xl sm:text-5xl font-mono font-bold gradient-text">
@@ -1296,15 +1297,16 @@ const ResultPage = () => {
             </div>
           )}
           
-          {/* Discount level display - only for discount cards */}
-          {discountLevel && normalizedType !== 'cashback' && normalizedType !== 'cashback_card' && (() => {
+          {/* Tier display - shared for discount and cashback cards */}
+          {discountLevel != null && (() => {
             const accumulatedAmount = totalTransactions / 100;
-            // Find current tier and next tier based on discount tiers config
+            const isCashback = normalizedType === 'cashback' || normalizedType === 'cashback_card';
+            const rateLabel = isCashback ? 'Cashback actual' : 'Descuento actual';
+            
             let currentTierName = null;
             let nextTier = null;
             
             if (discountTiers.length > 0) {
-              // Find the current tier by matching discount percentage
               const sortedTiers = [...discountTiers].sort((a, b) => a.threshold - b.threshold);
               for (let i = sortedTiers.length - 1; i >= 0; i--) {
                 if (discountLevel >= sortedTiers[i].percentage) {
@@ -1315,7 +1317,6 @@ const ResultPage = () => {
                   break;
                 }
               }
-              // If no match by percentage, try by threshold
               if (!currentTierName) {
                 for (let i = sortedTiers.length - 1; i >= 0; i--) {
                   if (accumulatedAmount >= sortedTiers[i].threshold) {
@@ -1341,9 +1342,8 @@ const ResultPage = () => {
                 {currentTierName && (
                   <p className="text-sm font-semibold text-[#120627] mt-1">{currentTierName}</p>
                 )}
-                <p className="text-xs sm:text-sm text-zinc-500 mt-1">Descuento actual</p>
+                <p className="text-xs sm:text-sm text-zinc-500 mt-1">{rateLabel}</p>
                 
-                {/* Show accumulated amount */}
                 {totalTransactions > 0 && (
                   <div className="mt-3 pt-3 border-t border-zinc-200">
                     <p className="text-sm text-zinc-600">
@@ -1352,7 +1352,6 @@ const ResultPage = () => {
                   </div>
                 )}
                 
-                {/* Progress to next tier - only show if there IS a next tier */}
                 {nextTier && (
                   <div className="mt-3 pt-3 border-t border-zinc-200">
                     <p className="text-xs text-zinc-500">
@@ -1367,7 +1366,6 @@ const ResultPage = () => {
                   </div>
                 )}
                 
-                {/* At max tier */}
                 {discountTiers.length > 0 && !nextTier && currentTierName && (
                   <div className="mt-3 pt-3 border-t border-zinc-200">
                     <p className="text-xs text-emerald-600 font-medium">Nivel máximo alcanzado</p>
@@ -2224,23 +2222,36 @@ const ResultPage = () => {
                   </div>
                 );
               })()}
-              {/* Transaction/spend amount for discount cards */}
-              {(balance.discountAmount !== undefined && balance.discountAmount > 0 && cardType === 'discount') && (
+              {/* Transaction/spend amount for discount AND cashback cards */}
+              {(balance.discountAmount !== undefined && balance.discountAmount > 0 && (cardType === 'discount' || cardType === 'cashback' || cardType === 'cashback_card')) && (
                 <div className="flex justify-between p-3 sm:p-4">
                   <span className="text-zinc-500 text-sm">Importe de transacciones</span>
                   <span className="font-medium text-sm">{formatCurrency(balance.discountAmount / 100)}</span>
                 </div>
               )}
-              {/* Show "Until next level" for cashback cards if tier info available */}
-              {(cardType === 'cashback' || cardType === 'cashback_card') && 
-               card.nextTierThreshold && balance.discountAmount !== undefined && (
-                <div className="flex justify-between p-3 sm:p-4">
-                  <span className="text-zinc-500 text-sm">Hasta el siguiente nivel</span>
-                  <span className="font-medium text-sm">
-                    {formatCurrency((card.nextTierThreshold - (balance.discountAmount / 100)), false)}
-                  </span>
-                </div>
-              )}
+              {/* Show "Until next level" for discount/cashback cards if tier info available */}
+              {(cardType === 'cashback' || cardType === 'cashback_card' || cardType === 'discount') && 
+               discountTiers.length > 0 && balance.discountAmount !== undefined && (() => {
+                const accAmt = (balance.discountAmount || 0) / 100;
+                const pct = balance.discountPercentage || 0;
+                const sorted = [...discountTiers].sort((a, b) => a.threshold - b.threshold);
+                let nextT = null;
+                for (let i = sorted.length - 1; i >= 0; i--) {
+                  if (pct >= sorted[i].percentage) {
+                    if (i < sorted.length - 1) nextT = sorted[i + 1];
+                    break;
+                  }
+                }
+                if (!nextT) return null;
+                return (
+                  <div className="flex justify-between p-3 sm:p-4">
+                    <span className="text-zinc-500 text-sm">Hasta {nextT.name}</span>
+                    <span className="font-medium text-sm">
+                      {formatCurrency(Math.max(0, nextT.threshold - accAmt))}
+                    </span>
+                  </div>
+                );
+              })()}
               {/* Legacy demo fields */}
               {(balance.discountLevel !== undefined && balance.discountLevel !== null && !balance.discountPercentage) && (
                 <div className="flex justify-between p-3 sm:p-4">

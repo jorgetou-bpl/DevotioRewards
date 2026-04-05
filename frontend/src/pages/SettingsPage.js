@@ -441,7 +441,7 @@ const SettingsPage = () => {
               <div className="flex items-center gap-3 mb-4">
                 <Percent className="h-5 w-5 text-[#120627]" />
                 <p className="text-xs sm:text-sm font-semibold uppercase tracking-widest text-zinc-500">
-                  Niveles de Descuento
+                  Niveles (Descuento / Cashback)
                 </p>
               </div>
 
@@ -452,7 +452,7 @@ const SettingsPage = () => {
               ) : (
                 <div className="space-y-4">
                   <p className="text-xs text-zinc-500">
-                    Configure los niveles de descuento que coincidan con su configuración en Boomerangme
+                    Configure los niveles que coincidan con su configuración en Boomerangme. Aplica para tarjetas de descuento y cashback.
                   </p>
 
                   {discountTiers.map((tier, index) => (

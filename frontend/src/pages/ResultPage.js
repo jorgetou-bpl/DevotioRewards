@@ -574,8 +574,12 @@ const ResultPage = () => {
         //             BUT also send purchaseSum for tier progression tracking
         const cardType = (card.type || '').toLowerCase();
         if (cardType === 'cashback' || cardType === 'cashback_card') {
-          // Cashback: calculate percentage of purchase amount for the cashback amount
-          const cashbackPercent = balance.discountPercentage || balance.cashbackPercent || 1;
+          // Cashback: use local tier percentage if available, fallback to Boomerangme's
+          let cashbackPercent = balance.discountPercentage || balance.cashbackPercent || 1;
+          if (tierProgress?.current_tier && discountTiers.length > 0) {
+            const matchedTier = discountTiers.find(t => t.name === tierProgress.current_tier);
+            if (matchedTier) cashbackPercent = matchedTier.percentage;
+          }
           payload.amount = Math.round(finalPurchaseAmount * (cashbackPercent / 100));
           // IMPORTANT: Also send purchaseSum as the full purchase amount for tier progression
           payload.purchaseSum = finalPurchaseAmount;
@@ -1333,12 +1337,20 @@ const ResultPage = () => {
             let nextThreshold = tierProgress?.next_threshold || null;
             let amountToNext = tierProgress?.amount_to_next || null;
             
+            // Determine the displayed percentage from local tier config
+            let displayPercentage = discountLevel;
+            if (currentTierName && discountTiers.length > 0) {
+              const matchedTier = discountTiers.find(t => t.name === currentTierName);
+              if (matchedTier) displayPercentage = matchedTier.percentage;
+            }
+            
             // Fallback to local calculation from discountTiers if no tierProgress
             if (!currentTierName && discountTiers.length > 0) {
               const sortedTiers = [...discountTiers].sort((a, b) => a.threshold - b.threshold);
               for (let i = sortedTiers.length - 1; i >= 0; i--) {
-                if (discountLevel >= sortedTiers[i].percentage || accumulatedAmount >= sortedTiers[i].threshold) {
+                if (accumulatedAmount >= sortedTiers[i].threshold) {
                   currentTierName = sortedTiers[i].name;
+                  displayPercentage = sortedTiers[i].percentage;
                   if (i < sortedTiers.length - 1) {
                     nextTierName = sortedTiers[i + 1].name;
                     nextThreshold = sortedTiers[i + 1].threshold;
@@ -1349,6 +1361,7 @@ const ResultPage = () => {
               }
               if (!currentTierName) {
                 currentTierName = sortedTiers[0]?.name;
+                displayPercentage = sortedTiers[0]?.percentage || discountLevel;
                 if (sortedTiers.length > 1) {
                   nextTierName = sortedTiers[1].name;
                   nextThreshold = sortedTiers[1].threshold;
@@ -1367,7 +1380,7 @@ const ResultPage = () => {
             return (
               <div className="text-center p-4 sm:p-6 bg-zinc-50 rounded-xl">
                 <span className="text-5xl sm:text-6xl font-mono font-bold gradient-text">
-                  {discountLevel}%
+                  {displayPercentage}%
                 </span>
                 {currentTierName && (
                   <p className="text-sm font-semibold text-[#120627] mt-1">{currentTierName}</p>

@@ -452,7 +452,7 @@ const SettingsPage = () => {
               ) : (
                 <div className="space-y-4">
                   <p className="text-xs text-zinc-500">
-                    Configure los niveles que coincidan con su configuración en Boomerangme. Aplica para tarjetas de descuento y cashback.
+                    Configure los niveles que coincidan con su configuración en Devotio Rewards. Aplica para tarjetas de descuento y cashback.
                   </p>
 
                   {discountTiers.map((tier, index) => (
@@ -529,7 +529,7 @@ const SettingsPage = () => {
                   )}
 
                   <p className="text-xs text-zinc-400">
-                    Los nombres y umbrales deben coincidir con la configuración de Boomerangme
+                    Los nombres y umbrales deben coincidir con la configuración de Devotio Rewards
                   </p>
                 </div>
               )}

@@ -183,10 +183,11 @@ class AccrualModeResponse(BaseModel):
 @router.get("/cards/{card_id}/accrual-mode")
 async def get_card_accrual_mode(card_id: str, current_user: dict = Depends(get_current_user)):
     """Get the saved accrual mode preference for a specific card."""
-    pref = await db.card_accrual_modes.find_one(
-        {"card_id": str(card_id)},
-        {"_id": 0}
-    )
+    ws_id = current_user.get("workspace_id")
+    query = {"card_id": str(card_id)}
+    if ws_id:
+        query["workspace_id"] = ws_id
+    pref = await db.card_accrual_modes.find_one(query, {"_id": 0})
     if pref:
         return AccrualModeResponse(success=True, card_id=str(card_id), mode=pref.get("mode"))
     return AccrualModeResponse(success=True, card_id=str(card_id), mode=None)
@@ -202,10 +203,15 @@ async def set_card_accrual_mode(
     if request.mode not in valid_modes:
         raise HTTPException(status_code=400, detail=f"Modo inválido. Use: {', '.join(valid_modes)}")
     
+    ws_id = current_user.get("workspace_id")
+    query = {"card_id": str(card_id)}
+    if ws_id:
+        query["workspace_id"] = ws_id
     await db.card_accrual_modes.update_one(
-        {"card_id": str(card_id)},
+        query,
         {"$set": {
             "card_id": str(card_id),
+            "workspace_id": ws_id,
             "mode": request.mode,
             "updated_by": current_user.get("email", ""),
             "updated_at": datetime.now(timezone.utc).isoformat()

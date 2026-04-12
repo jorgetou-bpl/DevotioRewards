@@ -1,0 +1,11 @@
+export { StampAddAction } from './StampAddAction';
+export { StampRedeemAction } from './StampRedeemAction';
+export { MembershipAction } from './MembershipAction';
+export { MultipassVisitsAction } from './MultipassVisitsAction';
+export { MultipassPointsAction } from './MultipassPointsAction';
+export { DiscountCashbackAction } from './DiscountCashbackAction';
+export { RewardAddAction } from './RewardAddAction';
+export { RewardRedeemAction } from './RewardRedeemAction';
+export { CouponAction } from './CouponAction';
+export { GenericRedeemAction } from './GenericRedeemAction';
+export { DefaultAddAction } from './DefaultAddAction';

@@ -555,6 +555,28 @@ BOOMERANG_API_KEY="542bcbc61866b65b2e63851267128679"  # UAT key
    - Verified: Demo user sees 116 ops, Cafe Demo user sees 0 ops (isolation confirmed)
    - Workspace admin page shows correct workspace info
 
+### Session 17b - ResultPage.js Refactoring & Accrual Mode Fix (April 12, 2026)
+1. **P1: Added `workspace_id` to `card_accrual_modes` endpoint**
+   - GET/POST `/api/cards/{card_id}/accrual-mode` now filtered by workspace_id
+   - Ensures accrual mode preferences are tenant-isolated
+
+2. **P2: Major Refactoring of ResultPage.js (2425 → 524 lines, 78% reduction)**
+   - Extracted 11 card-specific action components to `/components/cards/actions/`:
+     - StampAddAction, StampRedeemAction, MembershipAction
+     - MultipassVisitsAction, MultipassPointsAction
+     - DiscountCashbackAction, RewardAddAction, RewardRedeemAction
+     - CouponAction, GenericRedeemAction, DefaultAddAction
+   - Extracted 5 shared UI primitives to `/components/cards/shared/`:
+     - PurchaseAmountInput, AmountCounter, BalanceDisplay, ActionButton, CardInfoPanel
+   - CustomerInfoPanel and CardInfoPanel extracted from inline JSX
+   - ResultPage.js now acts as orchestrator: state + useEffects + tab routing + modals
+   - Zero functionality changes — purely structural refactor
+
+3. **Testing Results**
+   - `/app/test_reports/iteration_13.json`: 100% pass (12/12 backend, 10/10 frontend)
+   - Verified all card types: cashback, discount, membership, reward
+   - Operations page, settings page, collapsible panels all working
+
 ## Backlog (P2)
 - Refactor ResultPage.js into card-type components
 - Analytics dashboard

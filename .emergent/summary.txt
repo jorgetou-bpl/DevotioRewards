@@ -1,70 +1,65 @@
 <analysis>**original_problem_statement**: 
-The user wants to build a custom scanner web app for Devotio Rewards connecting to the Boomerangme API. The app must hide PII, feature custom branding with a Spanish UI, and include its own user authentication system. It must be capable of scanning/searching loyalty cards and processing transactions accurately for all Boomerangme card types (Stamp, Reward, Discount, Cashback, Membership, Multipass).
-
+Build a custom scanner web app for Devotio Rewards connecting to the Boomerangme API. The app must hide PII, feature custom branding with a Spanish UI, and include its own user authentication system. Must handle advanced card logic locally (partial spend accumulation, accrual modes). 
 **PRODUCT REQUIREMENTS:**
 - Core Functionality: Scan loyalty cards and process accruals/redemptions natively.
-- Custom Auth & Admin: Remove public sign-up/forgot password; allow admins to create users via a hidden setup URL.
-- Advanced Card Logic: Track specific settings locally (e.g., partial spend accumulation for Stamp cards, accrual modes for Reward cards) since the Boomerangme API has limitations on tracking partial progress or exposing configuration rules.
-- Hide PII, Mobile-first, Spanish UI.
+- Phase 2: Multi-Tenant Admin Panel. Restructure database to handle multiple Devotio clients (Workspaces) with isolated Boomerangme API keys per tenant.
+- Advanced Card Logic: Track partial spend for Stamp cards, unify cashback/discount tiers, handle daily limits.
 
-**User's preferred language**: Spanish (You MUST respond in the user's preferred language ONLY).
+**User's preferred language**: Spanish (You MUST automatically detect the user's primary language from their messages inside the <trajectory> tag and INSTRUCT next agent to respond in the user's preferred language only. The user speaks Spanish.)
 
 **what currently exists?** 
-A full-stack application (React + FastAPI + MongoDB) that handles scanning, viewing, and transacting with Boomerangme loyalty cards. It securely tracks custom business rules locally (like preferred accrual modes and partial spend progress). It includes a private Admin Setup page, operation history, and dynamic UI rendering based on the specific loyalty card type.
+A full-stack multi-tenant application (React + FastAPI + MongoDB). It handles scanning, transacting, and viewing Boomerangme cards. The system tracks partial progress, cashback/discount tiers, and daily limit errors locally. It supports multiple workspaces, each with its own Boomerangme API key and isolated users/configurations.
 
 **Last working item**: 
-- **Last item agent was working**: Modifying the  function in  to handle local partial spend accumulation for Stamp Cards configured in spend mode.
-  *Reasoning*: The user requested that Stamp Cards operating via spend shouldn't show a manual stamp input, but should instead automatically calculate stamps based on a monetary threshold (e.g., 0,000 = 1 stamp). Because Boomerangme doesn't track partial spends natively (e.g., spending 5k then 5k), the agent built local tracking in MongoDB (). The backend and UI state are set up, but the frontend submit execution was interrupted.
-- **Status**: IN PROGRESS
-- **Agent Testing Done**: N
-- **Which testing method agent to use?** Frontend testing agent and manual  of the Stamp card transaction.
+- **Last item agent was working**: Adding  filtering to local database configurations and progress tracking. The agent successfully migrated legacy users to a Devotio Default workspace and updated the , , , and  endpoints in  to filter queries and upserts by .
+- **Status**: TESTING PENDING
+- **Agent Testing Done**: N (Code was written and server started, but multi-tenant E2E flow testing was not completed via testing agent).
+- **Which testing method agent to use?**  (Crucial to verify the entire multi-tenant implementation, API key injection, and workspace isolation).
 - **User Testing Done**: N
 
 **All Pending/In progress Issue list**: 
-  Issue 1: Finish Partial Spend Accumulation Logic for Stamp Cards (P0)
-     - Attempted fixes: The agent successfully built backend endpoints () and updated the  UI to hide stamp inputs for spend mode. However, the context window ended while editing the  function.
+  - Issue 1: Verify and complete Workspace Data Isolation (P0)
+     - Attempted fixes: Agent updated  to use  for configurations.
      - Next debug checklist: 
-        1. Open .
-        2. Locate the  function.
-        3. Add the submission logic for stamp cards when . It should call , process the response (which calculates how many new stamps to add to Boomerangme), and then conditionally fire the Boomerangme  or  API if the threshold is met, followed by updating UI state.
-     - Why fix this issue and what will be achieved with the fix? It fulfills the user's UAT requirement to allow cumulative partial spends to grant stamps over multiple visits.
+        1. Check if  accurately injects  when saving new , , and  to the database during transactions.
+        2. Ensure the  history () filters by .
+        3. Run  to ensure no regressions in scanning and processing transactions with the new dynamic API key injection.
+     - Why fix this issue and what will be achieved with the fix? Ensures complete data isolation between tenants, preventing data leakage.
      - Status: IN PROGRESS
      - Is recurring issue? N
-     - Should Test frontend/backend/both after fix? Frontend 
-     - Blocked on other issue: None
+     - Should Test frontend/backend/both after fix? Both (Testing Agent)
 
 **In progress Task List**: 
-  Task 1: UAT Feedback Verification (P1)
-     - Where to resume: After completing Issue 1, verify the remaining UAT fixes implemented in the last session (Stamp dynamic grid, Reward visit limits, Discount removing hardcoded tiers, Cashback purchaseSum fix, Membership optional purchase amount).
-     - What will be achieved with this? Assures the client that all UAT feedback is fully implemented and tested.
+  - Task 1: Complete Multi-tenant E2E Testing (P0)
+     - Where to resume: Run the testing subagent to thoroughly validate the Workspace creation, Admin User management, and scanner flow using workspace-specific API keys.
+     - What will be achieved with this? Confirms Phase 2 is stable for production.
      - Status: TESTING PENDING
-     - Should Test frontend/backend/both after fix? Frontend (Testing Agent)
+     - Should Test frontend/backend/both after fix? Both
      - Blocked on something: Issue 1
 
 **Upcoming and Future Tasks**
   Upcoming Tasks:
-  - Phase 2: Multi-Tenant Admin Panel (P1) - Restructure the database and admin flow to handle multiple Devotio clients (Workspaces) with isolated Boomerangme API keys per tenant.
+  - Add workspace filtering to Operations logging and history (P1).
   Future Tasks:
-  - Refactor  (P2) - Break down the monolithic >2100 line file into smaller card-specific components.
+  - Refactor  (P2) - Break down the monolithic >2400 line file into smaller card-specific components.
+  - Analytics dashboard (P2).
   - Phase 2 POS Integration Gateway (P2).
 
 **Completed work in this session**
-- Membership UI data discrepancy fixed ( replacing ) (DONE)
-- Multipass UI cleanup (removed redundant sellos, added free input for redemptions, added max validation) (DONE)
-- Operations History fixed to display N/A for huge Reward Tier IDs instead of confusing amounts (DONE)
-- Discount card logic updated to send total  directly instead of a 1% calculation (DONE)
-- Cashback card logic updated to correctly calculate % and pass  to trigger upgrades (DONE)
-- Admin Setup Phase 1: Removed public register/forgot password, added secret  route via  (DONE)
-- BOOMERANGME API Documentation generated and corrected for POS client (DONE)
-- Stamp Card UAT fixes: dynamic stamp grid size, translated error messages, required purchase amount for accruals (DONE)
-- Discount Card UAT fixes: Removed hardcoded Bronze/Silver/Gold tier UI names (DONE)
-- Membership UAT fixes: Made purchase amount optional (DONE)
+- Fixed Stamp card spend mode: changed  with partial amounts to  with the full threshold amount. (DONE)
+- Fixed Daily limit string error handling for visit modes by reordering checks in . (DONE)
+- Removed  symbol from Reward Card tier displays. (DONE)
+- Unified Discount and Cashback tiers configuration in UI/DB. (DONE)
+- Added local  tracking for Cashback cards (since Boomerangme doesn't track  for cashback). (DONE)
+- Implemented Multi-tenant Architecture: Created  collection, added , updated . (DONE)
+- Updated  to dynamically use the  associated with the current user's . (DONE)
+- Migrated legacy users to a Devotio Default workspace. (DONE)
 
 **Earlier issues found/mentioned but not fixed**
 None.
 
 **Known issue recurrence from previous fork**
-- Issue recurrence in previous fork: N/A
+- Issue recurrence in previous fork: None
 - Recurrence count: 0
 - Status: RESOLVED
 
@@ -74,76 +69,84 @@ None.
 **Key Technical Concepts**
 - Frontend: React, Tailwind CSS, Shadcn UI
 - Backend: FastAPI, Pydantic
-- Database: MongoDB
-- Authentication: JWT
+- Database: MongoDB (Multi-tenant structure)
+- Authentication: JWT with roles (, , ) and .
 
 **key DB schema**
-  - accrual_mode_preferences: {card_id, mode}
-  - stamp_config: {company_id, mode, threshold, active}
-  - stamp_progress: {card_id, accumulated_amount}
-  - users: {email, name, hashed_password, role}
+  - : {id, name, slug, api_key, locations, active}
+  - : {email, name, hashed_password, role, workspace_id}
+  - , , , , : all now require  to ensure tenant isolation.
 
 **changes in tech stack**
-- No tech stack changes.
+- Multi-tenant architecture introduced. 3rd-party API keys are no longer static global  variables; they are fetched per request based on the user's .
 
 **All files of reference** 
-- : Cut off while editing . Crucial to finish the implementation.
-- : Contains new backend endpoints for stamp configs and progress.
-- : Updated to include stamp mode configuration UI.
-- : Created specifically for the user's POS client.
+- : Updated with  filtering.
+- : Endpoints updated to require  dynamically. Needs review to ensure  is passed to local DB inserts.
+- :  requires .
+- : Newly created tenant admin panel.
+- : Handles complex unified UI for local cashback/discount tier tracking.
 
 **Areas that need refactoring**: 
--  (Major Technical Debt - Over 2100 lines).
+-  (Major Technical Debt - Over 2400 lines).
 
 **key api endpoints**
-- : Adds partial spend amounts and checks if it crosses the threshold to grant a stamp.
-- : Retrieves the business-level stamp accrual mode.
-- : Endpoint for  to securely create users.
+- : Create new tenant.
+- : Fetch tenant data.
+- : All card endpoints now dynamically extract the Boomerangme API key via dependency injection.
 
 **Critical Info for New Agent** 
-- You are directly in the middle of writing logic inside the  function in . Your first priority (P0) is to finish integrating the UI submission with the new  endpoint for Stamp Cards in spend mode. 
-- Boomerangme API documentation is at  and uses .
-- Master admin code for  is .
+- The app is now MULTI-TENANT. Never rely on the global  for transactions. The key must be fetched from the database via the current user's .
+- Legacy users have been migrated to Devotio Default ().
+- The agent was interrupted immediately after updating the  endpoints in  to filter by .
+- **MUST DO**: Verify that new records created inside  (like , , ) are successfully storing the  so they don't leak across tenants. Run the  before marking the feature as completed.
 
 **documents and test reports created in this job**
-  - /app/docs/BOOMERANGME_API_DOCUMENTATION.md
-  - /app/test_reports/iteration_8.json
-  - /app/test_reports/iteration_9.json
-  - /app/memory/PRD.md
+  - /app/test_reports/iteration_10.json
+  - /app/test_reports/iteration_11.json
+  - /app/memory/PRD.md (Updated)
+  - /app/memory/test_credentials.md (Updated)
 
 **Last 10 User Messages and any pending HUMAN messages** 
-- (Pending continuation) User requested configuring Stamp cards by spend so it tracks partial accumulation locally (e.g. 5000 + 5000 = 1 stamp) and hides the manual stamp quantity input.
-- User clarified choosing Option A to track partial spends locally in our DB and configuring stamp accrual modes globally for the business. (Status: IN PROGRESS)
-- Agent explained that Boomerangme doesn't track partial spends, gave options to handle it locally.
-- User tested Stamp cards, requested removing quantity field for spend/visit modes and fixing partial accumulation tracking. (Status: IN PROGRESS)
-- Agent tested Discount card UI and verified the hardcoded tiers were removed.
-- User requested to run tests to validate the UAT fixes.
-- User provided UAT feedback on Stamp grids, Reward validation, Discount Tiers, Cashback levels, and Membership settings. (Status: MOSTLY COMPLETED)
-- User asked to update the POS documentation with the correct endpoint . (Status: COMPLETED)
-- User reported their developer was getting 404s on the Boomerang API using . (Status: RESOLVED)
-- User asked for the POS documentation content via chat. (Status: COMPLETED)
+1. User: Instructed to migrate legacy users to a default workspace, add filtering for operations/settings/progress by , and do complete testing. (Status: IN PROGRESS - filtering added to settings, testing pending).
+2. Agent: Updated endpoints in  to filter by workspace.
+3. User: Verified admin setup logic; confirmed it should run on the deployed URL. (Status: COMPLETED)
+4. User: Clarified Multi-tenant Admin panel workflow. (Status: COMPLETED)
+5. User: Requested to move to Multi-tenant phase. (Status: COMPLETED)
+6. User: Confirmed the membership card purchase amount behavior. (Status: COMPLETED)
+7. User: Reported cashback card tracking issue (doesn't progress tiers). (Status: COMPLETED - built local )
+8. User: Requested to change Boomerangme name in UI to Devotio Rewards. (Status: COMPLETED)
+9. User: Reported cashback percentage doesn't visually update. (Status: COMPLETED)
+10. User: Feedback on discount card tier updates. (Status: COMPLETED)
 
 **Project Health Check:**
-- Broken:  frontend logic for Stamp Cards (interrupted midway through the edit of ).
-- Mocked: Fallback logic for  cards.
+- Broken: None explicitly, but  and inserts in  might lack  tracking.
+- Mocked: Fallbacks for non-existent users.
 
 **3rd Party Integrations** 
-- Boomerangme API — Requires User API Key (Configured globally in backend).
+- Boomerangme API — Requires User API Key (Now dynamically fetched per workspace from DB, no longer just a global ).
 
 **Testing status**
-  - Testing agent used after significant changes: YES
+  - Testing agent used after significant changes: NO (Pending for Phase 2 multi-tenant)
   - Troubleshoot agent used after agent stuck in loop: NO
-  - Test files created: None
+  - Test files created: 
   - Known regressions: None
 
 **Credentials to test flow:**
-- Login:  / 
+- Login:  /  (Operator - Devotio Default)
+- Workspace Admin:  / 
 - Admin Master Code: 
-- Multipass: 
-- Membership: 
-- Discount: 
-- Cashback: 
-- Stamp:  (Spend mode configured via boomerangme)
+- Cashback Card: 
+- Membership Card: 
 
 **What agent forgot to execute**
-The context window ran out while editing  inside . The  tool was initiated but cut off. The agent needs to pick up this exact code modification to prevent the Result Page from being in a broken or half-implemented state regarding partial spend logic.</analysis>
+- The agent added  filtering to  queries in , but did not yet confirm if  attaches  when *creating* , , and  records.
+- The agent did not add  filtering to the  routes. 
+- Did not run the  for the massive multi-tenant architecture change.
+
+**Debugging checklist for current issue**
+    Issue: Multi-tenant data isolation incomplete. 
+    Backend files to check:
+    - : Check , , and  upserts to ensure  is included in the DB payload.
+    - : Add  to the MongoDB  query.
+    </analysis>

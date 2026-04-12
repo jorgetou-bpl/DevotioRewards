@@ -42,8 +42,10 @@ class StampConfigResponse(BaseModel):
 
 @router.get("/stamp-config")
 async def get_stamp_config(current_user: dict = Depends(get_current_user)):
-    """Get the global stamp configuration for the business."""
-    config = await db.stamp_config.find_one({}, {"_id": 0})
+    """Get the stamp configuration for the user's workspace."""
+    ws_id = current_user.get("workspace_id")
+    query = {"workspace_id": ws_id} if ws_id else {}
+    config = await db.stamp_config.find_one(query, {"_id": 0})
     if config:
         return StampConfigResponse(
             success=True, 
@@ -57,14 +59,17 @@ async def set_stamp_config(
     request: StampConfigRequest,
     current_user: dict = Depends(get_current_user)
 ):
-    """Set the global stamp configuration for the business. Admin only."""
+    """Set the stamp configuration for the user's workspace."""
     valid_modes = ['spend', 'visit', 'manual']
     if request.stamp_mode not in valid_modes:
         raise HTTPException(status_code=400, detail=f"Modo inválido. Use: {', '.join(valid_modes)}")
     
+    ws_id = current_user.get("workspace_id")
+    query = {"workspace_id": ws_id} if ws_id else {}
     await db.stamp_config.update_one(
-        {},  # Single global config
+        query,
         {"$set": {
+            "workspace_id": ws_id,
             "stamp_mode": request.stamp_mode,
             "spend_threshold": request.spend_threshold,
             "updated_by": current_user.get("email", ""),
@@ -91,11 +96,11 @@ class StampProgressResponse(BaseModel):
 @router.get("/stamp-progress/{card_id}")
 async def get_stamp_progress(card_id: str, current_user: dict = Depends(get_current_user)):
     """Get the accumulated progress towards the next stamp for a card."""
-    # Get global stamp config
-    config = await db.stamp_config.find_one({}, {"_id": 0})
+    ws_id = current_user.get("workspace_id")
+    config_query = {"workspace_id": ws_id} if ws_id else {}
+    config = await db.stamp_config.find_one(config_query, {"_id": 0})
     threshold = config.get("spend_threshold", 10000) if config else 10000
     
-    # Get card progress
     progress = await db.stamp_progress.find_one({"card_id": card_id}, {"_id": 0})
     accumulated = progress.get("accumulated_amount", 0) if progress else 0
     
@@ -117,8 +122,9 @@ async def add_stamp_progress(
     current_user: dict = Depends(get_current_user)
 ):
     """Add to the accumulated progress for a stamp card. Returns stamps earned if threshold reached."""
-    # Get global stamp config
-    config = await db.stamp_config.find_one({}, {"_id": 0})
+    ws_id = current_user.get("workspace_id")
+    config_query = {"workspace_id": ws_id} if ws_id else {}
+    config = await db.stamp_config.find_one(config_query, {"_id": 0})
     if not config or config.get("stamp_mode") != "spend":
         raise HTTPException(status_code=400, detail="Stamp config not set to 'spend' mode")
     
@@ -224,23 +230,27 @@ class DiscountTiersResponse(BaseModel):
 
 @router.get("/discount-tiers")
 async def get_discount_tiers(current_user: dict = Depends(get_current_user)):
-    """Get the discount tier configuration for the business."""
-    config = await db.discount_tiers.find_one({"type": "global"}, {"_id": 0})
+    """Get the discount tier configuration for the user's workspace."""
+    ws_id = current_user.get("workspace_id")
+    query = {"workspace_id": ws_id} if ws_id else {"type": "global"}
+    config = await db.discount_tiers.find_one(query, {"_id": 0})
     if config and config.get("tiers"):
         return DiscountTiersResponse(success=True, tiers=config["tiers"])
     return DiscountTiersResponse(success=True, tiers=[])
 
 @router.post("/discount-tiers")
 async def save_discount_tiers(request: DiscountTiersRequest, current_user: dict = Depends(get_current_user)):
-    """Save the discount tier configuration for the business."""
+    """Save the discount tier configuration for the user's workspace."""
     tiers_data = [t.model_dump() for t in request.tiers]
-    # Sort by threshold ascending
     tiers_data.sort(key=lambda x: x["threshold"])
     
+    ws_id = current_user.get("workspace_id")
+    query = {"workspace_id": ws_id} if ws_id else {"type": "global"}
     await db.discount_tiers.update_one(
-        {"type": "global"},
+        query,
         {"$set": {
             "type": "global",
+            "workspace_id": ws_id,
             "tiers": tiers_data,
             "updated_by": current_user.get("email", ""),
             "updated_at": datetime.now(timezone.utc).isoformat()

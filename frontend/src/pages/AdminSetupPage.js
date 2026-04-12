@@ -1,263 +1,264 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import { toast } from 'sonner';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
-import { Label } from '../components/ui/label';
-import { toast } from 'sonner';
-import { Shield, Mail, Lock, User, Eye, EyeOff, Loader2, CheckCircle, UserCog } from 'lucide-react';
-import axios from 'axios';
+import { Shield, Building2, Loader2, Plus, MapPin, Key, UserPlus, ArrowLeft, Check } from 'lucide-react';
 
-const API = process.env.REACT_APP_BACKEND_URL;
+const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 const AdminSetupPage = () => {
+  const navigate = useNavigate();
   const [masterCode, setMasterCode] = useState('');
-  const [isVerified, setIsVerified] = useState(false);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [name, setName] = useState('');
-  const [role, setRole] = useState('user');
-  const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [createdUsers, setCreatedUsers] = useState([]);
+  const [verified, setVerified] = useState(false);
+  const [verifying, setVerifying] = useState(false);
 
-  const handleVerifyCode = (e) => {
-    e.preventDefault();
-    if (masterCode.trim()) {
-      setIsVerified(true);
-      toast.success('Código verificado. Ahora puede crear usuarios.');
+  // Workspace creation
+  const [workspaceName, setWorkspaceName] = useState('');
+  const [apiKey, setApiKey] = useState('');
+  const [locations, setLocations] = useState([{ name: '', address: '' }]);
+  const [adminEmail, setAdminEmail] = useState('');
+  const [adminPassword, setAdminPassword] = useState('');
+  const [adminName, setAdminName] = useState('');
+  const [creating, setCreating] = useState(false);
+  const [createdWorkspace, setCreatedWorkspace] = useState(null);
+
+  const handleVerify = () => {
+    if (masterCode === 'DEVOTIO-2026-ADMIN') {
+      setVerified(true);
+      toast.success('Código maestro verificado');
     } else {
-      toast.error('Ingrese el código maestro');
+      toast.error('Código maestro incorrecto');
     }
   };
 
-  const handleCreateUser = async (e) => {
-    e.preventDefault();
-    setLoading(true);
+  const handleCreateWorkspace = async () => {
+    if (!workspaceName.trim()) { toast.error('Ingrese el nombre del workspace'); return; }
+    if (!apiKey.trim()) { toast.error('Ingrese la API Key de Devotio Rewards'); return; }
+    if (!adminEmail || !adminPassword || !adminName) { toast.error('Complete los datos del administrador'); return; }
 
+    setCreating(true);
     try {
-      const response = await axios.post(`${API}/api/auth/admin/create-user`, {
+      const payload = {
         master_code: masterCode,
-        email,
-        password,
-        name,
-        role
-      });
+        name: workspaceName,
+        boomerangme_api_key: apiKey,
+        locations: locations.filter(l => l.name.trim()),
+        admin_email: adminEmail,
+        admin_password: adminPassword,
+        admin_name: adminName
+      };
 
-      if (response.data.success) {
-        toast.success(`Usuario "${name}" creado exitosamente`);
-        setCreatedUsers([...createdUsers, response.data.user]);
-        // Reset form but keep master code
-        setEmail('');
-        setPassword('');
-        setName('');
-        setRole('user');
-      }
+      const resp = await axios.post(`${API}/admin/workspaces`, payload);
+      setCreatedWorkspace(resp.data);
+      toast.success(`Workspace '${workspaceName}' creado exitosamente`);
     } catch (error) {
-      const message = error.response?.data?.detail || 'Error al crear usuario';
-      toast.error(message);
-      
-      // If master code is invalid, reset verification
-      if (error.response?.status === 403) {
-        setIsVerified(false);
-        setMasterCode('');
-      }
+      toast.error(error.response?.data?.detail || 'Error al crear workspace');
     } finally {
-      setLoading(false);
+      setCreating(false);
     }
+  };
+
+  const resetForm = () => {
+    setCreatedWorkspace(null);
+    setWorkspaceName('');
+    setApiKey('');
+    setLocations([{ name: '', address: '' }]);
+    setAdminEmail('');
+    setAdminPassword('');
+    setAdminName('');
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-zinc-100 to-zinc-200 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        {/* Header */}
-        <div className="text-center mb-6">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-[#120627] rounded-2xl mb-4">
-            <Shield className="h-8 w-8 text-white" />
+    <div className="min-h-screen bg-zinc-50" data-testid="admin-setup-page">
+      <div className="bg-[#120627] text-white px-4 py-4">
+        <div className="max-w-lg mx-auto flex items-center gap-3">
+          <button onClick={() => navigate('/')} className="p-1">
+            <ArrowLeft className="h-5 w-5" />
+          </button>
+          <Shield className="h-5 w-5" />
+          <div>
+            <h1 className="font-bold text-base">Admin Setup</h1>
+            <p className="text-xs text-zinc-300">Gestión de Workspaces — Devotio</p>
           </div>
-          <h1 className="text-2xl font-bold text-[#120627]">Configuración Admin</h1>
-          <p className="text-sm text-zinc-500 mt-1">Devotio Rewards - Gestión de Usuarios</p>
         </div>
+      </div>
 
-        {/* Main Card */}
-        <div className="bg-white rounded-2xl shadow-xl border-2 border-zinc-200 p-6">
-          {!isVerified ? (
-            // Master Code Verification
-            <form onSubmit={handleVerifyCode} className="space-y-6">
-              <div className="text-center mb-4">
-                <Lock className="h-12 w-12 text-zinc-300 mx-auto mb-2" />
-                <p className="text-sm text-zinc-500">
-                  Ingrese el código maestro para continuar
-                </p>
+      <div className="max-w-lg mx-auto p-4">
+        {/* Step 1: Master Code Verification */}
+        {!verified && (
+          <div className="bg-white rounded-xl border border-zinc-200 p-6 space-y-4" data-testid="master-code-section">
+            <div className="text-center mb-4">
+              <Shield className="h-10 w-10 text-[#120627] mx-auto mb-2" />
+              <h2 className="font-bold text-lg">Acceso Restringido</h2>
+              <p className="text-sm text-zinc-500">Ingrese el código maestro para continuar</p>
+            </div>
+            <Input
+              type="password"
+              value={masterCode}
+              onChange={e => setMasterCode(e.target.value)}
+              placeholder="Código Maestro"
+              className="h-12 text-center font-mono tracking-widest"
+              onKeyDown={e => e.key === 'Enter' && handleVerify()}
+              data-testid="master-code-input"
+            />
+            <Button onClick={handleVerify} disabled={verifying} className="w-full h-12 bg-[#120627] hover:bg-[#1e0a3d] text-white" data-testid="verify-btn">
+              {verifying ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Verificar'}
+            </Button>
+          </div>
+        )}
+
+        {/* Step 2: Workspace Creation */}
+        {verified && !createdWorkspace && (
+          <div className="space-y-4">
+            {/* Workspace Info */}
+            <div className="bg-white rounded-xl border border-zinc-200 p-4 space-y-4">
+              <div className="flex items-center gap-2 mb-2">
+                <Building2 className="h-5 w-5 text-[#120627]" />
+                <h2 className="font-semibold text-sm uppercase tracking-wider text-zinc-700">Nuevo Workspace</h2>
               </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="masterCode" className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
-                  Código Maestro
-                </Label>
+              <Input
+                value={workspaceName}
+                onChange={e => setWorkspaceName(e.target.value)}
+                placeholder="Nombre del negocio"
+                className="h-10"
+                data-testid="workspace-name"
+              />
+              <div className="relative">
+                <Key className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
                 <Input
-                  id="masterCode"
-                  type="password"
-                  value={masterCode}
-                  onChange={(e) => setMasterCode(e.target.value)}
-                  placeholder="••••••••••••"
-                  className="text-center text-lg tracking-widest font-mono h-14 border-2 border-zinc-200 focus:border-[#120627]"
-                  required
-                  data-testid="master-code-input"
+                  value={apiKey}
+                  onChange={e => setApiKey(e.target.value)}
+                  placeholder="API Key de Devotio Rewards"
+                  className="h-10 pl-10 font-mono text-sm"
+                  data-testid="workspace-api-key"
                 />
               </div>
-
-              <Button
-                type="submit"
-                className="w-full h-12 bg-[#120627] hover:bg-[#1e0a3d] text-white"
-                data-testid="verify-code-button"
-              >
-                Verificar Código
-              </Button>
-            </form>
-          ) : (
-            // User Creation Form
-            <form onSubmit={handleCreateUser} className="space-y-5">
-              <div className="flex items-center gap-2 text-green-600 bg-green-50 px-3 py-2 rounded-lg mb-4">
-                <CheckCircle className="h-5 w-5" />
-                <span className="text-sm font-medium">Código verificado</span>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="name" className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
-                  Nombre del Gerente
-                </Label>
-                <div className="relative">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-400" />
-                  <Input
-                    id="name"
-                    type="text"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="Juan Pérez"
-                    className="pl-10 h-12 border-2 border-zinc-200 focus:border-[#120627]"
-                    required
-                    data-testid="name-input"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="email" className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
-                  Correo Electrónico
-                </Label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-400" />
-                  <Input
-                    id="email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="gerente@empresa.com"
-                    className="pl-10 h-12 border-2 border-zinc-200 focus:border-[#120627]"
-                    required
-                    data-testid="email-input"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="password" className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
-                  Contraseña
-                </Label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-400" />
-                  <Input
-                    id="password"
-                    type={showPassword ? 'text' : 'password'}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
-                    className="pl-10 pr-10 h-12 border-2 border-zinc-200 focus:border-[#120627]"
-                    required
-                    data-testid="password-input"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600"
-                  >
-                    {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                  </button>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="role" className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
-                  Rol del Usuario
-                </Label>
-                <div className="relative">
-                  <UserCog className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-400" />
-                  <select
-                    id="role"
-                    value={role}
-                    onChange={(e) => setRole(e.target.value)}
-                    className="w-full pl-10 h-12 border-2 border-zinc-200 rounded-lg focus:border-[#120627] focus:outline-none bg-white appearance-none cursor-pointer"
-                    data-testid="role-select"
-                  >
-                    <option value="user">Usuario (Gerente)</option>
-                    <option value="admin">Administrador</option>
-                  </select>
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                    <svg className="h-5 w-5 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </div>
-                </div>
-                <p className="text-xs text-zinc-400 mt-1">
-                  {role === 'admin' ? 'Puede gestionar configuraciones y usuarios' : 'Solo puede operar el escáner'}
-                </p>
-              </div>
-
-              <Button
-                type="submit"
-                disabled={loading}
-                className="w-full h-12 bg-[#120627] hover:bg-[#1e0a3d] text-white"
-                data-testid="create-user-button"
-              >
-                {loading ? (
-                  <Loader2 className="h-5 w-5 animate-spin" />
-                ) : (
-                  'Crear Usuario'
-                )}
-              </Button>
-            </form>
-          )}
-
-          {/* Created Users List */}
-          {createdUsers.length > 0 && (
-            <div className="mt-6 pt-6 border-t border-zinc-200">
-              <h3 className="text-sm font-semibold text-zinc-700 mb-3">Usuarios creados en esta sesión:</h3>
-              <div className="space-y-2">
-                {createdUsers.map((user, index) => (
-                  <div key={index} className="flex items-center justify-between bg-zinc-50 px-3 py-2 rounded-lg">
-                    <div>
-                      <p className="text-sm font-medium text-zinc-700">{user.name}</p>
-                      <p className="text-xs text-zinc-400">{user.email}</p>
-                    </div>
-                    <span className={`text-xs px-2 py-1 rounded-full ${
-                      user.role === 'admin' 
-                        ? 'bg-purple-100 text-purple-700' 
-                        : 'bg-blue-100 text-blue-700'
-                    }`}>
-                      {user.role === 'admin' ? 'Admin' : 'Usuario'}
-                    </span>
-                  </div>
-                ))}
-              </div>
             </div>
-          )}
-        </div>
 
-        {/* Footer */}
-        <p className="text-center text-xs text-zinc-400 mt-6">
-          Esta página es solo para administradores de Devotio Rewards.
-          <br />
-          No comparta el código maestro con usuarios finales.
-        </p>
+            {/* Locations */}
+            <div className="bg-white rounded-xl border border-zinc-200 p-4 space-y-3">
+              <div className="flex items-center gap-2 mb-2">
+                <MapPin className="h-5 w-5 text-[#120627]" />
+                <h2 className="font-semibold text-sm uppercase tracking-wider text-zinc-700">Sucursales</h2>
+              </div>
+              {locations.map((loc, i) => (
+                <div key={i} className="flex gap-2">
+                  <div className="flex-1 space-y-2">
+                    <Input
+                      value={loc.name}
+                      onChange={e => { const u = [...locations]; u[i] = { ...u[i], name: e.target.value }; setLocations(u); }}
+                      placeholder="Nombre sucursal"
+                      className="h-10"
+                      data-testid={`setup-location-name-${i}`}
+                    />
+                    <Input
+                      value={loc.address}
+                      onChange={e => { const u = [...locations]; u[i] = { ...u[i], address: e.target.value }; setLocations(u); }}
+                      placeholder="Dirección"
+                      className="h-10"
+                      data-testid={`setup-location-address-${i}`}
+                    />
+                  </div>
+                  {locations.length > 1 && (
+                    <button onClick={() => setLocations(locations.filter((_, idx) => idx !== i))} className="p-2 mt-1 text-zinc-400 hover:text-red-500">
+                      <span className="text-lg">x</span>
+                    </button>
+                  )}
+                </div>
+              ))}
+              <Button onClick={() => setLocations([...locations, { name: '', address: '' }])} variant="outline" className="w-full h-9 border-dashed border-zinc-300 text-sm">
+                <Plus className="h-4 w-4 mr-1" /> Agregar sucursal
+              </Button>
+            </div>
+
+            {/* Admin User */}
+            <div className="bg-white rounded-xl border border-zinc-200 p-4 space-y-3">
+              <div className="flex items-center gap-2 mb-2">
+                <UserPlus className="h-5 w-5 text-[#120627]" />
+                <h2 className="font-semibold text-sm uppercase tracking-wider text-zinc-700">Administrador del Workspace</h2>
+              </div>
+              <p className="text-xs text-zinc-500">Este usuario podrá gestionar el workspace, crear operadores y configurar settings.</p>
+              <Input
+                value={adminName}
+                onChange={e => setAdminName(e.target.value)}
+                placeholder="Nombre del administrador"
+                className="h-10"
+                data-testid="admin-name"
+              />
+              <Input
+                type="email"
+                value={adminEmail}
+                onChange={e => setAdminEmail(e.target.value)}
+                placeholder="Email del administrador"
+                className="h-10"
+                data-testid="admin-email"
+              />
+              <Input
+                type="password"
+                value={adminPassword}
+                onChange={e => setAdminPassword(e.target.value)}
+                placeholder="Contraseña"
+                className="h-10"
+                data-testid="admin-password"
+              />
+            </div>
+
+            <Button onClick={handleCreateWorkspace} disabled={creating} className="w-full h-12 bg-[#120627] hover:bg-[#1e0a3d] text-white" data-testid="create-workspace-btn">
+              {creating ? <Loader2 className="h-5 w-5 animate-spin" /> : <><Building2 className="h-4 w-4 mr-2" /> Crear Workspace</>}
+            </Button>
+          </div>
+        )}
+
+        {/* Step 3: Success */}
+        {createdWorkspace && (
+          <div className="bg-white rounded-xl border border-zinc-200 p-6 space-y-4" data-testid="workspace-created">
+            <div className="text-center">
+              <div className="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center mx-auto mb-3">
+                <Check className="h-6 w-6 text-emerald-600" />
+              </div>
+              <h2 className="font-bold text-lg">Workspace Creado</h2>
+            </div>
+
+            <div className="bg-zinc-50 rounded-lg p-4 space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-zinc-500">Nombre</span>
+                <span className="font-medium">{createdWorkspace.workspace?.name}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-zinc-500">Slug</span>
+                <span className="font-mono">{createdWorkspace.workspace?.slug}</span>
+              </div>
+              {createdWorkspace.workspace?.locations?.length > 0 && (
+                <div className="flex justify-between">
+                  <span className="text-zinc-500">Sucursales</span>
+                  <span>{createdWorkspace.workspace.locations.length}</span>
+                </div>
+              )}
+              {createdWorkspace.admin_created && (
+                <>
+                  <div className="border-t border-zinc-200 mt-2 pt-2" />
+                  <div className="flex justify-between">
+                    <span className="text-zinc-500">Admin</span>
+                    <span className="font-medium">{createdWorkspace.admin_created.name}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-zinc-500">Email</span>
+                    <span>{createdWorkspace.admin_created.email}</span>
+                  </div>
+                </>
+              )}
+            </div>
+
+            <div className="flex gap-2">
+              <Button onClick={resetForm} className="flex-1 bg-[#120627] hover:bg-[#1e0a3d] text-white" data-testid="create-another-btn">
+                <Plus className="h-4 w-4 mr-1" /> Crear otro
+              </Button>
+              <Button onClick={() => navigate('/')} variant="outline" className="flex-1">Volver</Button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

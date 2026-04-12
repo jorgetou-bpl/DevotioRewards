@@ -11,6 +11,7 @@ from utils.config import client
 # Import routers
 from routes.auth import router as auth_router
 from routes.settings import router as settings_router
+from routes.workspaces import router as workspaces_router
 from routes.cards import router as cards_router
 from routes.operations import router as operations_router
 from routes.templates import router as templates_router
@@ -29,6 +30,7 @@ api_router = APIRouter(prefix="/api")
 # Include all routers
 api_router.include_router(auth_router)
 api_router.include_router(settings_router)
+api_router.include_router(workspaces_router)
 api_router.include_router(cards_router)
 api_router.include_router(operations_router)
 api_router.include_router(templates_router)

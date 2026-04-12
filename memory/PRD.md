@@ -515,6 +515,29 @@ BOOMERANG_API_KEY="542bcbc61866b65b2e63851267128679"  # UAT key
 3. **Code Cleanup**
    - Removed dead `getTierStatus` function from ResultPage.js (hardcoded Bronce/Plata/Oro)
 
+### Session 16 - Multi-Tenant Architecture (April 12, 2026)
+1. **Phase 2 Multi-Tenant Backend**
+   - Created `workspaces` collection: name, slug, boomerangme_api_key, locations, active
+   - Updated `users` model: added workspace_id, location, new roles (super_admin, workspace_admin, operator)
+   - Modified `call_boomerang_api` to accept dynamic API key per workspace
+   - All card endpoints now use workspace-specific API key via `get_api_key` dependency
+   - Legacy users without workspace_id fall back to global API key
+   - Created `routes/workspaces.py` with full CRUD: create/list/update workspaces, manage users, locations
+
+2. **Phase 2 Frontend Pages**
+   - Redesigned `AdminSetupPage` (/admin/setup): Master code → Create workspace + sucursales + workspace admin
+   - Created `WorkspaceAdminPage` (/admin/workspace): 4 tabs (General, Usuarios, Sucursales, API Key)
+   - Updated login to return workspace_id, workspace_name, role
+   - Added "Admin Workspace" menu item for workspace_admin/super_admin roles
+   - Workspace admins can create operators, assign to locations, manage API key
+
+3. **UAT Bug Fixes (this session)**
+   - Fixed daily limit error: "A visit has already been registered today" → "Límite de check-in diario alcanzado"
+   - Removed $ sign from reward tier values
+   - Created discount/cashback tier configuration (Settings page)
+   - Implemented local tier progress tracking for cashback cards (Boomerangme doesn't track discountAmount)
+   - Fixed cashback % to use local tier percentage instead of Boomerangme's stale value
+
 ## Backlog (P2)
 - Refactor ResultPage.js into card-type components
 - Multi-tenant admin panel (Phase 2)

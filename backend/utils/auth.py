@@ -41,7 +41,21 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(g
         if not user:
             raise HTTPException(status_code=401, detail="User not found")
         
-        return {"id": user_id, "email": user.get("email"), "name": user.get("name")}
+        # Map legacy roles to new roles
+        role = user.get("role", "operator")
+        if role == "admin":
+            role = "workspace_admin"
+        elif role == "user":
+            role = "operator"
+        
+        return {
+            "id": user_id,
+            "email": user.get("email"),
+            "name": user.get("name"),
+            "role": role,
+            "workspace_id": user.get("workspace_id"),
+            "location": user.get("location")
+        }
     except jwt.ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="Token expired")
     except jwt.InvalidTokenError:

@@ -16,11 +16,17 @@ from utils.boomerang import (
     log_operation,
     build_comment_with_gerente,
     get_user_friendly_error,
-    parse_api_error
+    parse_api_error,
+    get_workspace_api_key
 )
 
 logger = logging.getLogger(__name__)
 router = APIRouter(tags=["cards"])
+
+# Dependency to get workspace API key for the current user
+async def get_api_key(current_user: dict = Depends(get_current_user)):
+    """FastAPI dependency that returns the Boomerangme API key for the current user's workspace."""
+    return await get_workspace_api_key(current_user)
 
 # ============ REWARD TRACKING HELPERS ============
 
@@ -130,9 +136,9 @@ def is_email(input_str: str) -> bool:
     """Check if input looks like an email."""
     return bool(re.match(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$', input_str.strip()))
 
-async def search_customer_and_get_card(search_type: str, search_value: str, current_user: dict, db):
+async def search_customer_and_get_card(search_type: str, search_value: str, current_user: dict, db, api_key: str = None):
     """Search for customer by phone/email and return their first card."""
-    customers_response = await call_boomerang_api('GET', '/customers', {search_type: search_value})
+    customers_response = await call_boomerang_api('GET', '/customers', {search_type: search_value}, api_key=api_key)
     
     if customers_response.get('code') != 200:
         return None
@@ -147,7 +153,7 @@ async def search_customer_and_get_card(search_type: str, search_value: str, curr
     if not customer_id:
         return None
     
-    cards_response = await call_boomerang_api('GET', f'/customers/{customer_id}/cards', {})
+    cards_response = await call_boomerang_api('GET', f'/customers/{customer_id}/cards', {}, api_key=api_key)
     
     if cards_response.get('code') != 200:
         return None
@@ -162,7 +168,7 @@ async def search_customer_and_get_card(search_type: str, search_value: str, curr
     if not card_id:
         return None
     
-    card_detail_response = await call_boomerang_api('GET', f'/cards/{card_id}', {})
+    card_detail_response = await call_boomerang_api('GET', f'/cards/{card_id}', {}, api_key=api_key)
     
     if card_detail_response.get('code') == 200:
         return card_detail_response.get('data')
@@ -172,9 +178,10 @@ async def search_customer_and_get_card(search_type: str, search_value: str, curr
 # ============ SCAN & GET CARD ============
 
 @router.post("/scan")
-async def scan_card(scan_data: ScanRequest, current_user: dict = Depends(get_current_user)):
+async def scan_card(scan_data: ScanRequest, current_user: dict = Depends(get_current_user), api_key: str = Depends(get_api_key)):
     """Scan a card by QR data, phone number, or email."""
     qr_data = scan_data.qr_data.strip()
+    api_key = await get_workspace_api_key(current_user)
     
     if not qr_data:
         raise HTTPException(status_code=400, detail=get_user_friendly_error("invalid_search"))
@@ -183,19 +190,19 @@ async def scan_card(scan_data: ScanRequest, current_user: dict = Depends(get_cur
     if is_card_id(qr_data):
         card_id = extract_card_id_from_qr(qr_data)
         logger.info(f"Scanning card ID: {card_id}")
-        response = await call_boomerang_api('GET', f'/cards/{card_id}', {})
+        response = await call_boomerang_api('GET', f'/cards/{card_id}', {}, api_key=api_key)
         return {"success": True, "card": mask_pii(response.get('data', {}))}
     
     if is_email(qr_data):
         logger.info(f"Searching by email")
-        result = await search_customer_and_get_card('email', qr_data, current_user, db)
+        result = await search_customer_and_get_card('email', qr_data, current_user, db, api_key=api_key)
         if result:
             return {"success": True, "card": mask_pii(result)}
         raise HTTPException(status_code=404, detail=get_user_friendly_error("search_no_results"))
     
     if is_phone_number(qr_data):
         logger.info(f"Searching by phone number")
-        result = await search_customer_and_get_card('phone', qr_data, current_user, db)
+        result = await search_customer_and_get_card('phone', qr_data, current_user, db, api_key=api_key)
         if result:
             return {"success": True, "card": mask_pii(result)}
         raise HTTPException(status_code=404, detail=get_user_friendly_error("search_no_results"))
@@ -203,19 +210,20 @@ async def scan_card(scan_data: ScanRequest, current_user: dict = Depends(get_cur
     # Try as card ID anyway
     card_id = extract_card_id_from_qr(qr_data)
     logger.info(f"Scanning card ID (fallback): {card_id}")
-    response = await call_boomerang_api('GET', f'/cards/{card_id}', {})
+    response = await call_boomerang_api('GET', f'/cards/{card_id}', {}, api_key=api_key)
     return {"success": True, "card": mask_pii(response.get('data', {}))}
 
 @router.get("/cards/{card_id}")
-async def get_card(card_id: str, current_user: dict = Depends(get_current_user)):
+async def get_card(card_id: str, current_user: dict = Depends(get_current_user), api_key: str = Depends(get_api_key)):
     """Get card details by ID."""
-    response = await call_boomerang_api('GET', f'/cards/{card_id}', {})
+    api_key = await get_workspace_api_key(current_user)
+    response = await call_boomerang_api('GET', f'/cards/{card_id}', {}, api_key=api_key)
     return {"success": True, "card": mask_pii(response.get('data', {}))}
 
 # ============ STAMP CARD ACTIONS ============
 
 @router.post("/cards/{card_id}/add-stamp")
-async def add_stamp(card_id: str, action_data: CardActionRequest, current_user: dict = Depends(get_current_user)):
+async def add_stamp(card_id: str, action_data: CardActionRequest, current_user: dict = Depends(get_current_user), api_key: str = Depends(get_api_key)):
     """Add stamps to stamp cards - supports all 3 program types."""
     stamps = action_data.amount or 1
     purchase_sum = action_data.purchaseSum or 0
@@ -223,7 +231,7 @@ async def add_stamp(card_id: str, action_data: CardActionRequest, current_user: 
     gerente_name = action_data.gerente or current_user.get('name', '')
     
     # Get current card state to detect new rewards
-    pre_response = await call_boomerang_api('GET', f'/cards/{card_id}', {}, raise_on_error=False)
+    pre_response = await call_boomerang_api('GET', f'/cards/{card_id}', {}, raise_on_error=False, api_key=api_key)
     old_rewards_unused = 0
     if pre_response.get('code') == 200:
         old_balance = pre_response.get('data', {}).get('balance', {})
@@ -249,7 +257,7 @@ async def add_stamp(card_id: str, action_data: CardActionRequest, current_user: 
     
     last_error = None
     for endpoint, payload, success_msg in endpoints:
-        response = await call_boomerang_api('POST', f'/cards/{card_id}/{endpoint}', payload, raise_on_error=False)
+        response = await call_boomerang_api('POST', f'/cards/{card_id}/{endpoint}', payload, raise_on_error=False, api_key=api_key)
         
         if response.get('code') == 200:
             card_data = response.get('data', {})
@@ -263,7 +271,7 @@ async def add_stamp(card_id: str, action_data: CardActionRequest, current_user: 
                 template_id = card_data.get('templateId')
                 template_data = None
                 if template_id:
-                    template_response = await call_boomerang_api('GET', f'/templates/{template_id}', {}, raise_on_error=False)
+                    template_response = await call_boomerang_api('GET', f'/templates/{template_id}', {}, raise_on_error=False, api_key=api_key)
                     if template_response.get('code') == 200:
                         template_data = template_response.get('data', {})
                 
@@ -320,7 +328,7 @@ async def add_stamp(card_id: str, action_data: CardActionRequest, current_user: 
     raise HTTPException(status_code=400, detail=parse_api_error(last_error or "action_failed"))
 
 @router.get("/cards/{card_id}/pending-rewards")
-async def get_card_pending_rewards(card_id: str, current_user: dict = Depends(get_current_user)):
+async def get_card_pending_rewards(card_id: str, current_user: dict = Depends(get_current_user), api_key: str = Depends(get_api_key)):
     """Get all pending (unredeemed) rewards for a card, sorted oldest first."""
     rewards = await get_pending_rewards(card_id)
     return {
@@ -330,7 +338,7 @@ async def get_card_pending_rewards(card_id: str, current_user: dict = Depends(ge
     }
 
 @router.post("/cards/{card_id}/subtract-reward")
-async def subtract_reward(card_id: str, action_data: CardActionRequest, current_user: dict = Depends(get_current_user)):
+async def subtract_reward(card_id: str, action_data: CardActionRequest, current_user: dict = Depends(get_current_user), api_key: str = Depends(get_api_key)):
     """
     Subtract/redeem rewards from stamp cards.
     
@@ -347,7 +355,7 @@ async def subtract_reward(card_id: str, action_data: CardActionRequest, current_
     if action_data.purchaseSum:
         payload["purchaseSum"] = action_data.purchaseSum
     
-    response = await call_boomerang_api('POST', f'/cards/{card_id}/subtract-reward', payload)
+    response = await call_boomerang_api('POST', f'/cards/{card_id}/subtract-reward', payload, api_key=api_key)
     card_data = response.get('data', {})
     
     # If a specific reward_id was provided, mark it as redeemed in our tracking
@@ -402,7 +410,7 @@ async def subtract_reward(card_id: str, action_data: CardActionRequest, current_
 # ============ POINTS/BALANCE ACTIONS ============
 
 @router.post("/cards/{card_id}/add-point")
-async def add_points(card_id: str, action_data: CardActionRequest, current_user: dict = Depends(get_current_user)):
+async def add_points(card_id: str, action_data: CardActionRequest, current_user: dict = Depends(get_current_user), api_key: str = Depends(get_api_key)):
     """Add points to cards."""
     gerente_name = action_data.gerente or current_user.get('name', '')
     comment_with_gerente = build_comment_with_gerente(action_data.comment, gerente_name)
@@ -416,7 +424,7 @@ async def add_points(card_id: str, action_data: CardActionRequest, current_user:
     else:
         payload["purchaseSum"] = amount
     
-    response = await call_boomerang_api('POST', f'/cards/{card_id}/add-point', payload)
+    response = await call_boomerang_api('POST', f'/cards/{card_id}/add-point', payload, api_key=api_key)
     card_data = response.get('data', {})
     card_type = str(card_data.get('type', '')).lower()
     
@@ -444,7 +452,7 @@ async def add_points(card_id: str, action_data: CardActionRequest, current_user:
     return {"success": True, "card": mask_pii(card_data), "message": message}
 
 @router.post("/cards/{card_id}/subtract-point")
-async def subtract_point(card_id: str, action_data: CardActionRequest, current_user: dict = Depends(get_current_user)):
+async def subtract_point(card_id: str, action_data: CardActionRequest, current_user: dict = Depends(get_current_user), api_key: str = Depends(get_api_key)):
     """Subtract points from certificate/gift/cashback cards."""
     gerente_name = action_data.gerente or current_user.get('name', '')
     comment_with_gerente = build_comment_with_gerente(action_data.comment, gerente_name)
@@ -458,7 +466,7 @@ async def subtract_point(card_id: str, action_data: CardActionRequest, current_u
     else:
         payload["purchaseSum"] = amount
     
-    response = await call_boomerang_api('POST', f'/cards/{card_id}/subtract-point', payload)
+    response = await call_boomerang_api('POST', f'/cards/{card_id}/subtract-point', payload, api_key=api_key)
     card_data = response.get('data', {})
     
     await log_operation(
@@ -476,7 +484,7 @@ async def subtract_point(card_id: str, action_data: CardActionRequest, current_u
     return {"success": True, "card": mask_pii(card_data), "message": "Saldo canjeado exitosamente"}
 
 @router.post("/cards/{card_id}/redeem-points")
-async def redeem_points(card_id: str, action_data: CardActionRequest, current_user: dict = Depends(get_current_user)):
+async def redeem_points(card_id: str, action_data: CardActionRequest, current_user: dict = Depends(get_current_user), api_key: str = Depends(get_api_key)):
     """Redeem points."""
     gerente_name = action_data.gerente or current_user.get('name', '')
     comment_with_gerente = build_comment_with_gerente(action_data.comment, gerente_name)
@@ -485,7 +493,7 @@ async def redeem_points(card_id: str, action_data: CardActionRequest, current_us
     if comment_with_gerente:
         payload["comment"] = comment_with_gerente
     
-    response = await call_boomerang_api('POST', f'/cards/{card_id}/redeem-points', payload)
+    response = await call_boomerang_api('POST', f'/cards/{card_id}/redeem-points', payload, api_key=api_key)
     card_data = response.get('data', {})
     
     await log_operation(
@@ -504,7 +512,7 @@ async def redeem_points(card_id: str, action_data: CardActionRequest, current_us
 # ============ VISIT ACTIONS ============
 
 @router.post("/cards/{card_id}/add-visit")
-async def add_visit(card_id: str, action_data: CardActionRequest, current_user: dict = Depends(get_current_user)):
+async def add_visit(card_id: str, action_data: CardActionRequest, current_user: dict = Depends(get_current_user), api_key: str = Depends(get_api_key)):
     """Add visits to customer."""
     gerente_name = action_data.gerente or current_user.get('name', '')
     comment_with_gerente = build_comment_with_gerente(action_data.comment, gerente_name)
@@ -515,7 +523,7 @@ async def add_visit(card_id: str, action_data: CardActionRequest, current_user: 
     if action_data.purchaseSum:
         payload["purchaseSum"] = action_data.purchaseSum
     
-    response = await call_boomerang_api('POST', f'/cards/{card_id}/add-visit', payload)
+    response = await call_boomerang_api('POST', f'/cards/{card_id}/add-visit', payload, api_key=api_key)
     card_data = response.get('data', {})
     
     await log_operation(
@@ -533,7 +541,7 @@ async def add_visit(card_id: str, action_data: CardActionRequest, current_user: 
     return {"success": True, "card": mask_pii(card_data), "message": "Visitas agregadas exitosamente"}
 
 @router.post("/cards/{card_id}/redeem-visit")
-async def redeem_visit(card_id: str, action_data: CardActionRequest, current_user: dict = Depends(get_current_user)):
+async def redeem_visit(card_id: str, action_data: CardActionRequest, current_user: dict = Depends(get_current_user), api_key: str = Depends(get_api_key)):
     """Redeem visits."""
     gerente_name = action_data.gerente or current_user.get('name', '')
     comment_with_gerente = build_comment_with_gerente(action_data.comment, gerente_name)
@@ -544,7 +552,7 @@ async def redeem_visit(card_id: str, action_data: CardActionRequest, current_use
     if action_data.purchaseSum:
         payload["purchaseSum"] = action_data.purchaseSum
     
-    response = await call_boomerang_api('POST', f'/cards/{card_id}/redeem-visit', payload)
+    response = await call_boomerang_api('POST', f'/cards/{card_id}/redeem-visit', payload, api_key=api_key)
     card_data = response.get('data', {})
     
     await log_operation(
@@ -562,7 +570,7 @@ async def redeem_visit(card_id: str, action_data: CardActionRequest, current_use
     return {"success": True, "card": mask_pii(card_data), "message": "Visita canjeada exitosamente"}
 
 @router.post("/cards/{card_id}/subtract-visit")
-async def subtract_visit(card_id: str, action_data: CardActionRequest, current_user: dict = Depends(get_current_user)):
+async def subtract_visit(card_id: str, action_data: CardActionRequest, current_user: dict = Depends(get_current_user), api_key: str = Depends(get_api_key)):
     """Customer uses a visit."""
     gerente_name = action_data.gerente or current_user.get('name', '')
     comment_with_gerente = build_comment_with_gerente(action_data.comment, gerente_name)
@@ -573,7 +581,7 @@ async def subtract_visit(card_id: str, action_data: CardActionRequest, current_u
     if action_data.purchaseSum:
         payload["purchaseSum"] = action_data.purchaseSum
     
-    response = await call_boomerang_api('POST', f'/cards/{card_id}/subtract-visit', payload)
+    response = await call_boomerang_api('POST', f'/cards/{card_id}/subtract-visit', payload, api_key=api_key)
     card_data = response.get('data', {})
     
     await log_operation(
@@ -593,7 +601,7 @@ async def subtract_visit(card_id: str, action_data: CardActionRequest, current_u
 # ============ COUPON ACTIONS ============
 
 @router.post("/cards/{card_id}/use-coupon")
-async def use_coupon(card_id: str, action_data: CardActionRequest, current_user: dict = Depends(get_current_user)):
+async def use_coupon(card_id: str, action_data: CardActionRequest, current_user: dict = Depends(get_current_user), api_key: str = Depends(get_api_key)):
     """Redeem a coupon."""
     gerente_name = action_data.gerente or current_user.get('name', '')
     comment_with_gerente = build_comment_with_gerente(action_data.comment, gerente_name)
@@ -604,7 +612,7 @@ async def use_coupon(card_id: str, action_data: CardActionRequest, current_user:
     if action_data.purchaseSum:
         payload["purchaseSum"] = action_data.purchaseSum
     
-    response = await call_boomerang_api('POST', f'/cards/{card_id}/redeem-coupon', payload)
+    response = await call_boomerang_api('POST', f'/cards/{card_id}/redeem-coupon', payload, api_key=api_key)
     card_data = response.get('data', {})
     
     await log_operation(
@@ -623,7 +631,7 @@ async def use_coupon(card_id: str, action_data: CardActionRequest, current_user:
 # ============ REWARD CARD ACTIONS ============
 
 @router.post("/cards/{card_id}/redeem-reward")
-async def redeem_reward(card_id: str, action_data: CardActionRequest, current_user: dict = Depends(get_current_user)):
+async def redeem_reward(card_id: str, action_data: CardActionRequest, current_user: dict = Depends(get_current_user), api_key: str = Depends(get_api_key)):
     """Redeem reward."""
     gerente_name = action_data.gerente or current_user.get('name', '')
     comment_with_gerente = build_comment_with_gerente(action_data.comment, gerente_name)
@@ -632,7 +640,7 @@ async def redeem_reward(card_id: str, action_data: CardActionRequest, current_us
     if comment_with_gerente:
         payload["comment"] = comment_with_gerente
     
-    response = await call_boomerang_api('POST', f'/cards/{card_id}/receive-reward', payload)
+    response = await call_boomerang_api('POST', f'/cards/{card_id}/receive-reward', payload, api_key=api_key)
     card_data = response.get('data', {})
     
     await log_operation(
@@ -648,7 +656,7 @@ async def redeem_reward(card_id: str, action_data: CardActionRequest, current_us
     return {"success": True, "card": mask_pii(card_data), "message": "Recompensa canjeada exitosamente"}
 
 @router.post("/cards/{card_id}/add-reward")
-async def add_reward(card_id: str, action_data: CardActionRequest, current_user: dict = Depends(get_current_user)):
+async def add_reward(card_id: str, action_data: CardActionRequest, current_user: dict = Depends(get_current_user), api_key: str = Depends(get_api_key)):
     """Add rewards to reward cards."""
     gerente_name = action_data.gerente or current_user.get('name', '')
     comment_with_gerente = build_comment_with_gerente(action_data.comment, gerente_name)
@@ -659,7 +667,7 @@ async def add_reward(card_id: str, action_data: CardActionRequest, current_user:
     if action_data.purchaseSum:
         payload["purchaseSum"] = action_data.purchaseSum
     
-    response = await call_boomerang_api('POST', f'/cards/{card_id}/add-reward', payload)
+    response = await call_boomerang_api('POST', f'/cards/{card_id}/add-reward', payload, api_key=api_key)
     card_data = response.get('data', {})
     
     await log_operation(
@@ -677,7 +685,7 @@ async def add_reward(card_id: str, action_data: CardActionRequest, current_user:
     return {"success": True, "card": mask_pii(card_data), "message": "Recompensas agregadas exitosamente"}
 
 @router.post("/cards/{card_id}/add-scores")
-async def add_scores(card_id: str, action_data: CardActionRequest, current_user: dict = Depends(get_current_user)):
+async def add_scores(card_id: str, action_data: CardActionRequest, current_user: dict = Depends(get_current_user), api_key: str = Depends(get_api_key)):
     """Add scores/points to reward cards (manual points mode)."""
     gerente_name = action_data.gerente or current_user.get('name', '')
     comment_with_gerente = build_comment_with_gerente(action_data.comment, gerente_name)
@@ -688,7 +696,7 @@ async def add_scores(card_id: str, action_data: CardActionRequest, current_user:
     if action_data.purchaseSum:
         payload["purchaseSum"] = action_data.purchaseSum
     
-    response = await call_boomerang_api('POST', f'/cards/{card_id}/add-scores', payload)
+    response = await call_boomerang_api('POST', f'/cards/{card_id}/add-scores', payload, api_key=api_key)
     card_data = response.get('data', {})
     
     await log_operation(
@@ -706,7 +714,7 @@ async def add_scores(card_id: str, action_data: CardActionRequest, current_user:
     return {"success": True, "card": mask_pii(card_data), "message": "Puntos agregados exitosamente"}
 
 @router.post("/cards/{card_id}/add-purchase")
-async def add_purchase(card_id: str, action_data: CardActionRequest, current_user: dict = Depends(get_current_user)):
+async def add_purchase(card_id: str, action_data: CardActionRequest, current_user: dict = Depends(get_current_user), api_key: str = Depends(get_api_key)):
     """Add purchase to reward/stamp cards (spend mode - points calculated by system rules)."""
     gerente_name = action_data.gerente or current_user.get('name', '')
     comment_with_gerente = build_comment_with_gerente(action_data.comment, gerente_name)
@@ -720,7 +728,7 @@ async def add_purchase(card_id: str, action_data: CardActionRequest, current_use
     # purchaseSum is the same as amount in this context
     payload["purchaseSum"] = float(purchase_amount)
     
-    response = await call_boomerang_api('POST', f'/cards/{card_id}/add-purchase', payload)
+    response = await call_boomerang_api('POST', f'/cards/{card_id}/add-purchase', payload, api_key=api_key)
     card_data = response.get('data', {})
     
     await log_operation(
@@ -738,7 +746,7 @@ async def add_purchase(card_id: str, action_data: CardActionRequest, current_use
     return {"success": True, "card": mask_pii(card_data), "message": "Compra registrada exitosamente"}
 
 @router.post("/cards/{card_id}/add-visit-reward")
-async def add_visit_reward(card_id: str, action_data: CardActionRequest, current_user: dict = Depends(get_current_user)):
+async def add_visit_reward(card_id: str, action_data: CardActionRequest, current_user: dict = Depends(get_current_user), api_key: str = Depends(get_api_key)):
     """Add visit to reward cards (visit mode - points calculated per visit)."""
     gerente_name = action_data.gerente or current_user.get('name', '')
     comment_with_gerente = build_comment_with_gerente(action_data.comment, gerente_name)
@@ -749,7 +757,7 @@ async def add_visit_reward(card_id: str, action_data: CardActionRequest, current
     if action_data.purchaseSum:
         payload["purchaseSum"] = action_data.purchaseSum
     
-    response = await call_boomerang_api('POST', f'/cards/{card_id}/add-visit', payload)
+    response = await call_boomerang_api('POST', f'/cards/{card_id}/add-visit', payload, api_key=api_key)
     card_data = response.get('data', {})
     
     await log_operation(
@@ -767,7 +775,7 @@ async def add_visit_reward(card_id: str, action_data: CardActionRequest, current
     return {"success": True, "card": mask_pii(card_data), "message": "Visita registrada exitosamente"}
 
 @router.post("/cards/{card_id}/add-points-auto")
-async def add_points_auto(card_id: str, action_data: CardActionRequest, current_user: dict = Depends(get_current_user)):
+async def add_points_auto(card_id: str, action_data: CardActionRequest, current_user: dict = Depends(get_current_user), api_key: str = Depends(get_api_key)):
     """
     Auto-detect accrual type for reward cards and call appropriate endpoint.
     Tries add-purchase (spend), add-visit, or add-scores based on template config.
@@ -805,7 +813,7 @@ async def add_points_auto(card_id: str, action_data: CardActionRequest, current_
             elif endpoint == 'add-purchase':
                 payload["purchaseSum"] = param_value
             
-            response = await call_boomerang_api('POST', f'/cards/{card_id}/{endpoint}', payload)
+            response = await call_boomerang_api('POST', f'/cards/{card_id}/{endpoint}', payload, api_key=api_key)
             
             if response.get('code') == 200:
                 card_data = response.get('data', {})
@@ -846,7 +854,7 @@ async def add_points_auto(card_id: str, action_data: CardActionRequest, current_
     raise HTTPException(status_code=400, detail="No se pudo determinar el tipo de acumulación")
 
 @router.post("/cards/{card_id}/detect-accrual-mode")
-async def detect_accrual_mode(card_id: str, current_user: dict = Depends(get_current_user)):
+async def detect_accrual_mode(card_id: str, current_user: dict = Depends(get_current_user), api_key: str = Depends(get_api_key)):
     """
     Detect accrual mode for reward cards without making actual transactions.
     Tries each endpoint with zero/minimal value and detects based on error response.
@@ -862,7 +870,7 @@ async def detect_accrual_mode(card_id: str, current_user: dict = Depends(get_cur
         try:
             # Use a dry-run approach - zero amounts should fail gracefully
             # but the error message will tell us if it's the wrong accrual type
-            response = await call_boomerang_api('POST', f'/cards/{card_id}/{endpoint}', payload)
+            response = await call_boomerang_api('POST', f'/cards/{card_id}/{endpoint}', payload, api_key=api_key)
             
             # If it succeeds with zero, this mode is supported
             if response.get('code') == 200:
@@ -884,7 +892,7 @@ async def detect_accrual_mode(card_id: str, current_user: dict = Depends(get_cur
     return {"success": True, "detectedMode": "spend"}
 
 @router.post("/cards/{card_id}/subtract-scores")
-async def subtract_scores(card_id: str, action_data: CardActionRequest, current_user: dict = Depends(get_current_user)):
+async def subtract_scores(card_id: str, action_data: CardActionRequest, current_user: dict = Depends(get_current_user), api_key: str = Depends(get_api_key)):
     """Subtract scores/points from cards."""
     gerente_name = action_data.gerente or current_user.get('name', '')
     comment_with_gerente = build_comment_with_gerente(action_data.comment, gerente_name)
@@ -895,7 +903,7 @@ async def subtract_scores(card_id: str, action_data: CardActionRequest, current_
     if action_data.purchaseSum:
         payload["purchaseSum"] = action_data.purchaseSum
     
-    response = await call_boomerang_api('POST', f'/cards/{card_id}/subtract-scores', payload)
+    response = await call_boomerang_api('POST', f'/cards/{card_id}/subtract-scores', payload, api_key=api_key)
     card_data = response.get('data', {})
     
     await log_operation(
@@ -913,7 +921,7 @@ async def subtract_scores(card_id: str, action_data: CardActionRequest, current_
     return {"success": True, "card": mask_pii(card_data), "message": "Puntos canjeados exitosamente"}
 
 @router.post("/cards/{card_id}/receive-reward")
-async def receive_reward(card_id: str, action_data: CardActionRequest, current_user: dict = Depends(get_current_user)):
+async def receive_reward(card_id: str, action_data: CardActionRequest, current_user: dict = Depends(get_current_user), api_key: str = Depends(get_api_key)):
     """Receive/redeem reward from reward cards."""
     gerente_name = action_data.gerente or current_user.get('name', '')
     comment_with_gerente = build_comment_with_gerente(action_data.comment, gerente_name)
@@ -924,7 +932,7 @@ async def receive_reward(card_id: str, action_data: CardActionRequest, current_u
     if action_data.purchaseSum:
         payload["purchaseSum"] = action_data.purchaseSum
     
-    response = await call_boomerang_api('POST', f'/cards/{card_id}/receive-reward', payload)
+    response = await call_boomerang_api('POST', f'/cards/{card_id}/receive-reward', payload, api_key=api_key)
     card_data = response.get('data', {})
     
     # Log with reward_value as amount (not tier ID), and purchase_sum

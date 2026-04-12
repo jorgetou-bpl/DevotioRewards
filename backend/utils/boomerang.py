@@ -9,6 +9,16 @@ from .config import db, BOOMERANG_API_BASE, BOOMERANG_API_KEY
 
 logger = logging.getLogger(__name__)
 
+async def get_workspace_api_key(user: dict) -> str:
+    """Get the Boomerangme API key for the user's workspace. Falls back to global key."""
+    workspace_id = user.get("workspace_id")
+    if workspace_id:
+        ws = await db.workspaces.find_one({"id": workspace_id}, {"_id": 0, "boomerangme_api_key": 1})
+        if ws and ws.get("boomerangme_api_key"):
+            return ws["boomerangme_api_key"]
+    return BOOMERANG_API_KEY
+
+
 # ============ ERROR HANDLING ============
 
 SUPPORT_MESSAGE = "Por favor contacte al administrador de Devotio Rewards para asistencia."
@@ -213,14 +223,17 @@ def build_comment_with_gerente(original_comment: str, gerente_name: str) -> str:
 
 # ============ BOOMERANG API CALLS ============
 
-async def call_boomerang_api(method: str, endpoint: str, data: dict = None, raise_on_error: bool = True) -> dict:
+async def call_boomerang_api(method: str, endpoint: str, data: dict = None, raise_on_error: bool = True, api_key: str = None) -> dict:
     """Make API calls to Boomerang/DigitalWallet API."""
     # Handle demo cards
     if endpoint and 'DEMO-' in endpoint.upper():
         return get_mock_response(endpoint, method, data)
     
+    # Use workspace-specific API key if provided, otherwise fall back to global
+    effective_key = api_key or BOOMERANG_API_KEY
+    
     url = f"{BOOMERANG_API_BASE}{endpoint}"
-    headers = {"X-Api-Key": BOOMERANG_API_KEY, "Content-Type": "application/json"}
+    headers = {"X-Api-Key": effective_key, "Content-Type": "application/json"}
     
     try:
         async with httpx.AsyncClient(timeout=30.0) as client:

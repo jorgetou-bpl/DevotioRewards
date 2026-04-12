@@ -1,7 +1,7 @@
 # Backend Models - Pydantic models for API requests/responses
 
 from pydantic import BaseModel, EmailStr
-from typing import Optional, Literal
+from typing import Optional, Literal, List
 
 # ============ USER MODELS ============
 
@@ -9,7 +9,7 @@ class UserCreate(BaseModel):
     email: EmailStr
     password: str
     name: Optional[str] = None
-    role: Literal["admin", "user"] = "user"
+    role: Literal["super_admin", "workspace_admin", "operator"] = "operator"
 
 class UserLogin(BaseModel):
     email: EmailStr
@@ -19,12 +19,17 @@ class TokenResponse(BaseModel):
     token: str
     email: str
     name: Optional[str] = None
-    role: Optional[str] = "user"
+    role: Optional[str] = "operator"
+    workspace_id: Optional[str] = None
+    workspace_name: Optional[str] = None
 
 class UserResponse(BaseModel):
     email: str
     name: Optional[str] = None
-    role: Optional[str] = "user"
+    role: Optional[str] = "operator"
+    workspace_id: Optional[str] = None
+    workspace_name: Optional[str] = None
+    location: Optional[str] = None
 
 # ============ ADMIN SETUP MODELS ============
 
@@ -34,7 +39,46 @@ class AdminUserCreate(BaseModel):
     email: EmailStr
     password: str
     name: str
-    role: Literal["admin", "user"] = "user"
+    role: Literal["super_admin", "workspace_admin", "operator"] = "operator"
+
+# ============ WORKSPACE MODELS ============
+
+class WorkspaceLocation(BaseModel):
+    name: str
+    address: Optional[str] = None
+
+class WorkspaceCreate(BaseModel):
+    master_code: str
+    name: str
+    slug: Optional[str] = None
+    boomerangme_api_key: str
+    locations: Optional[List[WorkspaceLocation]] = []
+    # Optionally create the workspace admin at the same time
+    admin_email: Optional[EmailStr] = None
+    admin_password: Optional[str] = None
+    admin_name: Optional[str] = None
+
+class WorkspaceUpdate(BaseModel):
+    name: Optional[str] = None
+    boomerangme_api_key: Optional[str] = None
+    locations: Optional[List[WorkspaceLocation]] = None
+    active: Optional[bool] = None
+
+class WorkspaceResponse(BaseModel):
+    id: str
+    name: str
+    slug: str
+    active: bool = True
+    locations: List[dict] = []
+    has_api_key: bool = False
+    user_count: int = 0
+
+class WorkspaceUserCreate(BaseModel):
+    email: EmailStr
+    password: str
+    name: str
+    role: Literal["workspace_admin", "operator"] = "operator"
+    location: Optional[str] = None
 
 # ============ SETTINGS MODELS ============
 

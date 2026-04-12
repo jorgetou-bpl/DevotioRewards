@@ -51,11 +51,11 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     const response = await axios.post(`${API}/auth/login`, { email, password });
-    const { token: newToken, email: userEmail, name: userName } = response.data;
+    const { token: newToken, email: userEmail, name: userName, role, workspace_id, workspace_name } = response.data;
     
     localStorage.setItem('token', newToken);
     setToken(newToken);
-    setUser({ email: userEmail, name: userName });
+    setUser({ email: userEmail, name: userName, role, workspace_id, workspace_name });
     
     return response.data;
   };

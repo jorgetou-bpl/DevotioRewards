@@ -18,7 +18,8 @@ import {
   Loader2,
   Camera,
   CameraOff,
-  ClipboardList
+  ClipboardList,
+  Building2
 } from 'lucide-react';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
@@ -176,6 +177,9 @@ const ScannerPage = () => {
     { icon: Home, label: 'Inicio', action: () => navigate('/'), testId: 'menu-home' },
     { icon: ClipboardList, label: 'Operaciones', action: () => navigate('/operations'), testId: 'menu-operations' },
     { icon: Settings, label: 'Configuración', action: () => navigate('/settings'), testId: 'menu-settings' },
+    ...(user?.role === 'workspace_admin' || user?.role === 'super_admin' ? [
+      { icon: Building2, label: 'Admin Workspace', action: () => navigate('/admin/workspace'), testId: 'menu-admin' }
+    ] : []),
     { icon: HelpCircle, label: 'Soporte', action: () => navigate('/support'), testId: 'menu-support' },
     { icon: LogOut, label: 'Cerrar Sesión', action: handleLogout, testId: 'menu-logout' }
   ];

@@ -84,20 +84,46 @@ async def login(credentials: UserLogin):
     if not stored_hash or not verify_password(credentials.password, stored_hash):
         raise HTTPException(status_code=401, detail="Credenciales incorrectas")
     
+    # Map legacy roles
+    role = user.get("role", "operator")
+    if role == "admin":
+        role = "workspace_admin"
+    elif role == "user":
+        role = "operator"
+    
+    # Get workspace name if applicable
+    workspace_id = user.get("workspace_id")
+    workspace_name = None
+    if workspace_id:
+        ws = await db.workspaces.find_one({"id": workspace_id}, {"_id": 0, "name": 1})
+        if ws:
+            workspace_name = ws.get("name")
+    
     # Get user ID - support both '_id' (ObjectId) and 'id' (string) formats
     user_id = user.get("id") or str(user.get("_id"))
     return TokenResponse(
         token=create_token(user_id), 
         email=user["email"], 
         name=user.get("name"),
-        role=user.get("role", "user")
+        role=role,
+        workspace_id=workspace_id,
+        workspace_name=workspace_name
     )
 
 @router.get("/me", response_model=UserResponse)
 async def get_me(current_user: dict = Depends(get_current_user)):
     """Get current user info."""
+    workspace_name = None
+    if current_user.get("workspace_id"):
+        ws = await db.workspaces.find_one({"id": current_user["workspace_id"]}, {"_id": 0, "name": 1})
+        if ws:
+            workspace_name = ws.get("name")
+    
     return UserResponse(
         email=current_user["email"], 
         name=current_user.get("name"),
-        role=current_user.get("role", "user")
+        role=current_user.get("role", "operator"),
+        workspace_id=current_user.get("workspace_id"),
+        workspace_name=workspace_name,
+        location=current_user.get("location")
     )

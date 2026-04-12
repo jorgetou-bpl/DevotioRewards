@@ -27,6 +27,9 @@ async def get_operations(
 ):
     """Get operations history with filtering."""
     query_filter = {}
+    ws_id = current_user.get("workspace_id")
+    if ws_id:
+        query_filter["workspace_id"] = ws_id
     
     if start_date:
         query_filter["created_at"] = {"$gte": start_date}
@@ -86,6 +89,9 @@ async def export_operations(
 ):
     """Export operations to CSV or XLSX format."""
     query_filter = {}
+    ws_id = current_user.get("workspace_id")
+    if ws_id:
+        query_filter["workspace_id"] = ws_id
     
     if start_date:
         query_filter["created_at"] = {"$gte": start_date}
@@ -237,6 +243,9 @@ async def get_operations_summary(
 ):
     """Get summary statistics for operations."""
     query_filter = {}
+    ws_id = current_user.get("workspace_id")
+    if ws_id:
+        query_filter["workspace_id"] = ws_id
     
     if start_date:
         query_filter["created_at"] = {"$gte": start_date}

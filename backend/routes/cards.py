@@ -35,7 +35,8 @@ async def detect_and_log_new_rewards(
     old_rewards_unused: int,
     new_rewards_unused: int,
     card_data: dict,
-    template_data: dict = None
+    template_data: dict = None,
+    workspace_id: str = None
 ):
     """
     Detect if new rewards were earned and log them with timestamps.
@@ -73,6 +74,7 @@ async def detect_and_log_new_rewards(
         reward_record = {
             "id": str(uuid.uuid4()),
             "card_id": card_id,
+            "workspace_id": workspace_id,
             "customer_name": customer_name,
             "template_id": str(template_id),
             "reward_threshold": threshold,
@@ -280,7 +282,8 @@ async def add_stamp(card_id: str, action_data: CardActionRequest, current_user: 
                     old_rewards_unused=old_rewards_unused,
                     new_rewards_unused=new_rewards_unused,
                     card_data=card_data,
-                    template_data=template_data
+                    template_data=template_data,
+                    workspace_id=current_user.get("workspace_id")
                 )
             
             await log_operation(

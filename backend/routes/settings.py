@@ -146,6 +146,7 @@ async def add_stamp_progress(
         {"card_id": card_id},
         {"$set": {
             "card_id": card_id,
+            "workspace_id": ws_id,
             "accumulated_amount": remaining,
             "last_updated": datetime.now(timezone.utc).isoformat()
         }},
@@ -277,8 +278,10 @@ async def get_tier_progress(card_id: str, current_user: dict = Depends(get_curre
     progress = await db.tier_progress.find_one({"card_id": str(card_id)}, {"_id": 0})
     accumulated = progress.get("accumulated_amount", 0) if progress else 0
     
-    # Get tier config to calculate current/next tier
-    config = await db.discount_tiers.find_one({"type": "global"}, {"_id": 0})
+    # Get tier config filtered by workspace
+    ws_id = current_user.get("workspace_id")
+    tier_query = {"workspace_id": ws_id} if ws_id else {"type": "global"}
+    config = await db.discount_tiers.find_one(tier_query, {"_id": 0})
     tiers = sorted(config.get("tiers", []), key=lambda x: x["threshold"]) if config else []
     
     current_tier = None
@@ -319,10 +322,12 @@ async def add_tier_progress(card_id: str, amount: float, current_user: dict = De
     current_amount = progress.get("accumulated_amount", 0) if progress else 0
     new_amount = current_amount + amount
     
+    ws_id = current_user.get("workspace_id")
     await db.tier_progress.update_one(
         {"card_id": str(card_id)},
         {"$set": {
             "card_id": str(card_id),
+            "workspace_id": ws_id,
             "accumulated_amount": new_amount,
             "updated_by": current_user.get("email", ""),
             "updated_at": datetime.now(timezone.utc).isoformat()
@@ -330,8 +335,9 @@ async def add_tier_progress(card_id: str, amount: float, current_user: dict = De
         upsert=True
     )
     
-    # Get tier config to return current status
-    config = await db.discount_tiers.find_one({"type": "global"}, {"_id": 0})
+    # Get tier config filtered by workspace
+    tier_query = {"workspace_id": ws_id} if ws_id else {"type": "global"}
+    config = await db.discount_tiers.find_one(tier_query, {"_id": 0})
     tiers = sorted(config.get("tiers", []), key=lambda x: x["threshold"]) if config else []
     
     current_tier = None

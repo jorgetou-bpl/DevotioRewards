@@ -183,6 +183,7 @@ async def log_operation(
         operation_record = {
             "id": operation_id,
             "created_at": datetime.now(timezone.utc).isoformat(),
+            "workspace_id": current_user.get("workspace_id"),
             "card_id": card_id,
             "customer_name": customer_name,
             "customer_phone": customer_phone,

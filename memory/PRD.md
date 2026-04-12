@@ -538,9 +538,25 @@ BOOMERANG_API_KEY="542bcbc61866b65b2e63851267128679"  # UAT key
    - Implemented local tier progress tracking for cashback cards (Boomerangme doesn't track discountAmount)
    - Fixed cashback % to use local tier percentage instead of Boomerangme's stale value
 
+### Session 17 - Multi-Tenant Data Isolation Complete (April 12, 2026)
+1. **Completed workspace_id isolation across ALL database collections (P0)**
+   - `log_operation()` in `boomerang.py`: Now stores `workspace_id` from `current_user` in every operation record
+   - `operations.py`: All 3 endpoints (`GET /operations`, `GET /operations/export`, `GET /operations/summary`) now filter by `workspace_id`
+   - `settings.py`: `tier-progress` GET/POST now use workspace-scoped `discount_tiers` lookup instead of `{"type": "global"}`
+   - `settings.py`: `stamp-progress` POST now stores `workspace_id` in progress records
+   - `cards.py`: `detect_and_log_new_rewards()` now accepts and stores `workspace_id` in `rewards_earned` records
+   
+2. **Legacy Data Migration**
+   - Migrated 116 operations, 8 rewards_earned records to "Devotio Default" workspace
+   - All stamp_progress and tier_progress records already had workspace_id
+
+3. **Testing Results**
+   - `/app/test_reports/iteration_12.json`: 100% pass (12/12 backend, 4/4 frontend)
+   - Verified: Demo user sees 116 ops, Cafe Demo user sees 0 ops (isolation confirmed)
+   - Workspace admin page shows correct workspace info
+
 ## Backlog (P2)
 - Refactor ResultPage.js into card-type components
-- Multi-tenant admin panel (Phase 2)
 - Analytics dashboard
 - Webhook integration
 - App store publishing

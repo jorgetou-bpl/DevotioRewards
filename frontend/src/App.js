@@ -15,6 +15,7 @@ import SupportPage from "./pages/SupportPage";
 import OperationsPage from "./pages/OperationsPage";
 import AdminSetupPage from "./pages/AdminSetupPage";
 import WorkspaceAdminPage from "./pages/WorkspaceAdminPage";
+import SuperAdminDashboard from "./pages/SuperAdminDashboard";
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -115,6 +116,8 @@ function AppRoutes() {
       />
       {/* Admin Setup - Hidden route, no authentication required */}
       <Route path="/admin/setup" element={<AdminSetupPage />} />
+      {/* Super Admin Dashboard - Master code required */}
+      <Route path="/admin/dashboard" element={<SuperAdminDashboard />} />
       {/* Workspace Admin Panel - Protected */}
       <Route
         path="/admin/workspace"

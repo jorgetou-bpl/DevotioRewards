@@ -244,3 +244,115 @@ async def delete_workspace_user(workspace_id: str, user_id: str, current_user: d
     
     await db.users.delete_one({"id": user_id})
     return {"success": True, "message": "Usuario eliminado"}
+
+
+# ============ SUPER ADMIN DASHBOARD ============
+
+@router.post("/verify-master-code")
+async def verify_master_code(data: dict):
+    """Verify master code for super admin access."""
+    if data.get("master_code") != MASTER_CODE:
+        raise HTTPException(status_code=403, detail="Código maestro inválido")
+    return {"success": True}
+
+@router.get("/dashboard")
+async def get_dashboard(current_user: dict = Depends(require_super_admin)):
+    """Get super admin dashboard with all workspaces and stats."""
+    workspaces = []
+    async for ws in db.workspaces.find({}, {"_id": 0}):
+        ws_id = ws["id"]
+        user_count = await db.users.count_documents({"workspace_id": ws_id})
+        ops_count = await db.operations.count_documents({"workspace_id": ws_id})
+        
+        # Get user breakdown by role
+        admins = await db.users.count_documents({"workspace_id": ws_id, "role": "workspace_admin"})
+        operators = await db.users.count_documents({"workspace_id": ws_id, "role": "operator"})
+        
+        workspaces.append({
+            "id": ws_id,
+            "name": ws["name"],
+            "slug": ws.get("slug", ""),
+            "active": ws.get("active", True),
+            "locations": ws.get("locations", []),
+            "has_api_key": bool(ws.get("boomerangme_api_key")),
+            "created_at": ws.get("created_at"),
+            "user_count": user_count,
+            "admin_count": admins,
+            "operator_count": operators,
+            "operations_count": ops_count
+        })
+    
+    total_users = await db.users.count_documents({})
+    total_ops = await db.operations.count_documents({})
+    
+    return {
+        "success": True,
+        "workspaces": workspaces,
+        "totals": {
+            "workspaces": len(workspaces),
+            "users": total_users,
+            "operations": total_ops
+        }
+    }
+
+@router.get("/dashboard/workspaces/{workspace_id}/users")
+async def get_workspace_users_admin(workspace_id: str, current_user: dict = Depends(require_super_admin)):
+    """Get all users of a workspace. Super admin only."""
+    users = []
+    async for user in db.users.find(
+        {"workspace_id": workspace_id},
+        {"_id": 0, "password": 0, "hashed_password": 0}
+    ):
+        users.append({
+            "id": user.get("id"),
+            "email": user.get("email"),
+            "name": user.get("name"),
+            "role": user.get("role"),
+            "location": user.get("location")
+        })
+    return {"success": True, "users": users}
+
+@router.post("/dashboard/users/{user_id}/reset-password")
+async def reset_user_password(user_id: str, data: dict, current_user: dict = Depends(require_super_admin)):
+    """Reset a user's password. Requires master code. Super admin only."""
+    if data.get("master_code") != MASTER_CODE:
+        raise HTTPException(status_code=403, detail="Código maestro inválido")
+    
+    user = await db.users.find_one({"id": user_id})
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    
+    new_password = data.get("new_password")
+    if not new_password:
+        # Auto-generate temporary password
+        import random
+        import string
+        new_password = f"Temp-{random.randint(1000, 9999)}-{''.join(random.choices(string.ascii_uppercase, k=3))}"
+    
+    hashed_pw = hash_password(new_password)
+    await db.users.update_one(
+        {"id": user_id},
+        {"$set": {"hashed_password": hashed_pw, "password": hashed_pw}}
+    )
+    
+    return {
+        "success": True,
+        "message": f"Contraseña restablecida para {user.get('email')}",
+        "new_password": new_password,
+        "user_email": user.get("email")
+    }
+
+@router.patch("/dashboard/workspaces/{workspace_id}/toggle-active")
+async def toggle_workspace_active(workspace_id: str, current_user: dict = Depends(require_super_admin)):
+    """Toggle workspace active status. Super admin only."""
+    ws = await db.workspaces.find_one({"id": workspace_id})
+    if not ws:
+        raise HTTPException(status_code=404, detail="Workspace no encontrado")
+    
+    new_status = not ws.get("active", True)
+    await db.workspaces.update_one(
+        {"id": workspace_id},
+        {"$set": {"active": new_status, "updated_at": datetime.now(timezone.utc).isoformat()}}
+    )
+    
+    return {"success": True, "active": new_status, "message": f"Workspace {'activado' if new_status else 'desactivado'}"}

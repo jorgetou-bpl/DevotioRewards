@@ -577,6 +577,26 @@ BOOMERANG_API_KEY="542bcbc61866b65b2e63851267128679"  # UAT key
    - Verified all card types: cashback, discount, membership, reward
    - Operations page, settings page, collapsible panels all working
 
+### Session 17c - Super Admin Dashboard (April 13, 2026)
+1. **Panel Super Admin (`/admin/dashboard`)**
+   - Master code verification required (`DEVOTIO-2026-ADMIN`)
+   - Summary cards: total workspaces, users, operations
+   - List of all workspaces with: name, user count, operations count, locations, API key status
+   - Expandable workspace details: admins/operators breakdown, locations list, full user list
+   - Password reset: auto-generate (Temp-XXXX-XXX) or manual entry, with copy button
+   - Toggle workspace active/inactive
+   - Link to create new workspace (/admin/setup)
+
+2. **New Backend Endpoints**
+   - `POST /api/admin/verify-master-code`: Validates master code
+   - `GET /api/admin/dashboard`: All workspaces with stats (super_admin only)
+   - `GET /api/admin/dashboard/workspaces/{id}/users`: User list per workspace
+   - `POST /api/admin/dashboard/users/{id}/reset-password`: Reset password (requires master code)
+   - `PATCH /api/admin/dashboard/workspaces/{id}/toggle-active`: Toggle workspace status
+
+3. **Testing Results**
+   - `/app/test_reports/iteration_14.json`: 100% pass (13/13 backend, 14/14 frontend)
+
 ## Backlog (P2)
 - Refactor ResultPage.js into card-type components
 - Analytics dashboard

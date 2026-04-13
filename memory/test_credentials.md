@@ -1,12 +1,17 @@
 # Test Credentials
 
-## Login (Legacy - no workspace)
+## Login (Legacy - Devotio Default workspace)
 - Email: demo@devotio.com
 - Password: demo123
+- Role: super_admin
 
 ## Admin Setup
 - URL: /admin/setup
 - Master Code: DEVOTIO-2026-ADMIN
+
+## Super Admin Dashboard
+- URL: /admin/dashboard
+- Requires: Login as super_admin + Master Code
 
 ## Test Workspace: Cafe Demo
 - Workspace Admin: admin@cafedemo.com / admin123

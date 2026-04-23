@@ -610,6 +610,25 @@ BOOMERANG_API_KEY="542bcbc61866b65b2e63851267128679"  # UAT key
    - `/app/frontend/src/App.js`: `/admin/setup` → `Navigate to /admin/dashboard`
    - `/app/backend/server.py`: Added startup migration for super_admin role
 
+### Session 17e - Unified Admin UI & Role Editing (April 13, 2026)
+1. **Unified UI Design**
+   - WorkspaceAdminPage redesigned to match SuperAdminDashboard style
+   - Consistent: white nav-header with logo, pill-style tabs, stat cards, role badges
+   - Removed old dark purple header from WorkspaceAdminPage
+
+2. **Role Editing Feature**
+   - Click on any user's role badge → dropdown to change role
+   - Workspace admins: can set Operador/Administrador
+   - Super admins: can also set Super Admin
+   - Operators cannot access admin pages (403)
+   - Cannot edit own role or super_admin roles (unless you're super_admin)
+
+3. **New Backend Endpoint**
+   - `PUT /api/admin/workspaces/{id}/users/{user_id}/role`: Change user role with permission checks
+
+4. **Testing Results**
+   - `/app/test_reports/iteration_15.json`: 100% pass (12/12 backend, 13/13 frontend)
+
 ## Backlog (P2)
 - Refactor ResultPage.js into card-type components
 - Analytics dashboard

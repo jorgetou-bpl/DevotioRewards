@@ -32,6 +32,7 @@ const SuperAdminDashboard = () => {
   const [resetting, setResetting] = useState(false);
   const [resetResult, setResetResult] = useState(null);
   const [copiedPassword, setCopiedPassword] = useState(false);
+  const [editingRole, setEditingRole] = useState(null);
 
   // Create workspace state
   const [workspaceName, setWorkspaceName] = useState('');
@@ -121,6 +122,16 @@ const SuperAdminDashboard = () => {
     navigator.clipboard.writeText(text);
     setCopiedPassword(true);
     setTimeout(() => setCopiedPassword(false), 2000);
+  };
+
+  const handleUpdateRole = async (wsId, userId, newRole) => {
+    const token = localStorage.getItem('token');
+    try {
+      await axios.put(`${API}/admin/workspaces/${wsId}/users/${userId}/role`, { role: newRole }, { headers: { Authorization: `Bearer ${token}` } });
+      toast.success('Rol actualizado');
+      setEditingRole(null);
+      fetchWorkspaceUsers(wsId);
+    } catch (err) { toast.error(err.response?.data?.detail || 'Error al actualizar rol'); }
   };
 
   // Create workspace
@@ -424,17 +435,34 @@ const SuperAdminDashboard = () => {
                           <div className="text-center py-4"><Loader2 className="h-5 w-5 animate-spin mx-auto text-zinc-400" /></div>
                         ) : workspaceUsers[ws.id]?.length > 0 ? (
                           <div className="space-y-2">
-                            {workspaceUsers[ws.id].map((u) => (
+                            {workspaceUsers[ws.id].map((u) => {
+                              const isEditing = editingRole === u.id;
+                              const canEditRole = u.role !== 'super_admin';
+                              const roleLabel = u.role === 'super_admin' ? 'Super Admin' : u.role === 'workspace_admin' ? 'Admin' : 'Operador';
+                              const roleCls = u.role === 'super_admin' ? 'bg-purple-100 text-purple-700' : u.role === 'workspace_admin' ? 'bg-blue-100 text-blue-700' : 'bg-zinc-100 text-zinc-600';
+                              return (
                               <div key={u.id} className="flex items-center justify-between bg-white p-3 rounded-lg">
                                 <div>
                                   <p className="font-medium text-sm text-[#120627]">{u.name}</p>
                                   <p className="text-xs text-zinc-500">{u.email}</p>
                                   <div className="flex items-center gap-2 mt-1">
-                                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                                      u.role === 'super_admin' ? 'bg-purple-100 text-purple-700' :
-                                      u.role === 'workspace_admin' ? 'bg-blue-100 text-blue-700' :
-                                      'bg-zinc-100 text-zinc-600'
-                                    }`}>{u.role === 'super_admin' ? 'Super Admin' : u.role === 'workspace_admin' ? 'Admin' : 'Operador'}</span>
+                                    {isEditing ? (
+                                      <select value={u.role} onChange={(e) => handleUpdateRole(ws.id, u.id, e.target.value)}
+                                        onBlur={() => setEditingRole(null)}
+                                        className="text-xs border border-zinc-300 rounded-lg px-2 py-1 bg-white" autoFocus
+                                        data-testid={`role-select-${u.id}`}>
+                                        <option value="operator">Operador</option>
+                                        <option value="workspace_admin">Administrador</option>
+                                        <option value="super_admin">Super Admin</option>
+                                      </select>
+                                    ) : (
+                                      <button onClick={() => canEditRole && setEditingRole(u.id)}
+                                        className={`text-xs px-2 py-0.5 rounded-full font-medium ${roleCls} ${canEditRole ? 'cursor-pointer hover:ring-2 hover:ring-[#120627]/20' : 'cursor-default'}`}
+                                        title={canEditRole ? 'Click para cambiar rol' : ''}
+                                        data-testid={`role-badge-${u.id}`}>
+                                        {roleLabel}
+                                      </button>
+                                    )}
                                     {u.location && <span className="text-xs text-zinc-400">{u.location}</span>}
                                   </div>
                                 </div>
@@ -443,7 +471,8 @@ const SuperAdminDashboard = () => {
                                   <RefreshCw className="h-3 w-3" /> Restablecer
                                 </Button>
                               </div>
-                            ))}
+                              );
+                            })}
                           </div>
                         ) : (
                           <p className="text-sm text-zinc-400 text-center py-4">No hay usuarios en este workspace</p>

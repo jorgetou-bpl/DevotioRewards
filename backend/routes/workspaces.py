@@ -246,6 +246,31 @@ async def delete_workspace_user(workspace_id: str, user_id: str, current_user: d
     return {"success": True, "message": "Usuario eliminado"}
 
 
+@router.put("/workspaces/{workspace_id}/users/{user_id}/role")
+async def update_user_role(workspace_id: str, user_id: str, data: dict, current_user: dict = Depends(require_workspace_admin)):
+    """Update a user's role. Workspace admins can manage their own workspace users."""
+    if current_user.get("role") == "workspace_admin" and current_user.get("workspace_id") != workspace_id:
+        raise HTTPException(status_code=403, detail="No tiene acceso a este workspace")
+    
+    new_role = data.get("role")
+    valid_roles = ["operator", "workspace_admin"]
+    if current_user.get("role") == "super_admin":
+        valid_roles.append("super_admin")
+    
+    if new_role not in valid_roles:
+        raise HTTPException(status_code=400, detail=f"Rol inválido. Opciones: {', '.join(valid_roles)}")
+    
+    target_user = await db.users.find_one({"id": user_id, "workspace_id": workspace_id})
+    if not target_user:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    
+    if target_user.get("role") == "super_admin" and current_user.get("role") != "super_admin":
+        raise HTTPException(status_code=403, detail="No puede modificar un super admin")
+    
+    await db.users.update_one({"id": user_id}, {"$set": {"role": new_role}})
+    return {"success": True, "message": f"Rol actualizado a '{new_role}'"}
+
+
 # ============ SUPER ADMIN DASHBOARD ============
 
 @router.post("/verify-master-code")

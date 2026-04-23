@@ -6,7 +6,7 @@ import logging
 from datetime import datetime, timezone
 
 # Import database connection
-from utils.config import client
+from utils.config import client, db
 
 # Import routers
 from routes.auth import router as auth_router
@@ -61,6 +61,18 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Startup migration
+@app.on_event("startup")
+async def run_migrations():
+    """Ensure critical data is correct on every startup."""
+    # Ensure demo@devotio.com has super_admin role
+    result = await db.users.update_one(
+        {"email": "demo@devotio.com", "role": {"$ne": "super_admin"}},
+        {"$set": {"role": "super_admin"}}
+    )
+    if result.modified_count > 0:
+        logger.info("Migration: Updated demo@devotio.com to super_admin role")
 
 # Shutdown handler
 @app.on_event("shutdown")

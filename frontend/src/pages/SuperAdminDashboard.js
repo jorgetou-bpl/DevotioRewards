@@ -6,8 +6,8 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import {
   Shield, Building2, Users, Activity, ChevronDown, ChevronUp,
-  Key, RefreshCw, Loader2, ArrowLeft, MapPin, Eye, EyeOff,
-  ToggleLeft, ToggleRight, Copy, Check
+  Key, RefreshCw, Loader2, ArrowLeft, MapPin, UserPlus,
+  ToggleLeft, ToggleRight, Copy, Check, Plus, X
 } from 'lucide-react';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
@@ -22,6 +22,9 @@ const SuperAdminDashboard = () => {
   const [workspaceUsers, setWorkspaceUsers] = useState({});
   const [loadingUsers, setLoadingUsers] = useState(null);
 
+  // View mode: 'dashboard' or 'create'
+  const [view, setView] = useState('dashboard');
+
   // Reset password state
   const [resetModal, setResetModal] = useState({ open: false, user: null });
   const [resetMode, setResetMode] = useState('auto');
@@ -29,6 +32,16 @@ const SuperAdminDashboard = () => {
   const [resetting, setResetting] = useState(false);
   const [resetResult, setResetResult] = useState(null);
   const [copiedPassword, setCopiedPassword] = useState(false);
+
+  // Create workspace state
+  const [workspaceName, setWorkspaceName] = useState('');
+  const [apiKey, setApiKey] = useState('');
+  const [locations, setLocations] = useState([{ name: '', address: '' }]);
+  const [adminEmail, setAdminEmail] = useState('');
+  const [adminPassword, setAdminPassword] = useState('');
+  const [adminName, setAdminName] = useState('');
+  const [creating, setCreating] = useState(false);
+  const [createdWorkspace, setCreatedWorkspace] = useState(null);
 
   const handleVerify = async () => {
     setLoading(true);
@@ -110,6 +123,47 @@ const SuperAdminDashboard = () => {
     setTimeout(() => setCopiedPassword(false), 2000);
   };
 
+  // Create workspace
+  const handleCreateWorkspace = async () => {
+    if (!workspaceName.trim()) { toast.error('Ingrese el nombre del workspace'); return; }
+    if (!apiKey.trim()) { toast.error('Ingrese la API Key de Boomerangme'); return; }
+    if (!adminEmail || !adminPassword || !adminName) { toast.error('Complete los datos del administrador'); return; }
+    setCreating(true);
+    try {
+      const resp = await axios.post(`${API}/admin/workspaces`, {
+        master_code: masterCode,
+        name: workspaceName,
+        boomerangme_api_key: apiKey,
+        locations: locations.filter(l => l.name.trim()),
+        admin_email: adminEmail,
+        admin_password: adminPassword,
+        admin_name: adminName
+      });
+      setCreatedWorkspace(resp.data);
+      toast.success(`Workspace '${workspaceName}' creado exitosamente`);
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Error al crear workspace');
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const resetCreateForm = () => {
+    setCreatedWorkspace(null);
+    setWorkspaceName('');
+    setApiKey('');
+    setLocations([{ name: '', address: '' }]);
+    setAdminEmail('');
+    setAdminPassword('');
+    setAdminName('');
+  };
+
+  const backToDashboard = () => {
+    resetCreateForm();
+    setView('dashboard');
+    fetchDashboard();
+  };
+
   // Master code verification screen
   if (!verified) {
     return (
@@ -130,12 +184,9 @@ const SuperAdminDashboard = () => {
             <p className="text-sm text-zinc-500">Ingrese el código maestro para acceder</p>
           </div>
           <div className="space-y-4">
-            <Input
-              type="password" value={masterCode} onChange={(e) => setMasterCode(e.target.value)}
+            <Input type="password" value={masterCode} onChange={(e) => setMasterCode(e.target.value)}
               placeholder="Código maestro" className="input-brutalist h-14 text-center text-lg"
-              onKeyDown={(e) => e.key === 'Enter' && handleVerify()}
-              data-testid="master-code-input"
-            />
+              onKeyDown={(e) => e.key === 'Enter' && handleVerify()} data-testid="master-code-input" />
             <Button onClick={handleVerify} disabled={loading || !masterCode}
               className="w-full h-14 btn-primary text-lg" data-testid="verify-master-code-btn">
               {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Verificar Acceso'}
@@ -146,6 +197,123 @@ const SuperAdminDashboard = () => {
     );
   }
 
+  // ============ CREATE WORKSPACE VIEW ============
+  if (view === 'create') {
+    return (
+      <div className="min-h-screen bg-zinc-50">
+        <header className="nav-header">
+          <button onClick={backToDashboard} className="flex items-center gap-2 p-2 hover:bg-[#ee478a] hover:text-white rounded-lg transition-colors">
+            <ArrowLeft className="h-5 w-5" /><span className="font-medium hidden sm:inline">Dashboard</span>
+          </button>
+          <img src="/fonts/logo.png" alt="Devotio Rewards" className="h-8 sm:h-10" />
+          <div className="w-14 sm:w-20" />
+        </header>
+
+        <main className="max-w-lg mx-auto p-4 sm:p-6">
+          <h1 className="text-xl font-bold text-[#120627] mb-6">Crear Nuevo Workspace</h1>
+
+          {!createdWorkspace ? (
+            <div className="space-y-4">
+              {/* Workspace Info */}
+              <div className="bg-white rounded-xl border border-zinc-200 p-4 space-y-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Building2 className="h-5 w-5 text-[#120627]" />
+                  <h2 className="font-semibold text-sm uppercase tracking-wider text-zinc-700">Datos del Workspace</h2>
+                </div>
+                <Input value={workspaceName} onChange={e => setWorkspaceName(e.target.value)}
+                  placeholder="Nombre del negocio" className="h-10" data-testid="workspace-name" />
+                <div className="relative">
+                  <Key className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
+                  <Input value={apiKey} onChange={e => setApiKey(e.target.value)}
+                    placeholder="API Key de Boomerangme" className="h-10 pl-10 font-mono text-sm" data-testid="workspace-api-key" />
+                </div>
+              </div>
+
+              {/* Locations */}
+              <div className="bg-white rounded-xl border border-zinc-200 p-4 space-y-3">
+                <div className="flex items-center gap-2 mb-2">
+                  <MapPin className="h-5 w-5 text-[#120627]" />
+                  <h2 className="font-semibold text-sm uppercase tracking-wider text-zinc-700">Sucursales</h2>
+                </div>
+                {locations.map((loc, i) => (
+                  <div key={i} className="flex gap-2">
+                    <div className="flex-1 space-y-2">
+                      <Input value={loc.name}
+                        onChange={e => { const u = [...locations]; u[i] = { ...u[i], name: e.target.value }; setLocations(u); }}
+                        placeholder="Nombre sucursal" className="h-10" data-testid={`location-name-${i}`} />
+                      <Input value={loc.address}
+                        onChange={e => { const u = [...locations]; u[i] = { ...u[i], address: e.target.value }; setLocations(u); }}
+                        placeholder="Dirección" className="h-10" data-testid={`location-address-${i}`} />
+                    </div>
+                    {locations.length > 1 && (
+                      <button onClick={() => setLocations(locations.filter((_, idx) => idx !== i))} className="p-2 mt-1 text-zinc-400 hover:text-red-500">
+                        <X className="h-4 w-4" />
+                      </button>
+                    )}
+                  </div>
+                ))}
+                <Button onClick={() => setLocations([...locations, { name: '', address: '' }])} variant="outline" className="w-full h-9 border-dashed border-zinc-300 text-sm">
+                  <Plus className="h-4 w-4 mr-1" /> Agregar sucursal
+                </Button>
+              </div>
+
+              {/* Admin User */}
+              <div className="bg-white rounded-xl border border-zinc-200 p-4 space-y-3">
+                <div className="flex items-center gap-2 mb-2">
+                  <UserPlus className="h-5 w-5 text-[#120627]" />
+                  <h2 className="font-semibold text-sm uppercase tracking-wider text-zinc-700">Administrador del Workspace</h2>
+                </div>
+                <p className="text-xs text-zinc-500">Este usuario podrá gestionar el workspace, crear operadores y configurar settings.</p>
+                <Input value={adminName} onChange={e => setAdminName(e.target.value)}
+                  placeholder="Nombre del administrador" className="h-10" data-testid="admin-name" />
+                <Input type="email" value={adminEmail} onChange={e => setAdminEmail(e.target.value)}
+                  placeholder="Email del administrador" className="h-10" data-testid="admin-email" />
+                <Input type="password" value={adminPassword} onChange={e => setAdminPassword(e.target.value)}
+                  placeholder="Contraseña" className="h-10" data-testid="admin-password" />
+              </div>
+
+              <Button onClick={handleCreateWorkspace} disabled={creating}
+                className="w-full h-12 btn-primary" data-testid="create-workspace-btn">
+                {creating ? <Loader2 className="h-5 w-5 animate-spin" /> : <><Building2 className="h-4 w-4 mr-2" /> Crear Workspace</>}
+              </Button>
+            </div>
+          ) : (
+            /* Success */
+            <div className="bg-white rounded-xl border border-zinc-200 p-6 space-y-4" data-testid="workspace-created">
+              <div className="text-center">
+                <div className="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center mx-auto mb-3">
+                  <Check className="h-6 w-6 text-emerald-600" />
+                </div>
+                <h2 className="font-bold text-lg">Workspace Creado</h2>
+              </div>
+              <div className="bg-zinc-50 rounded-lg p-4 space-y-2 text-sm">
+                <div className="flex justify-between"><span className="text-zinc-500">Nombre</span><span className="font-medium">{createdWorkspace.workspace?.name}</span></div>
+                <div className="flex justify-between"><span className="text-zinc-500">Slug</span><span className="font-mono">{createdWorkspace.workspace?.slug}</span></div>
+                {createdWorkspace.workspace?.locations?.length > 0 && (
+                  <div className="flex justify-between"><span className="text-zinc-500">Sucursales</span><span>{createdWorkspace.workspace.locations.length}</span></div>
+                )}
+                {createdWorkspace.admin_created && (
+                  <>
+                    <div className="border-t border-zinc-200 mt-2 pt-2" />
+                    <div className="flex justify-between"><span className="text-zinc-500">Admin</span><span className="font-medium">{createdWorkspace.admin_created.name}</span></div>
+                    <div className="flex justify-between"><span className="text-zinc-500">Email</span><span>{createdWorkspace.admin_created.email}</span></div>
+                  </>
+                )}
+              </div>
+              <div className="flex gap-2">
+                <Button onClick={resetCreateForm} className="flex-1 btn-primary" data-testid="create-another-btn">
+                  <Plus className="h-4 w-4 mr-1" /> Crear otro
+                </Button>
+                <Button onClick={backToDashboard} variant="outline" className="flex-1">Volver al Dashboard</Button>
+              </div>
+            </div>
+          )}
+        </main>
+      </div>
+    );
+  }
+
+  // ============ DASHBOARD VIEW ============
   return (
     <div className="min-h-screen bg-zinc-50">
       <header className="nav-header">
@@ -208,7 +376,7 @@ const SuperAdminDashboard = () => {
                           {!ws.active && <span className="text-xs px-2 py-0.5 rounded-full bg-red-100 text-red-600 font-medium flex-shrink-0">Inactivo</span>}
                         </div>
                         <div className="flex items-center gap-3 text-xs text-zinc-500 mt-0.5">
-                          <span className="flex items-center gap-1"><Users className="h-3 w-3" /> {ws.user_count} usuarios</span>
+                          <span className="flex items-center gap-1"><Users className="h-3 w-3" /> {ws.user_count}</span>
                           <span className="flex items-center gap-1"><Activity className="h-3 w-3" /> {ws.operations_count} ops</span>
                           <span className="flex items-center gap-1"><MapPin className="h-3 w-3" /> {ws.locations?.length || 0} suc.</span>
                           {ws.has_api_key && <span className="flex items-center gap-1"><Key className="h-3 w-3 text-green-500" /> API</span>}
@@ -220,7 +388,6 @@ const SuperAdminDashboard = () => {
 
                   {expandedWorkspace === ws.id && (
                     <div className="border-t border-zinc-200 p-4 bg-zinc-50">
-                      {/* Stats row */}
                       <div className="grid grid-cols-3 gap-3 mb-4">
                         <div className="text-center p-2 bg-white rounded-lg">
                           <p className="text-lg font-bold text-[#120627]">{ws.admin_count}</p>
@@ -236,7 +403,6 @@ const SuperAdminDashboard = () => {
                         </div>
                       </div>
 
-                      {/* Locations */}
                       {ws.locations?.length > 0 && (
                         <div className="mb-4">
                           <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-2">Sucursales</p>
@@ -252,7 +418,6 @@ const SuperAdminDashboard = () => {
                         </div>
                       )}
 
-                      {/* Users */}
                       <div className="mb-4">
                         <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-2">Usuarios</p>
                         {loadingUsers === ws.id ? (
@@ -285,7 +450,6 @@ const SuperAdminDashboard = () => {
                         )}
                       </div>
 
-                      {/* Actions */}
                       <div className="flex gap-2">
                         <Button variant="outline" size="sm" onClick={() => handleToggleActive(ws.id)}
                           className={`gap-2 text-xs ${ws.active ? 'text-red-600 hover:bg-red-50' : 'text-green-600 hover:bg-green-50'}`}
@@ -299,10 +463,10 @@ const SuperAdminDashboard = () => {
               ))}
             </div>
 
-            {/* Create new workspace link */}
+            {/* Create new workspace */}
             <div className="mt-6 text-center">
-              <Button onClick={() => navigate('/admin/setup')} variant="outline" className="gap-2" data-testid="create-workspace-btn">
-                <Building2 className="h-4 w-4" /> Crear Nuevo Workspace
+              <Button onClick={() => setView('create')} className="gap-2 btn-primary" data-testid="create-workspace-nav-btn">
+                <Plus className="h-4 w-4" /> Crear Nuevo Workspace
               </Button>
             </div>
           </>
@@ -325,30 +489,22 @@ const SuperAdminDashboard = () => {
                   <div className="grid grid-cols-2 gap-2">
                     <button onClick={() => setResetMode('auto')}
                       className={`p-3 border-2 rounded-xl text-center text-sm transition-all ${resetMode === 'auto' ? 'border-[#120627] bg-[#120627]/5 font-semibold' : 'border-zinc-200'}`}
-                      data-testid="reset-mode-auto">
-                      Automática
-                    </button>
+                      data-testid="reset-mode-auto">Automática</button>
                     <button onClick={() => setResetMode('manual')}
                       className={`p-3 border-2 rounded-xl text-center text-sm transition-all ${resetMode === 'manual' ? 'border-[#120627] bg-[#120627]/5 font-semibold' : 'border-zinc-200'}`}
-                      data-testid="reset-mode-manual">
-                      Manual
-                    </button>
+                      data-testid="reset-mode-manual">Manual</button>
                   </div>
                 </div>
-
                 {resetMode === 'manual' && (
                   <div className="mb-4">
                     <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500 block mb-2">Nueva contraseña</label>
                     <Input type="text" value={manualPassword} onChange={(e) => setManualPassword(e.target.value)}
-                      placeholder="Escriba la nueva contraseña" className="input-brutalist"
-                      data-testid="manual-password-input" />
+                      placeholder="Escriba la nueva contraseña" className="input-brutalist" data-testid="manual-password-input" />
                   </div>
                 )}
-
                 <div className="flex gap-2">
                   <Button variant="outline" onClick={() => setResetModal({ open: false, user: null })} className="flex-1">Cancelar</Button>
-                  <Button onClick={handleResetPassword}
-                    disabled={resetting || (resetMode === 'manual' && !manualPassword)}
+                  <Button onClick={handleResetPassword} disabled={resetting || (resetMode === 'manual' && !manualPassword)}
                     className="flex-1 btn-primary" data-testid="confirm-reset-btn">
                     {resetting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Restablecer'}
                   </Button>

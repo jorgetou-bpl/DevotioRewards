@@ -597,6 +597,19 @@ BOOMERANG_API_KEY="542bcbc61866b65b2e63851267128679"  # UAT key
 3. **Testing Results**
    - `/app/test_reports/iteration_14.json`: 100% pass (13/13 backend, 14/14 frontend)
 
+### Session 17d - Unified Super Admin Dashboard (April 13, 2026)
+1. **Merged `/admin/setup` into `/admin/dashboard`**
+   - `/admin/setup` now redirects to `/admin/dashboard`
+   - Workspace creation form integrated as a sub-view of the dashboard
+   - Master code entered only once — grants access to both dashboard and workspace creation
+   - "← Dashboard" button to return to workspace list after creating
+   - Startup migration ensures `demo@devotio.com` always has `super_admin` role (fixes prod DB issue)
+
+2. **Updated Files**
+   - `/app/frontend/src/pages/SuperAdminDashboard.js`: Added `view` state ('dashboard'|'create'), integrated creation form
+   - `/app/frontend/src/App.js`: `/admin/setup` → `Navigate to /admin/dashboard`
+   - `/app/backend/server.py`: Added startup migration for super_admin role
+
 ## Backlog (P2)
 - Refactor ResultPage.js into card-type components
 - Analytics dashboard

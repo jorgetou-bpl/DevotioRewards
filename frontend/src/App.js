@@ -115,7 +115,8 @@ function AppRoutes() {
         }
       />
       {/* Admin Setup - Hidden route, no authentication required */}
-      <Route path="/admin/setup" element={<AdminSetupPage />} />
+      {/* Admin Setup - Redirects to unified dashboard */}
+      <Route path="/admin/setup" element={<Navigate to="/admin/dashboard" replace />} />
       {/* Super Admin Dashboard - Master code required */}
       <Route path="/admin/dashboard" element={<SuperAdminDashboard />} />
       {/* Workspace Admin Panel - Protected */}

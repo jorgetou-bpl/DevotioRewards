@@ -254,8 +254,6 @@ async def update_user_role(workspace_id: str, user_id: str, data: dict, current_
     
     new_role = data.get("role")
     valid_roles = ["operator", "workspace_admin"]
-    if current_user.get("role") == "super_admin":
-        valid_roles.append("super_admin")
     
     if new_role not in valid_roles:
         raise HTTPException(status_code=400, detail=f"Rol inválido. Opciones: {', '.join(valid_roles)}")

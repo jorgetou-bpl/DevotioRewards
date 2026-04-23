@@ -453,7 +453,6 @@ const SuperAdminDashboard = () => {
                                         data-testid={`role-select-${u.id}`}>
                                         <option value="operator">Operador</option>
                                         <option value="workspace_admin">Administrador</option>
-                                        <option value="super_admin">Super Admin</option>
                                       </select>
                                     ) : (
                                       <button onClick={() => canEditRole && setEditingRole(u.id)}

@@ -31,7 +31,7 @@ Este documento detalla cómo conectar un sistema POS (punto de venta) con la pla
 
 **URL Base de la API:**
 ```
-https://api.boomerangme.biz/partner-api/v1
+https://api.digitalwallet.cards/api/v2
 ```
 
 **Header de autenticación (requerido en TODAS las llamadas):**
@@ -122,7 +122,7 @@ El flujo requiere **4 nodos** en N8N:
 #### Si es teléfono:
 ```
 Método: GET
-URL: https://api.boomerangme.biz/partner-api/v1/customers?phone={telefono_del_cliente}
+URL: https://api.digitalwallet.cards/api/v2/customers?phone={telefono_del_cliente}
 Headers:
   Apikey: {SU_API_KEY}
 ```
@@ -130,7 +130,7 @@ Headers:
 #### Si es email:
 ```
 Método: GET
-URL: https://api.boomerangme.biz/partner-api/v1/customers?email={email_del_cliente}
+URL: https://api.digitalwallet.cards/api/v2/customers?email={email_del_cliente}
 Headers:
   Apikey: {SU_API_KEY}
 ```
@@ -165,7 +165,7 @@ Saltar directamente al **Nodo 3** usando el ID de tarjeta proporcionado.
 
 ```
 Método: GET
-URL: https://api.boomerangme.biz/partner-api/v1/customers/{customer_id}/cards
+URL: https://api.digitalwallet.cards/api/v2/customers/{customer_id}/cards
 Headers:
   Apikey: {SU_API_KEY}
 ```
@@ -209,7 +209,7 @@ Headers:
 
 ```
 Método: POST
-URL: https://api.boomerangme.biz/partner-api/v1/cards/{card_id}/add-point
+URL: https://api.digitalwallet.cards/api/v2/cards/{card_id}/add-point
 Headers:
   Apikey: {SU_API_KEY}
   Content-Type: application/json
@@ -260,7 +260,7 @@ Headers:
 
 ```
 Método: POST
-URL: https://api.boomerangme.biz/partner-api/v1/cards/{card_id}/subtract-point
+URL: https://api.digitalwallet.cards/api/v2/cards/{card_id}/subtract-point
 Headers:
   Apikey: {SU_API_KEY}
   Content-Type: application/json
@@ -413,7 +413,7 @@ Complete estos datos antes de implementar:
 |------|-------|
 | **API Key** | _(proporcionada por Devotio)_ |
 | **URL del Webhook N8N** | _(generada al crear el nodo Webhook en N8N)_ |
-| **URL Base API** | `https://api.boomerangme.biz/partner-api/v1` |
+| **URL Base API** | `https://api.digitalwallet.cards/api/v2` |
 
 ---
 

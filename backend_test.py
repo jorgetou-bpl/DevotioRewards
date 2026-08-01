@@ -1,13 +1,17 @@
 #!/usr/bin/env python3
 
+import os
 import requests
 import sys
 import json
 from datetime import datetime
 import uuid
 
+DEFAULT_BASE_URL = os.environ.get("TEST_BACKEND_URL", "http://localhost:8000") + "/api"
+
+
 class BoomerangScannerAPITester:
-    def __init__(self, base_url="https://tenant-rewards-1.preview.emergentagent.com/api"):
+    def __init__(self, base_url=DEFAULT_BASE_URL):
         self.base_url = base_url
         self.token = None
         self.user_id = None

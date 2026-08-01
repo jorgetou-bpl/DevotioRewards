@@ -4,7 +4,7 @@ import { useAuth } from './AuthContext';
 
 const SettingsContext = createContext(null);
 
-const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
+import { API_BASE_URL as API } from '../config/api';
 
 // Supported currencies
 export const CURRENCIES = [

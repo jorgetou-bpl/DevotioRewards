@@ -25,7 +25,7 @@ import {
   Trash2
 } from 'lucide-react';
 
-const API = process.env.REACT_APP_BACKEND_URL;
+import { API_BASE_URL as API } from '../config/api';
 
 const SettingsPage = () => {
   const navigate = useNavigate();
@@ -50,7 +50,7 @@ const SettingsPage = () => {
     const loadStampConfig = async () => {
       try {
         const token = localStorage.getItem('token');
-        const response = await axios.get(`${API}/api/stamp-config`, {
+        const response = await axios.get(`${API}/stamp-config`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         if (response.data.stamp_mode) {
@@ -73,7 +73,7 @@ const SettingsPage = () => {
     const loadDiscountTiers = async () => {
       try {
         const token = localStorage.getItem('token');
-        const response = await axios.get(`${API}/api/discount-tiers`, {
+        const response = await axios.get(`${API}/discount-tiers`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         if (response.data.tiers && response.data.tiers.length > 0) {
@@ -97,7 +97,7 @@ const SettingsPage = () => {
     setSavingStampConfig(true);
     try {
       const token = localStorage.getItem('token');
-      await axios.post(`${API}/api/stamp-config`, stampConfig, {
+      await axios.post(`${API}/stamp-config`, stampConfig, {
         headers: { Authorization: `Bearer ${token}` }
       });
       toast.success('Configuración de sellos guardada');
@@ -140,7 +140,7 @@ const SettingsPage = () => {
     setSavingDiscountTiers(true);
     try {
       const token = localStorage.getItem('token');
-      await axios.post(`${API}/api/discount-tiers`, { tiers: discountTiers }, {
+      await axios.post(`${API}/discount-tiers`, { tiers: discountTiers }, {
         headers: { Authorization: `Bearer ${token}` }
       });
       toast.success('Niveles de descuento guardados');

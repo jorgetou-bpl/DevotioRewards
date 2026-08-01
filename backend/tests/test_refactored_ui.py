@@ -6,7 +6,7 @@ import pytest
 import requests
 import os
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://tenant-rewards-1.preview.emergentagent.com')
+BASE_URL = os.environ.get('TEST_BACKEND_URL', 'http://localhost:8000')
 
 # Test credentials
 DEMO_USER = {"email": "demo@devotio.com", "password": "demo123"}

@@ -9,7 +9,7 @@ import {
   Eye, EyeOff, UserPlus, Activity, ChevronDown, ChevronUp, RefreshCw
 } from 'lucide-react';
 
-const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
+import { API_BASE_URL as API } from '../config/api';
 
 const ROLE_CONFIG = {
   super_admin: { label: 'Super Admin', bg: 'bg-purple-100', text: 'text-purple-700' },

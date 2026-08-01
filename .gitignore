@@ -254,3 +254,7 @@ credentials.json
 *.pem
 *.key
 .credentials
+
+# Keep example env files — they document required vars without secrets
+!.env.example
+!**/.env.example

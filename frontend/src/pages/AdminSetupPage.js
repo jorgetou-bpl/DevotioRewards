@@ -6,7 +6,7 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Shield, Building2, Loader2, Plus, MapPin, Key, UserPlus, ArrowLeft, Check } from 'lucide-react';
 
-const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
+import { API_BASE_URL as API } from '../config/api';
 
 const AdminSetupPage = () => {
   const navigate = useNavigate();

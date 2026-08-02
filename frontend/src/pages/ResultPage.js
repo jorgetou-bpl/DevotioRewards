@@ -166,6 +166,7 @@ const ResultPage = () => {
       } finally { setDetectingMode(false); }
     };
     fetchAccrualMode();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally keyed on card.id, not the whole card object, to avoid refetching on unrelated field changes
   }, [card?.id, cardType]);
 
   const saveAccrualMode = async (mode) => {

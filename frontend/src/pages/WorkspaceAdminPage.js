@@ -152,14 +152,15 @@ const WorkspaceAdminPage = () => {
     );
   }
 
+  const isSuperAdmin = user?.role === 'super_admin';
+
   const tabs = [
     { key: 'overview', label: 'General', icon: Building2 },
     { key: 'users', label: 'Usuarios', icon: Users },
     { key: 'locations', label: 'Sucursales', icon: MapPin },
-    { key: 'api', label: 'API Key', icon: Key },
+    // API Key is Devotio-only — the client's own workspace_admin never sees it
+    ...(isSuperAdmin ? [{ key: 'api', label: 'API Key', icon: Key }] : []),
   ];
-
-  const isSuperAdmin = user?.role === 'super_admin';
 
   return (
     <div className="min-h-screen bg-zinc-50" data-testid="workspace-admin-page">

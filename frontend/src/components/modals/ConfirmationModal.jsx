@@ -5,30 +5,37 @@ import { Input } from '../ui/input';
 import { toast } from 'sonner';
 import { formatActionTitle } from '../../config/cardTypes';
 
-const ConfirmationModal = ({ 
-  isOpen, 
-  onClose, 
-  onConfirm, 
-  title, 
-  details, 
-  config, 
-  loading, 
-  purchaseAmountFromParent, 
-  requireComments = true 
+const ConfirmationModal = ({
+  isOpen,
+  onClose,
+  onConfirm,
+  title,
+  details,
+  config,
+  loading,
+  purchaseAmountFromParent,
+  requireComments = true,
+  commentMode = 'open'
 }) => {
   const [comment, setComment] = useState('');
-  const [commentError, setCommentError] = useState(false);
-  
+  const [commentError, setCommentError] = useState('');
+  const isInvoiceMode = commentMode === 'invoice_number';
+
   if (!isOpen) return null;
 
   const handleConfirm = () => {
-    // Validate comment only if required
-    if (requireComments && !comment.trim()) {
-      setCommentError(true);
+    const trimmed = comment.trim();
+    if (requireComments && !trimmed) {
+      setCommentError('Campo obligatorio');
       toast.error('El comentario es obligatorio');
       return;
     }
-    setCommentError(false);
+    if (trimmed && isInvoiceMode && !/^\d+$/.test(trimmed)) {
+      setCommentError('El número de factura debe ser solo dígitos');
+      toast.error('El número de factura debe ser solo dígitos');
+      return;
+    }
+    setCommentError('');
     onConfirm(comment, purchaseAmountFromParent);
     // Reset comment after successful confirm
     setComment('');
@@ -36,7 +43,7 @@ const ConfirmationModal = ({
   
   const handleClose = () => {
     setComment('');
-    setCommentError(false);
+    setCommentError('');
     onClose();
   };
   
@@ -66,23 +73,25 @@ const ConfirmationModal = ({
           ))}
         </div>
         
-        {/* Comment - conditionally mandatory */}
+        {/* Comment - conditionally mandatory, format depends on the card type's configured mode */}
         <div className="mb-4 sm:mb-6">
           <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500 block mb-2">
-            Comentario {requireComments && <span className="text-red-500">*</span>}
+            {isInvoiceMode ? 'Número de factura' : 'Comentario'} {requireComments && <span className="text-red-500">*</span>}
           </label>
           <Input
             value={comment}
+            inputMode={isInvoiceMode ? 'numeric' : 'text'}
             onChange={(e) => {
-              setComment(e.target.value);
-              if (e.target.value.trim()) setCommentError(false);
+              const value = isInvoiceMode ? e.target.value.replace(/\D/g, '') : e.target.value;
+              setComment(value);
+              if (value.trim()) setCommentError('');
             }}
-            placeholder={requireComments ? "Nota interna obligatoria..." : "Nota interna (opcional)..."}
+            placeholder={isInvoiceMode ? '# de factura' : (requireComments ? "Nota interna obligatoria..." : "Nota interna (opcional)...")}
             className={`input-brutalist text-sm ${commentError ? 'border-red-500 focus:ring-red-500' : ''}`}
             data-testid="confirmation-comment"
           />
           {commentError && (
-            <p className="text-xs text-red-500 mt-1">* Campo obligatorio</p>
+            <p className="text-xs text-red-500 mt-1">* {commentError}</p>
           )}
         </div>
         

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useSettings } from '../context/SettingsContext';
 import { useAuth } from '../context/AuthContext';
@@ -47,10 +47,25 @@ const ResultPage = () => {
   const [loadingStampConfig, setLoadingStampConfig] = useState(false);
   const [discountTiers, setDiscountTiers] = useState([]);
   const [tierProgress, setTierProgress] = useState(null);
+  const [commentMode, setCommentMode] = useState('open');
+  const [giftCardConfig, setGiftCardConfig] = useState({ allow_add: false });
 
   const currencyInfo = getCurrencyInfo();
   const cardType = card ? normalizeCardType(card.type) : null;
-  const config = cardType ? (CARD_TYPE_CONFIG[cardType] || CARD_TYPE_CONFIG.stamp) : null;
+  const rawConfig = cardType ? (CARD_TYPE_CONFIG[cardType] || CARD_TYPE_CONFIG.stamp) : null;
+
+  // Gift cards default to redeem-only — "Agregar" is an exception only
+  // Admin/Devotio can grant, either globally (allow_add) or by being the one
+  // operating the scanner themselves.
+  const isGiftCard = cardType === 'gift' || cardType === 'gift_card';
+  const canBypassGiftCardRestriction = user?.role === 'workspace_admin' || user?.role === 'super_admin';
+  const restrictGiftCardAdd = isGiftCard && !giftCardConfig.allow_add && !canBypassGiftCardRestriction;
+  const config = useMemo(() => {
+    if (restrictGiftCardAdd && rawConfig) {
+      return { ...rawConfig, tabs: rawConfig.tabs.filter((t) => t !== 'Agregar') };
+    }
+    return rawConfig;
+  }, [rawConfig, restrictGiftCardAdd]);
 
   // Set initial tab
   useEffect(() => {
@@ -143,6 +158,34 @@ const ResultPage = () => {
     };
     fetchDiscountTiers();
   }, [card?.id, cardType]);
+
+  // Load comment mode (open text vs invoice number) for the current card type
+  useEffect(() => {
+    const fetchCommentMode = async () => {
+      const normalizedType = cardType ? cardType.replace('_card', '') : '';
+      if (!normalizedType) return;
+      const token = localStorage.getItem('token');
+      try {
+        const response = await axios.get(`${API}/comment-config/${normalizedType}`, { headers: { Authorization: `Bearer ${token}` } });
+        setCommentMode(response.data?.mode || 'open');
+      } catch { setCommentMode('open'); }
+    };
+    fetchCommentMode();
+  }, [cardType]);
+
+  // Load gift card "Agregar" toggle
+  useEffect(() => {
+    const fetchGiftCardConfig = async () => {
+      const normalizedType = cardType ? cardType.replace('_card', '') : '';
+      if (normalizedType !== 'gift') return;
+      const token = localStorage.getItem('token');
+      try {
+        const response = await axios.get(`${API}/gift-card-config`, { headers: { Authorization: `Bearer ${token}` } });
+        setGiftCardConfig({ allow_add: response.data?.allow_add || false });
+      } catch { setGiftCardConfig({ allow_add: false }); }
+    };
+    fetchGiftCardConfig();
+  }, [cardType]);
 
   // Fetch accrual mode for reward cards
   useEffect(() => {
@@ -519,6 +562,7 @@ const ResultPage = () => {
         purchaseAmountFromParent={confirmModal.purchaseAmount}
         formatCurrency={formatCurrency}
         requireComments={settings.require_comments !== false}
+        commentMode={commentMode}
       />
 
       <SuccessModal

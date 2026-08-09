@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSettings, CURRENCIES } from '../context/SettingsContext';
+import { useAuth } from '../context/AuthContext';
 import { Switch } from '../components/ui/switch';
 import { Input } from '../components/ui/input';
 import { Button } from '../components/ui/button';
@@ -23,7 +24,8 @@ import {
   Save,
   Percent,
   Plus,
-  Trash2
+  Trash2,
+  Gift
 } from 'lucide-react';
 
 import { API_BASE_URL as API } from '../config/api';
@@ -31,6 +33,8 @@ import { API_BASE_URL as API } from '../config/api';
 const SettingsPage = () => {
   const navigate = useNavigate();
   const { settings, updateSettings, loading } = useSettings();
+  const { user } = useAuth();
+  const isSuperAdmin = user?.role === 'super_admin';
   const [currencyOpen, setCurrencyOpen] = useState(false);
   
   // Stamp configuration state
@@ -45,6 +49,14 @@ const SettingsPage = () => {
   const [discountTiers, setDiscountTiers] = useState([]);
   const [discountTiersLoading, setDiscountTiersLoading] = useState(true);
   const [savingDiscountTiers, setSavingDiscountTiers] = useState(false);
+
+  // Gift card "Agregar" toggle state
+  const [giftCardAllowAdd, setGiftCardAllowAdd] = useState(false);
+  const [savingGiftCardConfig, setSavingGiftCardConfig] = useState(false);
+
+  // Comment mode state (per card type — currently enforced for stamp and coupon)
+  const [commentModes, setCommentModes] = useState({ stamp: 'open', coupon: 'open' });
+  const [savingCommentMode, setSavingCommentMode] = useState('');
 
   // Load stamp configuration on mount
   useEffect(() => {
@@ -88,6 +100,55 @@ const SettingsPage = () => {
     };
     loadDiscountTiers();
   }, []);
+
+  // Load gift card "Agregar" toggle and comment modes on mount (Devotio-only settings)
+  useEffect(() => {
+    if (!isSuperAdmin) return;
+    const token = localStorage.getItem('token');
+    const headers = { Authorization: `Bearer ${token}` };
+
+    axios.get(`${API}/gift-card-config`, { headers })
+      .then((res) => setGiftCardAllowAdd(!!res.data?.allow_add))
+      .catch((error) => console.error('Error loading gift card config:', error));
+
+    Promise.all(['stamp', 'coupon'].map((cardType) =>
+      axios.get(`${API}/comment-config/${cardType}`, { headers }).then((res) => [cardType, res.data?.mode || 'open'])
+    ))
+      .then((entries) => setCommentModes(Object.fromEntries(entries)))
+      .catch((error) => console.error('Error loading comment config:', error));
+  }, [isSuperAdmin]);
+
+  const handleSaveGiftCardConfig = async (nextValue) => {
+    setSavingGiftCardConfig(true);
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post(`${API}/gift-card-config`, { allow_add: nextValue }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setGiftCardAllowAdd(nextValue);
+      toast.success('Configuración de tarjeta de regalo guardada');
+    } catch (error) {
+      toast.error('Error al guardar configuración');
+    } finally {
+      setSavingGiftCardConfig(false);
+    }
+  };
+
+  const handleSaveCommentMode = async (cardType, mode) => {
+    setSavingCommentMode(cardType);
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post(`${API}/comment-config/${cardType}`, { mode }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setCommentModes((prev) => ({ ...prev, [cardType]: mode }));
+      toast.success('Modo de comentario guardado');
+    } catch (error) {
+      toast.error('Error al guardar configuración');
+    } finally {
+      setSavingCommentMode('');
+    }
+  };
 
   const handleSaveStampConfig = async () => {
     if (!stampConfig.stamp_mode) {
@@ -341,6 +402,10 @@ const SettingsPage = () => {
               </p>
             </div>
 
+            {/* Card-type configuration (API-backed settings, points/discount tiers, etc.)
+                is Devotio-only — the client's own workspace_admin no longer sees it. */}
+            {isSuperAdmin && (
+            <>
             {/* Stamp Card Configuration */}
             <div className="card-brutalist mt-6">
               <div className="flex items-center gap-3 mb-4">
@@ -537,6 +602,61 @@ const SettingsPage = () => {
                 </div>
               )}
             </div>
+
+            {/* Gift Card "Agregar" Toggle */}
+            <div className="card-brutalist mt-6">
+              <div className="flex items-center gap-3 mb-4">
+                <Gift className="h-5 w-5 text-[#120627]" />
+                <p className="text-xs sm:text-sm font-semibold uppercase tracking-widest text-zinc-500">
+                  Tarjetas de Regalo
+                </p>
+              </div>
+              <div className="settings-row py-2">
+                <div className="flex-1 min-w-0 pr-3">
+                  <p className="font-medium text-[#120627] text-sm sm:text-base">Permitir "Agregar" saldo</p>
+                  <p className="text-xs sm:text-sm text-zinc-500">
+                    Por defecto los operadores solo pueden canjear. Actívelo únicamente si este negocio necesita cargar saldo desde el escáner.
+                  </p>
+                </div>
+                <Switch
+                  checked={giftCardAllowAdd}
+                  onCheckedChange={handleSaveGiftCardConfig}
+                  disabled={savingGiftCardConfig}
+                  className="data-[state=checked]:bg-[#120627] flex-shrink-0"
+                  data-testid="gift-card-allow-add-switch"
+                />
+              </div>
+            </div>
+
+            {/* Comment Mode per Card Type */}
+            <div className="card-brutalist mt-6">
+              <div className="flex items-center gap-3 mb-4">
+                <MessageSquare className="h-5 w-5 text-[#120627]" />
+                <p className="text-xs sm:text-sm font-semibold uppercase tracking-widest text-zinc-500">
+                  Comentario por Tipo de Tarjeta
+                </p>
+              </div>
+              <p className="text-xs text-zinc-500 mb-4">
+                "Abierto" acepta cualquier nota. "# de Factura" exige un número que no se haya usado antes en este negocio.
+              </p>
+              {[{ key: 'stamp', label: 'Sellos' }, { key: 'coupon', label: 'Cupón' }].map(({ key, label }) => (
+                <div key={key} className="settings-row py-2">
+                  <p className="font-medium text-[#120627] text-sm sm:text-base flex-1">{label}</p>
+                  <select
+                    value={commentModes[key] || 'open'}
+                    onChange={(e) => handleSaveCommentMode(key, e.target.value)}
+                    disabled={savingCommentMode === key}
+                    className="h-9 border border-zinc-200 rounded-lg px-3 text-sm bg-white"
+                    data-testid={`comment-mode-${key}`}
+                  >
+                    <option value="open">Abierto</option>
+                    <option value="invoice_number"># de Factura</option>
+                  </select>
+                </div>
+              ))}
+            </div>
+            </>
+            )}
           </>
         )}
 

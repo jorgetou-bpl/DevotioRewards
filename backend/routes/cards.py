@@ -10,11 +10,12 @@ from models import CardActionRequest, ScanRequest
 from utils.auth import get_current_user
 from utils.config import db
 from utils.boomerang import (
-    call_boomerang_api, 
-    mask_pii, 
+    call_boomerang_api,
+    mask_pii,
     extract_card_id_from_qr,
     log_operation,
     build_comment_with_gerente,
+    validate_comment_for_card_type,
     get_user_friendly_error,
     parse_api_error,
     get_workspace_api_key
@@ -231,6 +232,8 @@ async def add_stamp(card_id: str, action_data: CardActionRequest, current_user: 
     purchase_sum = action_data.purchaseSum or 0
     original_comment = action_data.comment
     gerente_name = action_data.gerente or current_user.get('name', '')
+
+    await validate_comment_for_card_type('stamp', original_comment, current_user.get('workspace_id'))
     
     # Get current card state to detect new rewards
     pre_response = await call_boomerang_api('GET', f'/cards/{card_id}', {}, raise_on_error=False, api_key=api_key)
@@ -607,6 +610,7 @@ async def subtract_visit(card_id: str, action_data: CardActionRequest, current_u
 @router.post("/cards/{card_id}/use-coupon")
 async def use_coupon(card_id: str, action_data: CardActionRequest, current_user: dict = Depends(get_current_user), api_key: str = Depends(get_api_key)):
     """Redeem a coupon."""
+    await validate_comment_for_card_type('coupon', action_data.comment, current_user.get('workspace_id'))
     gerente_name = action_data.gerente or current_user.get('name', '')
     comment_with_gerente = build_comment_with_gerente(action_data.comment, gerente_name)
     

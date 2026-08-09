@@ -60,3 +60,17 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(g
         raise HTTPException(status_code=401, detail="Token expired")
     except jwt.InvalidTokenError:
         raise HTTPException(status_code=401, detail="Invalid token")
+
+
+async def require_super_admin(current_user: dict = Depends(get_current_user)):
+    """FastAPI dependency restricting an endpoint to super_admin (Devotio staff) only."""
+    if current_user.get("role") != "super_admin":
+        raise HTTPException(status_code=403, detail="Acceso restringido a super administradores")
+    return current_user
+
+
+async def require_workspace_admin(current_user: dict = Depends(get_current_user)):
+    """FastAPI dependency restricting an endpoint to workspace_admin or super_admin."""
+    if current_user.get("role") not in ("super_admin", "workspace_admin"):
+        raise HTTPException(status_code=403, detail="Acceso restringido a administradores")
+    return current_user

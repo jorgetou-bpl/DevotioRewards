@@ -5,7 +5,7 @@ from pydantic import BaseModel
 from typing import Optional, List
 from models import SettingsUpdate, SettingsResponse
 from utils.config import db
-from utils.auth import get_current_user
+from utils.auth import get_current_user, require_super_admin
 from datetime import datetime, timezone
 
 router = APIRouter(tags=["settings"])
@@ -57,9 +57,9 @@ async def get_stamp_config(current_user: dict = Depends(get_current_user)):
 @router.post("/stamp-config")
 async def set_stamp_config(
     request: StampConfigRequest,
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(require_super_admin)
 ):
-    """Set the stamp configuration for the user's workspace."""
+    """Set the stamp configuration for the user's workspace. Devotio-only."""
     valid_modes = ['spend', 'visit', 'manual']
     if request.stamp_mode not in valid_modes:
         raise HTTPException(status_code=400, detail=f"Modo inválido. Use: {', '.join(valid_modes)}")
@@ -246,8 +246,8 @@ async def get_discount_tiers(current_user: dict = Depends(get_current_user)):
     return DiscountTiersResponse(success=True, tiers=[])
 
 @router.post("/discount-tiers")
-async def save_discount_tiers(request: DiscountTiersRequest, current_user: dict = Depends(get_current_user)):
-    """Save the discount tier configuration for the user's workspace."""
+async def save_discount_tiers(request: DiscountTiersRequest, current_user: dict = Depends(require_super_admin)):
+    """Save the discount tier configuration for the user's workspace. Devotio-only."""
     tiers_data = [t.model_dump() for t in request.tiers]
     tiers_data.sort(key=lambda x: x["threshold"])
     
@@ -376,3 +376,86 @@ async def add_tier_progress(card_id: str, amount: float, current_user: dict = De
         next_threshold=next_threshold,
         amount_to_next=amount_to_next
     )
+
+
+# ============ COMMENT CONFIGURATION (per card type) ============
+
+VALID_CARD_TYPES = ['stamp', 'cashback', 'multipass', 'coupon', 'discount', 'gift', 'membership', 'reward']
+
+class CommentConfigRequest(BaseModel):
+    mode: str  # 'open' or 'invoice_number'
+
+class CommentConfigResponse(BaseModel):
+    success: bool
+    card_type: str
+    mode: str = 'open'
+
+@router.get("/comment-config/{card_type}")
+async def get_comment_config(card_type: str, current_user: dict = Depends(get_current_user)):
+    """Get the comment mode for a card type. Readable by any authenticated user —
+    operators need this to know what the confirmation modal should ask for."""
+    ws_id = current_user.get("workspace_id")
+    query = {"workspace_id": ws_id, "card_type": card_type} if ws_id else {"card_type": card_type}
+    config = await db.comment_config.find_one(query, {"_id": 0})
+    return CommentConfigResponse(success=True, card_type=card_type, mode=config.get("mode", "open") if config else "open")
+
+@router.post("/comment-config/{card_type}")
+async def set_comment_config(card_type: str, request: CommentConfigRequest, current_user: dict = Depends(require_super_admin)):
+    """Set the comment mode for a card type. Devotio-only."""
+    if card_type not in VALID_CARD_TYPES:
+        raise HTTPException(status_code=400, detail=f"Tipo de tarjeta inválido. Use: {', '.join(VALID_CARD_TYPES)}")
+    valid_modes = ['open', 'invoice_number']
+    if request.mode not in valid_modes:
+        raise HTTPException(status_code=400, detail=f"Modo inválido. Use: {', '.join(valid_modes)}")
+
+    ws_id = current_user.get("workspace_id")
+    query = {"workspace_id": ws_id, "card_type": card_type} if ws_id else {"card_type": card_type}
+    await db.comment_config.update_one(
+        query,
+        {"$set": {
+            "workspace_id": ws_id,
+            "card_type": card_type,
+            "mode": request.mode,
+            "updated_by": current_user.get("email", ""),
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }},
+        upsert=True
+    )
+    return CommentConfigResponse(success=True, card_type=card_type, mode=request.mode)
+
+
+# ============ GIFT CARD "AGREGAR" TOGGLE ============
+
+class GiftCardConfigRequest(BaseModel):
+    allow_add: bool
+
+class GiftCardConfigResponse(BaseModel):
+    success: bool
+    allow_add: bool = False
+
+@router.get("/gift-card-config")
+async def get_gift_card_config(current_user: dict = Depends(get_current_user)):
+    """Get whether operators can add balance to gift cards. Defaults to False
+    (redeem-only) — matches the client's request that adding funds is the
+    exception, not the default."""
+    ws_id = current_user.get("workspace_id")
+    query = {"workspace_id": ws_id} if ws_id else {}
+    config = await db.gift_card_config.find_one(query, {"_id": 0})
+    return GiftCardConfigResponse(success=True, allow_add=config.get("allow_add", False) if config else False)
+
+@router.post("/gift-card-config")
+async def set_gift_card_config(request: GiftCardConfigRequest, current_user: dict = Depends(require_super_admin)):
+    """Set whether operators can add balance to gift cards. Devotio-only."""
+    ws_id = current_user.get("workspace_id")
+    query = {"workspace_id": ws_id} if ws_id else {}
+    await db.gift_card_config.update_one(
+        query,
+        {"$set": {
+            "workspace_id": ws_id,
+            "allow_add": request.allow_add,
+            "updated_by": current_user.get("email", ""),
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }},
+        upsert=True
+    )
+    return GiftCardConfigResponse(success=True, allow_add=request.allow_add)

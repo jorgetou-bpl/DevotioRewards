@@ -215,12 +215,35 @@ def build_comment_with_gerente(original_comment: str, gerente_name: str) -> str:
     """Build comment string that includes gerente attribution for Boomerangme."""
     if not gerente_name:
         return original_comment or ""
-    
+
     gerente_tag = f"[Gerente: {gerente_name}]"
-    
+
     if original_comment:
         return f"{gerente_tag} {original_comment}"
     return gerente_tag
+
+
+async def validate_comment_for_card_type(card_type: str, comment: str, workspace_id: str) -> None:
+    """Enforce the configured comment mode for a card type before an action is
+    submitted. In 'invoice_number' mode the comment must be a plain number and
+    must not have been used before in this workspace's operation history —
+    raises HTTPException(400) if either check fails. No-op in 'open' mode."""
+    from fastapi import HTTPException
+
+    query = {"workspace_id": workspace_id, "card_type": card_type} if workspace_id else {"card_type": card_type}
+    config = await db.comment_config.find_one(query, {"_id": 0})
+    mode = config.get("mode", "open") if config else "open"
+
+    if mode != "invoice_number":
+        return
+
+    candidate = (comment or "").strip()
+    if not candidate.isdigit():
+        raise HTTPException(status_code=400, detail="El comentario debe ser un número de factura (solo dígitos)")
+
+    duplicate = await db.operations.find_one({"workspace_id": workspace_id, "note": candidate})
+    if duplicate:
+        raise HTTPException(status_code=400, detail=f"El número de factura '{candidate}' ya fue usado anteriormente")
 
 # ============ BOOMERANG API CALLS ============
 

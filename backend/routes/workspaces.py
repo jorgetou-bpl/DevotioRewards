@@ -10,7 +10,7 @@ from models import (
     WorkspaceUserCreate, WorkspaceLocation
 )
 from utils.config import db
-from utils.auth import hash_password, get_current_user
+from utils.auth import hash_password, require_super_admin, require_workspace_admin
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -21,16 +21,6 @@ def slugify(text):
     text = re.sub(r'[^\w\s-]', '', text)
     text = re.sub(r'[\s_]+', '-', text)
     return text.strip('-')
-
-async def require_super_admin(current_user: dict = Depends(get_current_user)):
-    if current_user.get("role") != "super_admin":
-        raise HTTPException(status_code=403, detail="Acceso restringido a super administradores")
-    return current_user
-
-async def require_workspace_admin(current_user: dict = Depends(get_current_user)):
-    if current_user.get("role") not in ("super_admin", "workspace_admin"):
-        raise HTTPException(status_code=403, detail="Acceso restringido a administradores")
-    return current_user
 
 # ============ WORKSPACE CRUD (Super Admin) ============
 
@@ -123,23 +113,25 @@ async def get_workspace(workspace_id: str, current_user: dict = Depends(require_
         raise HTTPException(status_code=404, detail="Workspace no encontrado")
     
     user_count = await db.users.count_documents({"workspace_id": workspace_id})
-    # Mask API key for non-super admins
-    api_key = ws.get("boomerangme_api_key", "")
-    masked_key = f"{'*' * max(0, len(api_key) - 4)}{api_key[-4:]}" if len(api_key) > 4 else "****"
-    
-    return {
-        "success": True,
-        "workspace": {
-            "id": ws["id"],
-            "name": ws["name"],
-            "slug": ws["slug"],
-            "active": ws.get("active", True),
-            "locations": ws.get("locations", []),
-            "api_key_masked": masked_key,
-            "has_api_key": bool(api_key),
-            "user_count": user_count
-        }
+
+    workspace_response = {
+        "id": ws["id"],
+        "name": ws["name"],
+        "slug": ws["slug"],
+        "active": ws.get("active", True),
+        "locations": ws.get("locations", []),
+        "user_count": user_count
     }
+
+    # API key visibility is Devotio-only — a workspace_admin (the client's own
+    # business owner) should never see it, not even masked.
+    if current_user.get("role") == "super_admin":
+        api_key = ws.get("boomerangme_api_key", "")
+        masked_key = f"{'*' * max(0, len(api_key) - 4)}{api_key[-4:]}" if len(api_key) > 4 else "****"
+        workspace_response["api_key_masked"] = masked_key
+        workspace_response["has_api_key"] = bool(api_key)
+
+    return {"success": True, "workspace": workspace_response}
 
 @router.put("/workspaces/{workspace_id}")
 async def update_workspace(workspace_id: str, data: WorkspaceUpdate, current_user: dict = Depends(require_workspace_admin)):
@@ -154,7 +146,7 @@ async def update_workspace(workspace_id: str, data: WorkspaceUpdate, current_use
     update_fields = {}
     if data.name is not None:
         update_fields["name"] = data.name
-    if data.boomerangme_api_key is not None:
+    if data.boomerangme_api_key is not None and current_user.get("role") == "super_admin":
         update_fields["boomerangme_api_key"] = data.boomerangme_api_key
     if data.locations is not None:
         update_fields["locations"] = [loc.model_dump() for loc in data.locations]

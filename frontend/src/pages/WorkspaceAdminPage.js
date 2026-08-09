@@ -247,6 +247,10 @@ const WorkspaceAdminPage = () => {
                   <option value="operator">Operador</option>
                   <option value="workspace_admin">Administrador</option>
                 </select>
+                <p className="text-xs text-zinc-400 -mt-2">
+                  <span className="font-medium text-zinc-500">Operador:</span> solo puede escanear tarjetas y registrar ventas.{' '}
+                  <span className="font-medium text-zinc-500">Administrador:</span> además puede gestionar usuarios, sucursales y configuración del workspace.
+                </p>
                 {locations.length > 0 && (
                   <select value={newUser.location} onChange={e => setNewUser({ ...newUser, location: e.target.value })}
                     className="w-full h-10 border border-zinc-200 rounded-lg px-3 text-sm bg-white" data-testid="new-user-location">
@@ -320,6 +324,9 @@ const WorkspaceAdminPage = () => {
         {activeTab === 'locations' && (
           <div className="space-y-4">
             <h2 className="text-sm font-semibold text-zinc-700 uppercase tracking-wider">Sucursales</h2>
+            <p className="text-xs text-zinc-400 -mt-2">
+              Los puntos físicos de este negocio (locales, sedes). Se usan para asignar operadores a una sucursal específica y para filtrar reportes por ubicación.
+            </p>
             {locations.map((loc, i) => (
               <div key={i} className="flex gap-2 items-start" data-testid={`location-${i}`}>
                 <div className="flex-1 space-y-2">

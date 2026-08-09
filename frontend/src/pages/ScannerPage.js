@@ -188,14 +188,15 @@ const ScannerPage = () => {
     <div className="min-h-screen bg-white flex flex-col" data-testid="scanner-page">
       {/* Header */}
       <header className="nav-header">
-        <img 
-          src="/fonts/logo.png" 
-          alt="Devotio Rewards" 
+        <div className="w-10" />
+        <img
+          src="/fonts/logo.png"
+          alt="Devotio Rewards"
           className="h-8 sm:h-10"
           data-testid="header-logo"
         />
-        <button 
-          onClick={() => setMenuOpen(true)} 
+        <button
+          onClick={() => setMenuOpen(true)}
           className="p-2 hover:bg-[#ee478a] hover:text-white rounded-lg transition-colors"
           data-testid="menu-button"
           aria-label="Abrir menú"
@@ -212,9 +213,6 @@ const ScannerPage = () => {
           <h2 className="text-heading text-xl sm:text-2xl mt-1" data-testid="user-name">
             {user?.name || 'Usuario'}
           </h2>
-          <p className="text-zinc-500 text-xs sm:text-sm masked-data" data-testid="user-email">
-            {user?.email || '***@***.***'}
-          </p>
 {/* Instruction text removed per client request */}
         </div>
 

@@ -298,17 +298,18 @@ async def add_stamp(card_id: str, action_data: CardActionRequest, current_user: 
                 gerente_override=gerente_name
             )
             
-            # Include info about new rewards in response
+            # Include info about new rewards in response — the frontend appends
+            # the "recompensa(s) ganada(s)" suffix itself, so message stays plain
+            # here to avoid it being shown twice.
             response_data = {
-                "success": True, 
-                "card": mask_pii(card_data), 
+                "success": True,
+                "card": mask_pii(card_data),
                 "message": success_msg
             }
-            
+
             if new_rewards:
                 response_data["new_rewards_earned"] = len(new_rewards)
-                response_data["message"] = f"{success_msg} ¡{len(new_rewards)} recompensa(s) ganada(s)!"
-            
+
             return response_data
         
         error_msg = response.get('message', '')

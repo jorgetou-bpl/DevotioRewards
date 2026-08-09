@@ -6,6 +6,7 @@ import { Input } from '../components/ui/input';
 import { Button } from '../components/ui/button';
 import { toast } from 'sonner';
 import axios from 'axios';
+import { formatWithThousands, stripThousandsFormatting } from '../components/cards/shared/numberFormat';
 import { 
   ArrowLeft, 
   Vibrate, 
@@ -397,11 +398,12 @@ const SettingsPage = () => {
                       <div className="relative">
                         <span className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400">{currentCurrency.symbol}</span>
                         <Input
-                          type="number"
-                          value={stampConfig.spend_threshold}
-                          onChange={(e) => setStampConfig({ ...stampConfig, spend_threshold: parseFloat(e.target.value) || 0 })}
+                          type="text"
+                          inputMode="decimal"
+                          value={formatWithThousands(stampConfig.spend_threshold)}
+                          onChange={(e) => setStampConfig({ ...stampConfig, spend_threshold: parseFloat(stripThousandsFormatting(e.target.value)) || 0 })}
                           className="pl-12 h-12 border-2 border-zinc-200 rounded-xl"
-                          placeholder="10000"
+                          placeholder="10,000"
                           data-testid="stamp-spend-threshold"
                         />
                       </div>
@@ -468,9 +470,10 @@ const SettingsPage = () => {
                       </div>
                       <div className="w-24">
                         <Input
-                          type="number"
-                          value={tier.threshold}
-                          onChange={(e) => handleUpdateDiscountTier(index, 'threshold', e.target.value)}
+                          type="text"
+                          inputMode="decimal"
+                          value={formatWithThousands(tier.threshold)}
+                          onChange={(e) => handleUpdateDiscountTier(index, 'threshold', stripThousandsFormatting(e.target.value))}
                           placeholder="Gasto"
                           className="h-10 border-2 border-zinc-200 rounded-lg text-sm"
                           disabled={index === 0}

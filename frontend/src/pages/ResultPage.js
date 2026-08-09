@@ -14,7 +14,7 @@ import {
   MultipassVisitsAction, MultipassPointsAction, DiscountCashbackAction,
   RewardAddAction, RewardRedeemAction, CouponAction,
   GenericRedeemAction, DefaultAddAction,
-  CustomerInfoPanel, CardInfoPanel
+  CustomerInfoPanel, CardInfoPanel, getCurrentTierInfo
 } from '../components/cards';
 
 import { API_BASE_URL as API } from '../config/api';
@@ -286,7 +286,7 @@ const ResultPage = () => {
             setStampProgress({ accumulated_amount, threshold, progress_percent });
             triggerVibration(); triggerBeep();
             const rewardsMsg = apiResponse.data.new_rewards_earned ? ` ¡${apiResponse.data.new_rewards_earned} recompensa(s) ganada(s)!` : '';
-            setSuccessModal({ open: true, message: `${stamps_to_add} sello(s) agregado(s) exitosamente.${rewardsMsg} Progreso: ${formatCurrency(accumulated_amount)} de ${formatCurrency(threshold)}` });
+            setSuccessModal({ open: true, message: `${stamps_to_add} sello(s) agregado(s) exitosamente.${rewardsMsg}` });
           }
         } else {
           setStampProgress({ accumulated_amount, threshold, progress_percent });
@@ -358,6 +358,13 @@ const ResultPage = () => {
       } else if (actionKey === 'usar') {
         endpoint = `${API}/cards/${card.id}/use-coupon`;
         payload = { ...basePayload, amount: 1 };
+      } else if ((actionKey === 'agregar' || actionKey === 'aplicar') && (normalizedType === 'cashback' || normalizedType === 'discount')) {
+        // Cashback/discount points are a percentage of the purchase, not a flat count —
+        // compute from the same tier info shown on screen so what's displayed is what's charged.
+        const tierInfo = getCurrentTierInfo(discountTiers, tierProgress, balance);
+        const pointsToAdd = purchaseVal * ((tierInfo.percentage || 0) / 100);
+        endpoint = `${API}/cards/${card.id}/add-point`;
+        payload = { ...basePayload, amount: pointsToAdd, purchaseSum: purchaseVal };
       } else {
         const tabConfig = config.actions[activeTab.toLowerCase()];
         if (!tabConfig) throw new Error('No action config found');
@@ -405,7 +412,8 @@ const ResultPage = () => {
 
     // Stamp Agregar
     if (normalizedType === 'stamp' && activeTab === 'Agregar') {
-      return <StampAddAction {...commonProps} stampConfig={stampConfig} stampProgress={stampProgress} />;
+      const stampRewardTiers = card?.availableRewardTiers?.length > 0 ? card.availableRewardTiers : templateRewardTiers;
+      return <StampAddAction {...commonProps} stampConfig={stampConfig} stampProgress={stampProgress} stampRewardTiers={stampRewardTiers} />;
     }
     // Stamp Canjear
     if (normalizedType === 'stamp' && activeTab === 'Canjear') {

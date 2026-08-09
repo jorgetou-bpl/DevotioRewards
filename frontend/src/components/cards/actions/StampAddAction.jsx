@@ -6,12 +6,22 @@ import { PurchaseAmountInput, AmountCounter, ActionButton } from '../shared';
 
 export const StampAddAction = ({
   balance, stampConfig, stampProgress, purchaseAmount, setPurchaseAmount,
-  actionAmount, setActionAmount, loading, openConfirmation, formatCurrency, currencyInfo
+  actionAmount, setActionAmount, loading, openConfirmation, formatCurrency, currencyInfo,
+  stampRewardTiers = []
 }) => {
   const activeStamps = balance.currentNumberOfUses ?? 0;
   const stampsBeforeReward = balance.stampsBeforeReward ?? 0;
   const displayTotal = activeStamps + stampsBeforeReward || 10;
   const isPurchaseValid = parseFloat(purchaseAmount) > 0;
+
+  // The card balance only reflects progress toward the NEXT reward tier — for
+  // multi-tier cards (e.g. a reward at 2 stamps and another at 5), find the
+  // tier after that one so the operator sees the full structure, not just "de 2".
+  const laterTierThresholds = stampRewardTiers
+    .map((t) => t.threshold)
+    .filter((threshold) => typeof threshold === 'number' && threshold > displayTotal)
+    .sort((a, b) => a - b);
+  const nextTierAfterThreshold = laterTierThresholds[0];
   const stampMode = stampConfig.stamp_mode;
   const isSpendMode = stampMode === 'spend';
   const isVisitMode = stampMode === 'visit';
@@ -29,9 +39,10 @@ export const StampAddAction = ({
       <div className="text-center">
         <p className="text-xs sm:text-sm text-zinc-500">
           Sellos activos: {activeStamps} de {displayTotal}
+          {nextTierAfterThreshold ? ` — próximo nivel a los ${nextTierAfterThreshold}` : ''}
         </p>
         <p className="text-xs sm:text-sm text-zinc-500 mt-1">
-          {stampsBeforeReward > 0 
+          {stampsBeforeReward > 0
             ? `${stampsBeforeReward} sello${stampsBeforeReward !== 1 ? 's' : ''} hasta la próxima recompensa`
             : '¡Recompensa disponible!'}
         </p>

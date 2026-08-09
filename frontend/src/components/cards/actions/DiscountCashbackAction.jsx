@@ -1,5 +1,5 @@
 import React from 'react';
-import { PurchaseAmountInput, ActionButton } from '../shared';
+import { PurchaseAmountInput, ActionButton, getCurrentTierInfo } from '../shared';
 
 export const DiscountCashbackAction = ({
   cardType, balance, discountTiers, tierProgress, purchaseAmount, setPurchaseAmount,
@@ -7,54 +7,18 @@ export const DiscountCashbackAction = ({
 }) => {
   const normalizedType = cardType.replace('_card', '');
   const discountLevel = balance.discountLevel ?? balance.discountPercentage ?? null;
-  const discountAmount = balance.discountAmount ?? 0;
-  const totalTransactions = balance.transactionsAmount ?? discountAmount;
   const isCashback = normalizedType === 'cashback' || normalizedType === 'cashback_card';
-
-  const accumulatedAmount = tierProgress ? tierProgress.accumulated_amount : (totalTransactions / 100);
   const rateLabel = isCashback ? 'Cashback actual' : 'Descuento actual';
 
-  let currentTierName = tierProgress?.current_tier || null;
-  let nextTierName = tierProgress?.next_tier || null;
-  let nextThreshold = tierProgress?.next_threshold || null;
-  let amountToNext = tierProgress?.amount_to_next || null;
-  let displayPercentage = discountLevel;
-
-  if (currentTierName && discountTiers.length > 0) {
-    const matchedTier = discountTiers.find(t => t.name === currentTierName);
-    if (matchedTier) displayPercentage = matchedTier.percentage;
-  }
-
-  if (!currentTierName && discountTiers.length > 0) {
-    const sortedTiers = [...discountTiers].sort((a, b) => a.threshold - b.threshold);
-    for (let i = sortedTiers.length - 1; i >= 0; i--) {
-      if (accumulatedAmount >= sortedTiers[i].threshold) {
-        currentTierName = sortedTiers[i].name;
-        displayPercentage = sortedTiers[i].percentage;
-        if (i < sortedTiers.length - 1) {
-          nextTierName = sortedTiers[i + 1].name;
-          nextThreshold = sortedTiers[i + 1].threshold;
-          amountToNext = Math.max(0, sortedTiers[i + 1].threshold - accumulatedAmount);
-        }
-        break;
-      }
-    }
-    if (!currentTierName) {
-      currentTierName = sortedTiers[0]?.name;
-      displayPercentage = sortedTiers[0]?.percentage || discountLevel;
-      if (sortedTiers.length > 1) {
-        nextTierName = sortedTiers[1].name;
-        nextThreshold = sortedTiers[1].threshold;
-        amountToNext = Math.max(0, sortedTiers[1].threshold - accumulatedAmount);
-      }
-    }
-  }
-
-  let nextTierPct = null;
-  if (nextTierName && discountTiers.length > 0) {
-    const nt = discountTiers.find(t => t.name === nextTierName);
-    if (nt) nextTierPct = nt.percentage;
-  }
+  const {
+    percentage: displayPercentage,
+    tierName: currentTierName,
+    accumulatedAmount,
+    nextTierName,
+    nextThreshold,
+    amountToNext,
+    nextTierPercentage: nextTierPct
+  } = getCurrentTierInfo(discountTiers, tierProgress, balance);
 
   return (
     <div className="space-y-4 sm:space-y-6">

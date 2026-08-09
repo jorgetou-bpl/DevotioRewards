@@ -1,11 +1,12 @@
 import React from 'react';
 import { Input } from '../../ui/input';
+import { formatWithThousands, stripThousandsFormatting } from './numberFormat';
 
-export const PurchaseAmountInput = ({ 
-  value, 
-  onChange, 
-  currencyInfo, 
-  required = false, 
+export const PurchaseAmountInput = ({
+  value,
+  onChange,
+  currencyInfo,
+  required = false,
   optional = false,
   hint = null,
   testId = "purchase-amount-input",
@@ -19,9 +20,10 @@ export const PurchaseAmountInput = ({
     <div className="relative">
       <span className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-zinc-400 text-lg sm:text-xl">{currencyInfo.symbol}</span>
       <Input
-        type="number"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
+        type="text"
+        inputMode="decimal"
+        value={formatWithThousands(value)}
+        onChange={(e) => onChange(stripThousandsFormatting(e.target.value))}
         placeholder="0"
         className={`input-brutalist pl-10 sm:pl-12 text-2xl sm:text-3xl font-mono h-14 sm:h-16 text-center ${error ? 'border-red-300' : ''}`}
         data-testid={testId}

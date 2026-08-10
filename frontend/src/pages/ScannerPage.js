@@ -11,9 +11,8 @@ import {
   Scan, 
   Menu, 
   X, 
-  Home, 
-  Settings, 
-  HelpCircle, 
+  Home,
+  Settings,
   LogOut,
   Loader2,
   Camera,
@@ -180,7 +179,6 @@ const ScannerPage = () => {
     ...(user?.role === 'workspace_admin' || user?.role === 'super_admin' ? [
       { icon: Building2, label: 'Admin Workspace', action: () => navigate('/admin/workspace'), testId: 'menu-admin' }
     ] : []),
-    { icon: HelpCircle, label: 'Soporte', action: () => navigate('/support'), testId: 'menu-support' },
     { icon: LogOut, label: 'Cerrar Sesión', action: handleLogout, testId: 'menu-logout' }
   ];
 

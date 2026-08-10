@@ -11,7 +11,6 @@ import ScannerPage from "./pages/ScannerPage";
 import ResultPage from "./pages/ResultPage";
 import SettingsPage from "./pages/SettingsPage";
 import SearchPage from "./pages/SearchPage";
-import SupportPage from "./pages/SupportPage";
 import OperationsPage from "./pages/OperationsPage";
 import AdminSetupPage from "./pages/AdminSetupPage";
 import WorkspaceAdminPage from "./pages/WorkspaceAdminPage";
@@ -95,14 +94,6 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <SearchPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/support"
-        element={
-          <ProtectedRoute>
-            <SupportPage />
           </ProtectedRoute>
         }
       />

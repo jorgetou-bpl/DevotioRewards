@@ -1,15 +1,17 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'sonner';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import {
   ArrowLeft, Building2, Users, MapPin, Key, Plus, Trash2, Loader2, Save,
-  Eye, EyeOff, UserPlus, Activity, ChevronDown, ChevronUp, RefreshCw
+  Eye, EyeOff, UserPlus, Activity, ChevronDown, ChevronUp, RefreshCw,
+  Settings, Stamp, Percent, Gift, MessageSquare
 } from 'lucide-react';
 
 import { API_BASE_URL as API } from '../config/api';
+import { formatWithThousands, stripThousandsFormatting } from '../components/cards/shared/numberFormat';
 
 const ROLE_CONFIG = {
   super_admin: { label: 'Super Admin', bg: 'bg-purple-100', text: 'text-purple-700' },
@@ -19,7 +21,12 @@ const ROLE_CONFIG = {
 
 const WorkspaceAdminPage = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [user, setUser] = useState(null);
+  // Which workspace this page is managing — a super_admin can be sent here
+  // to manage a different business than their own (?workspace=<id> from the
+  // Super Admin Dashboard); everyone else always manages their own.
+  const [targetWorkspaceId, setTargetWorkspaceId] = useState(null);
   const [workspace, setWorkspace] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
@@ -34,6 +41,17 @@ const WorkspaceAdminPage = () => {
   const [locations, setLocations] = useState([]);
   const [savingLocations, setSavingLocations] = useState(false);
   const [editingRole, setEditingRole] = useState(null);
+
+  // Card configuration state (Config. Tarjetas tab) — all scoped to targetWorkspaceId
+  const [configLoading, setConfigLoading] = useState(true);
+  const [stampConfig, setStampConfig] = useState({ stamp_mode: null, spend_threshold: 10000 });
+  const [savingStampConfig, setSavingStampConfig] = useState(false);
+  const [tiersByType, setTiersByType] = useState({ cashback: [], discount: [] });
+  const [savingTiersType, setSavingTiersType] = useState('');
+  const [giftCardAllowAdd, setGiftCardAllowAdd] = useState(false);
+  const [savingGiftCardConfig, setSavingGiftCardConfig] = useState(false);
+  const [commentMode, setCommentMode] = useState('open');
+  const [savingCommentMode, setSavingCommentMode] = useState(false);
 
   const fetchWorkspace = useCallback(async (wsId) => {
     try {
@@ -67,26 +85,29 @@ const WorkspaceAdminPage = () => {
           return;
         }
         setUser(userData);
-        if (userData.workspace_id) {
-          await fetchWorkspace(userData.workspace_id);
-          await fetchUsers(userData.workspace_id);
+        const requestedWorkspace = userData.role === 'super_admin' ? searchParams.get('workspace') : null;
+        const wsId = requestedWorkspace || userData.workspace_id;
+        setTargetWorkspaceId(wsId);
+        if (wsId) {
+          await fetchWorkspace(wsId);
+          await fetchUsers(wsId);
         }
       } catch { navigate('/login'); }
       finally { setLoading(false); }
     };
     checkAuth();
-  }, [navigate, fetchWorkspace, fetchUsers]);
+  }, [navigate, fetchWorkspace, fetchUsers, searchParams]);
 
   const handleCreateUser = async () => {
     if (!newUser.email || !newUser.password || !newUser.name) { toast.error('Complete todos los campos requeridos'); return; }
     setCreatingUser(true);
     try {
       const token = localStorage.getItem('token');
-      await axios.post(`${API}/admin/workspaces/${user.workspace_id}/users`, newUser, { headers: { Authorization: `Bearer ${token}` } });
+      await axios.post(`${API}/admin/workspaces/${targetWorkspaceId}/users`, newUser, { headers: { Authorization: `Bearer ${token}` } });
       toast.success(`Usuario '${newUser.name}' creado`);
       setNewUser({ email: '', password: '', name: '', role: 'operator', location: '' });
       setShowCreateUser(false);
-      await fetchUsers(user.workspace_id);
+      await fetchUsers(targetWorkspaceId);
     } catch (error) { toast.error(error.response?.data?.detail || 'Error al crear usuario'); }
     finally { setCreatingUser(false); }
   };
@@ -95,19 +116,19 @@ const WorkspaceAdminPage = () => {
     if (!window.confirm(`¿Eliminar a ${userName}?`)) return;
     try {
       const token = localStorage.getItem('token');
-      await axios.delete(`${API}/admin/workspaces/${user.workspace_id}/users/${userId}`, { headers: { Authorization: `Bearer ${token}` } });
+      await axios.delete(`${API}/admin/workspaces/${targetWorkspaceId}/users/${userId}`, { headers: { Authorization: `Bearer ${token}` } });
       toast.success('Usuario eliminado');
-      await fetchUsers(user.workspace_id);
+      await fetchUsers(targetWorkspaceId);
     } catch (error) { toast.error(error.response?.data?.detail || 'Error al eliminar'); }
   };
 
   const handleUpdateRole = async (userId, newRole) => {
     try {
       const token = localStorage.getItem('token');
-      await axios.put(`${API}/admin/workspaces/${user.workspace_id}/users/${userId}/role`, { role: newRole }, { headers: { Authorization: `Bearer ${token}` } });
+      await axios.put(`${API}/admin/workspaces/${targetWorkspaceId}/users/${userId}/role`, { role: newRole }, { headers: { Authorization: `Bearer ${token}` } });
       toast.success('Rol actualizado');
       setEditingRole(null);
-      await fetchUsers(user.workspace_id);
+      await fetchUsers(targetWorkspaceId);
     } catch (error) { toast.error(error.response?.data?.detail || 'Error al actualizar rol'); }
   };
 
@@ -116,10 +137,10 @@ const WorkspaceAdminPage = () => {
     setSavingApiKey(true);
     try {
       const token = localStorage.getItem('token');
-      await axios.put(`${API}/admin/workspaces/${user.workspace_id}`, { boomerangme_api_key: newApiKey }, { headers: { Authorization: `Bearer ${token}` } });
+      await axios.put(`${API}/admin/workspaces/${targetWorkspaceId}`, { boomerangme_api_key: newApiKey }, { headers: { Authorization: `Bearer ${token}` } });
       toast.success('API Key actualizada');
       setNewApiKey('');
-      await fetchWorkspace(user.workspace_id);
+      await fetchWorkspace(targetWorkspaceId);
     } catch { toast.error('Error al guardar'); }
     finally { setSavingApiKey(false); }
   };
@@ -129,11 +150,121 @@ const WorkspaceAdminPage = () => {
     setSavingLocations(true);
     try {
       const token = localStorage.getItem('token');
-      await axios.put(`${API}/admin/workspaces/${user.workspace_id}`, { locations }, { headers: { Authorization: `Bearer ${token}` } });
+      await axios.put(`${API}/admin/workspaces/${targetWorkspaceId}`, { locations }, { headers: { Authorization: `Bearer ${token}` } });
       toast.success('Sucursales guardadas');
-      await fetchWorkspace(user.workspace_id);
+      await fetchWorkspace(targetWorkspaceId);
     } catch { toast.error('Error al guardar'); }
     finally { setSavingLocations(false); }
+  };
+
+  // Load card configuration for the target workspace (Devotio-only tab)
+  useEffect(() => {
+    if (!targetWorkspaceId || user?.role !== 'super_admin') return;
+    const token = localStorage.getItem('token');
+    const params = { workspace_id: targetWorkspaceId };
+    const headers = { Authorization: `Bearer ${token}` };
+    setConfigLoading(true);
+
+    Promise.all([
+      axios.get(`${API}/stamp-config`, { params, headers }),
+      axios.get(`${API}/discount-tiers/cashback`, { params, headers }),
+      axios.get(`${API}/discount-tiers/discount`, { params, headers }),
+      axios.get(`${API}/gift-card-config`, { params, headers }),
+      axios.get(`${API}/comment-config`, { params, headers })
+    ])
+      .then(([stampResp, cashbackResp, discountResp, giftResp, commentResp]) => {
+        if (stampResp.data.stamp_mode) {
+          setStampConfig({ stamp_mode: stampResp.data.stamp_mode, spend_threshold: stampResp.data.spend_threshold || 10000 });
+        } else {
+          setStampConfig({ stamp_mode: null, spend_threshold: 10000 });
+        }
+        setTiersByType({ cashback: cashbackResp.data.tiers || [], discount: discountResp.data.tiers || [] });
+        setGiftCardAllowAdd(!!giftResp.data.allow_add);
+        setCommentMode(commentResp.data.mode || 'open');
+      })
+      .catch((error) => console.error('Error loading card configuration:', error))
+      .finally(() => setConfigLoading(false));
+  }, [targetWorkspaceId, user]);
+
+  const handleSaveStampConfig = async () => {
+    if (!stampConfig.stamp_mode) { toast.error('Seleccione un modo de acumulación'); return; }
+    setSavingStampConfig(true);
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post(`${API}/stamp-config`, stampConfig, {
+        params: { workspace_id: targetWorkspaceId },
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success('Configuración de sellos guardada');
+    } catch { toast.error('Error al guardar configuración'); }
+    finally { setSavingStampConfig(false); }
+  };
+
+  const handleAddTier = (cardType) => {
+    const tiers = tiersByType[cardType];
+    const lastTier = tiers[tiers.length - 1];
+    setTiersByType({
+      ...tiersByType,
+      [cardType]: [...tiers, {
+        name: '',
+        threshold: lastTier ? lastTier.threshold + 5000 : 0,
+        percentage: lastTier ? lastTier.percentage + 2 : 1
+      }]
+    });
+  };
+
+  const handleUpdateTier = (cardType, index, field, value) => {
+    const updated = [...tiersByType[cardType]];
+    updated[index] = { ...updated[index], [field]: field === 'name' ? value : (parseFloat(value) || 0) };
+    setTiersByType({ ...tiersByType, [cardType]: updated });
+  };
+
+  const handleRemoveTier = (cardType, index) => {
+    setTiersByType({ ...tiersByType, [cardType]: tiersByType[cardType].filter((_, i) => i !== index) });
+  };
+
+  const handleSaveTiers = async (cardType) => {
+    const tiers = tiersByType[cardType];
+    if (tiers.length === 0) { toast.error('Agregue al menos un nivel'); return; }
+    if (tiers.some(t => !t.name.trim())) { toast.error('Todos los niveles necesitan un nombre'); return; }
+    setSavingTiersType(cardType);
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post(`${API}/discount-tiers/${cardType}`, { tiers }, {
+        params: { workspace_id: targetWorkspaceId },
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success('Niveles guardados');
+    } catch { toast.error('Error al guardar niveles'); }
+    finally { setSavingTiersType(''); }
+  };
+
+  const handleSaveGiftCardConfig = async (nextValue) => {
+    setSavingGiftCardConfig(true);
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post(`${API}/gift-card-config`, { allow_add: nextValue }, {
+        params: { workspace_id: targetWorkspaceId },
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setGiftCardAllowAdd(nextValue);
+      toast.success('Configuración de tarjeta de regalo guardada');
+    } catch { toast.error('Error al guardar configuración'); }
+    finally { setSavingGiftCardConfig(false); }
+  };
+
+  const handleSaveCommentMode = async (mode) => {
+    setSavingCommentMode(true);
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post(`${API}/comment-config`, { mode }, {
+        params: { workspace_id: targetWorkspaceId },
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setCommentMode(mode);
+      toast.success('Modo de comentario guardado');
+    } catch { toast.error('Error al guardar configuración'); }
+    finally { setSavingCommentMode(false); }
   };
 
   if (loading) {
@@ -158,8 +289,12 @@ const WorkspaceAdminPage = () => {
     { key: 'overview', label: 'General', icon: Building2 },
     { key: 'users', label: 'Usuarios', icon: Users },
     { key: 'locations', label: 'Sucursales', icon: MapPin },
-    // API Key is Devotio-only — the client's own workspace_admin never sees it
-    ...(isSuperAdmin ? [{ key: 'api', label: 'API Key', icon: Key }] : []),
+    // API Key and card configuration are Devotio-only — the client's own
+    // workspace_admin never sees them.
+    ...(isSuperAdmin ? [
+      { key: 'api', label: 'API Key', icon: Key },
+      { key: 'config', label: 'Config. Tarjetas', icon: Settings },
+    ] : []),
   ];
 
   return (
@@ -180,7 +315,7 @@ const WorkspaceAdminPage = () => {
             <h1 className="text-xl sm:text-2xl font-bold text-[#120627]">{workspace.name}</h1>
             <p className="text-sm text-zinc-500">Panel de Administración</p>
           </div>
-          <Button onClick={() => { fetchWorkspace(user.workspace_id); fetchUsers(user.workspace_id); }} variant="outline" size="sm" className="gap-2">
+          <Button onClick={() => { fetchWorkspace(targetWorkspaceId); fetchUsers(targetWorkspaceId); }} variant="outline" size="sm" className="gap-2">
             <RefreshCw className="h-4 w-4" /> Actualizar
           </Button>
         </div>
@@ -385,6 +520,120 @@ const WorkspaceAdminPage = () => {
               </Button>
             </div>
           </div>
+        )}
+
+        {/* Config. Tarjetas Tab */}
+        {activeTab === 'config' && (
+          configLoading ? (
+            <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-[#120627]" /></div>
+          ) : (
+            <div className="space-y-4">
+              {/* Stamp Card Configuration */}
+              <div className="bg-white rounded-xl border border-zinc-200 p-4 space-y-3">
+                <div className="flex items-center gap-3">
+                  <Stamp className="h-5 w-5 text-[#120627]" />
+                  <p className="text-xs sm:text-sm font-semibold uppercase tracking-widest text-zinc-500">Tarjetas de Sellos</p>
+                </div>
+                <div className="space-y-2">
+                  {[
+                    { value: 'spend', label: 'Por Monto de Compra' },
+                    { value: 'visit', label: 'Por Visita' },
+                    { value: 'manual', label: 'Manual' }
+                  ].map(mode => (
+                    <button key={mode.value} onClick={() => setStampConfig({ ...stampConfig, stamp_mode: mode.value })}
+                      className={`w-full text-left px-4 py-3 rounded-lg border-2 text-sm transition-colors ${
+                        stampConfig.stamp_mode === mode.value ? 'border-[#120627] bg-[#120627]/5 font-medium' : 'border-zinc-200'
+                      }`}>
+                      {mode.label}
+                    </button>
+                  ))}
+                </div>
+                {stampConfig.stamp_mode === 'spend' && (
+                  <div className="pt-2">
+                    <p className="text-xs text-zinc-500 mb-2">Monto por sello</p>
+                    <Input type="text" inputMode="decimal" value={formatWithThousands(stampConfig.spend_threshold)}
+                      onChange={(e) => setStampConfig({ ...stampConfig, spend_threshold: parseFloat(stripThousandsFormatting(e.target.value)) || 0 })}
+                      className="h-10" data-testid="stamp-spend-threshold" />
+                  </div>
+                )}
+                <Button onClick={handleSaveStampConfig} disabled={savingStampConfig || !stampConfig.stamp_mode} className="w-full h-10 btn-primary" data-testid="save-stamp-config">
+                  {savingStampConfig ? <Loader2 className="h-5 w-5 animate-spin" /> : <><Save className="h-4 w-4 mr-2" /> Guardar Configuración</>}
+                </Button>
+              </div>
+
+              {/* Tier sections — Cashback and Descuento, independent */}
+              {[{ type: 'cashback', label: 'Niveles — Cashback' }, { type: 'discount', label: 'Niveles — Descuento' }].map(({ type, label }) => (
+                <div key={type} className="bg-white rounded-xl border border-zinc-200 p-4 space-y-3">
+                  <div className="flex items-center gap-3">
+                    <Percent className="h-5 w-5 text-[#120627]" />
+                    <p className="text-xs sm:text-sm font-semibold uppercase tracking-widest text-zinc-500">{label}</p>
+                  </div>
+                  {tiersByType[type].map((tier, index) => (
+                    <div key={index} className="flex gap-2 items-start" data-testid={`${type}-tier-${index}`}>
+                      <Input value={tier.name} onChange={(e) => handleUpdateTier(type, index, 'name', e.target.value)}
+                        placeholder="Nombre" className="h-10 text-sm flex-1" data-testid={`${type}-tier-name-${index}`} />
+                      <Input type="text" inputMode="decimal" value={formatWithThousands(tier.threshold)}
+                        onChange={(e) => handleUpdateTier(type, index, 'threshold', stripThousandsFormatting(e.target.value))}
+                        placeholder="Gasto" className="h-10 text-sm w-24" disabled={index === 0} data-testid={`${type}-tier-threshold-${index}`} />
+                      <div className="relative w-16">
+                        <Input type="number" value={tier.percentage} onChange={(e) => handleUpdateTier(type, index, 'percentage', e.target.value)}
+                          placeholder="%" className="h-10 text-sm pr-6" data-testid={`${type}-tier-percentage-${index}`} />
+                        <span className="absolute right-2 top-1/2 -translate-y-1/2 text-zinc-400 text-xs">%</span>
+                      </div>
+                      <button onClick={() => handleRemoveTier(type, index)} className="p-2 text-zinc-400 hover:text-red-500" data-testid={`${type}-tier-remove-${index}`}>
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ))}
+                  <Button onClick={() => handleAddTier(type)} variant="outline"
+                    className="w-full h-10 border-2 border-dashed border-zinc-300" data-testid={`add-${type}-tier`}>
+                    <Plus className="h-4 w-4 mr-2" /> Agregar nivel
+                  </Button>
+                  {tiersByType[type].length > 0 && (
+                    <Button onClick={() => handleSaveTiers(type)} disabled={savingTiersType === type} className="w-full h-10 btn-primary" data-testid={`save-${type}-tiers`}>
+                      {savingTiersType === type ? <Loader2 className="h-5 w-5 animate-spin" /> : <><Save className="h-4 w-4 mr-2" /> Guardar Niveles</>}
+                    </Button>
+                  )}
+                </div>
+              ))}
+
+              {/* Gift Card "Agregar" Toggle */}
+              <div className="bg-white rounded-xl border border-zinc-200 p-4">
+                <div className="flex items-center gap-3 mb-3">
+                  <Gift className="h-5 w-5 text-[#120627]" />
+                  <p className="text-xs sm:text-sm font-semibold uppercase tracking-widest text-zinc-500">Tarjetas de Regalo</p>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex-1 pr-3">
+                    <p className="font-medium text-[#120627] text-sm">Permitir "Agregar" saldo</p>
+                    <p className="text-xs text-zinc-500">Por defecto los operadores solo canjean. Actívelo si este negocio necesita cargar saldo desde el escáner.</p>
+                  </div>
+                  <button onClick={() => handleSaveGiftCardConfig(!giftCardAllowAdd)} disabled={savingGiftCardConfig}
+                    className={`shrink-0 w-11 h-6 rounded-full transition-colors ${giftCardAllowAdd ? 'bg-[#120627]' : 'bg-zinc-300'}`}
+                    data-testid="gift-card-allow-add-switch">
+                    <span className={`block w-5 h-5 bg-white rounded-full transition-transform ${giftCardAllowAdd ? 'translate-x-5' : 'translate-x-0.5'}`} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Comment Mode */}
+              <div className="bg-white rounded-xl border border-zinc-200 p-4">
+                <div className="flex items-center gap-3 mb-3">
+                  <MessageSquare className="h-5 w-5 text-[#120627]" />
+                  <p className="text-xs sm:text-sm font-semibold uppercase tracking-widest text-zinc-500">Comentario</p>
+                </div>
+                <p className="text-xs text-zinc-500 mb-3">Aplica a todas las acciones del escáner por igual.</p>
+                <div className="flex items-center justify-between">
+                  <p className="font-medium text-[#120627] text-sm">Modo de comentario</p>
+                  <select value={commentMode} onChange={(e) => handleSaveCommentMode(e.target.value)} disabled={savingCommentMode}
+                    className="h-9 border border-zinc-200 rounded-lg px-3 text-sm bg-white" data-testid="comment-mode">
+                    <option value="open">Abierto</option>
+                    <option value="invoice_number"># de Factura</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          )
         )}
       </main>
     </div>

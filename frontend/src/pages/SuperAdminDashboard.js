@@ -7,7 +7,7 @@ import { Input } from '../components/ui/input';
 import {
   Shield, Building2, Users, Activity, ChevronDown, ChevronUp,
   Key, RefreshCw, Loader2, ArrowLeft, MapPin, UserPlus,
-  ToggleLeft, ToggleRight, Copy, Check, Plus, X
+  ToggleLeft, ToggleRight, Copy, Check, Plus, X, Settings
 } from 'lucide-react';
 
 import { API_BASE_URL as API } from '../config/api';
@@ -479,6 +479,11 @@ const SuperAdminDashboard = () => {
                       </div>
 
                       <div className="flex gap-2">
+                        <Button variant="outline" size="sm" onClick={() => navigate(`/admin?workspace=${ws.id}`)}
+                          className="gap-2 text-xs text-[#120627] hover:bg-[#120627]/5"
+                          data-testid={`manage-workspace-${ws.slug}`}>
+                          <Settings className="h-4 w-4" /> Gestionar
+                        </Button>
                         <Button variant="outline" size="sm" onClick={() => handleToggleActive(ws.id)}
                           className={`gap-2 text-xs ${ws.active ? 'text-red-600 hover:bg-red-50' : 'text-green-600 hover:bg-green-50'}`}
                           data-testid={`toggle-workspace-${ws.slug}`}>

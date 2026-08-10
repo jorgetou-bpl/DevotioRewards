@@ -10,6 +10,15 @@ from datetime import datetime, timezone
 
 router = APIRouter(tags=["settings"])
 
+def resolve_workspace_id(current_user: dict, workspace_id: Optional[str] = None) -> Optional[str]:
+    """Resolve which workspace a business-configuration request applies to.
+    Only super_admin may target a workspace other than their own — this is
+    what lets Devotio configure card settings for a specific client business
+    from the Super Admin Dashboard instead of only their own workspace."""
+    if workspace_id and current_user.get("role") == "super_admin":
+        return workspace_id
+    return current_user.get("workspace_id")
+
 @router.get("/settings", response_model=SettingsResponse)
 async def get_settings(current_user: dict = Depends(get_current_user)):
     """Get user settings."""
@@ -41,14 +50,15 @@ class StampConfigResponse(BaseModel):
     spend_threshold: Optional[float] = None
 
 @router.get("/stamp-config")
-async def get_stamp_config(current_user: dict = Depends(get_current_user)):
-    """Get the stamp configuration for the user's workspace."""
-    ws_id = current_user.get("workspace_id")
+async def get_stamp_config(workspace_id: Optional[str] = None, current_user: dict = Depends(get_current_user)):
+    """Get the stamp configuration for the user's workspace (or, for
+    super_admin, an explicitly targeted workspace)."""
+    ws_id = resolve_workspace_id(current_user, workspace_id)
     query = {"workspace_id": ws_id} if ws_id else {}
     config = await db.stamp_config.find_one(query, {"_id": 0})
     if config:
         return StampConfigResponse(
-            success=True, 
+            success=True,
             stamp_mode=config.get("stamp_mode"),
             spend_threshold=config.get("spend_threshold")
         )
@@ -57,14 +67,15 @@ async def get_stamp_config(current_user: dict = Depends(get_current_user)):
 @router.post("/stamp-config")
 async def set_stamp_config(
     request: StampConfigRequest,
+    workspace_id: Optional[str] = None,
     current_user: dict = Depends(require_super_admin)
 ):
-    """Set the stamp configuration for the user's workspace. Devotio-only."""
+    """Set the stamp configuration for a workspace. Devotio-only."""
     valid_modes = ['spend', 'visit', 'manual']
     if request.stamp_mode not in valid_modes:
         raise HTTPException(status_code=400, detail=f"Modo inválido. Use: {', '.join(valid_modes)}")
-    
-    ws_id = current_user.get("workspace_id")
+
+    ws_id = resolve_workspace_id(current_user, workspace_id)
     query = {"workspace_id": ws_id} if ws_id else {}
     await db.stamp_config.update_one(
         query,
@@ -246,10 +257,11 @@ def _validate_tier_card_type(card_type: str) -> None:
         raise HTTPException(status_code=400, detail=f"Tipo de tarjeta inválido. Use: {', '.join(TIER_CARD_TYPES)}")
 
 @router.get("/discount-tiers/{card_type}")
-async def get_discount_tiers(card_type: str, current_user: dict = Depends(get_current_user)):
-    """Get the tier configuration for 'cashback' or 'discount' cards, for the user's workspace."""
+async def get_discount_tiers(card_type: str, workspace_id: Optional[str] = None, current_user: dict = Depends(get_current_user)):
+    """Get the tier configuration for 'cashback' or 'discount' cards, for the
+    user's workspace (or, for super_admin, an explicitly targeted workspace)."""
     _validate_tier_card_type(card_type)
-    ws_id = current_user.get("workspace_id")
+    ws_id = resolve_workspace_id(current_user, workspace_id)
     query = {"workspace_id": ws_id, "card_type": card_type} if ws_id else {"card_type": card_type}
     config = await db.discount_tiers.find_one(query, {"_id": 0})
     if config and config.get("tiers"):
@@ -257,13 +269,13 @@ async def get_discount_tiers(card_type: str, current_user: dict = Depends(get_cu
     return DiscountTiersResponse(success=True, card_type=card_type, tiers=[])
 
 @router.post("/discount-tiers/{card_type}")
-async def save_discount_tiers(card_type: str, request: DiscountTiersRequest, current_user: dict = Depends(require_super_admin)):
+async def save_discount_tiers(card_type: str, request: DiscountTiersRequest, workspace_id: Optional[str] = None, current_user: dict = Depends(require_super_admin)):
     """Save the tier configuration for 'cashback' or 'discount' cards. Devotio-only."""
     _validate_tier_card_type(card_type)
     tiers_data = [t.model_dump() for t in request.tiers]
     tiers_data.sort(key=lambda x: x["threshold"])
 
-    ws_id = current_user.get("workspace_id")
+    ws_id = resolve_workspace_id(current_user, workspace_id)
     query = {"workspace_id": ws_id, "card_type": card_type} if ws_id else {"card_type": card_type}
     await db.discount_tiers.update_one(
         query,
@@ -388,22 +400,22 @@ class CommentConfigResponse(BaseModel):
     mode: str = 'open'
 
 @router.get("/comment-config")
-async def get_comment_config(current_user: dict = Depends(get_current_user)):
+async def get_comment_config(workspace_id: Optional[str] = None, current_user: dict = Depends(get_current_user)):
     """Get the workspace's comment mode. Readable by any authenticated user —
     operators need this to know what the confirmation modal should ask for."""
-    ws_id = current_user.get("workspace_id")
+    ws_id = resolve_workspace_id(current_user, workspace_id)
     query = {"workspace_id": ws_id} if ws_id else {}
     config = await db.comment_config.find_one(query, {"_id": 0})
     return CommentConfigResponse(success=True, mode=config.get("mode", "open") if config else "open")
 
 @router.post("/comment-config")
-async def set_comment_config(request: CommentConfigRequest, current_user: dict = Depends(require_super_admin)):
-    """Set the workspace's comment mode. Devotio-only."""
+async def set_comment_config(request: CommentConfigRequest, workspace_id: Optional[str] = None, current_user: dict = Depends(require_super_admin)):
+    """Set a workspace's comment mode. Devotio-only."""
     valid_modes = ['open', 'invoice_number']
     if request.mode not in valid_modes:
         raise HTTPException(status_code=400, detail=f"Modo inválido. Use: {', '.join(valid_modes)}")
 
-    ws_id = current_user.get("workspace_id")
+    ws_id = resolve_workspace_id(current_user, workspace_id)
     query = {"workspace_id": ws_id} if ws_id else {}
     await db.comment_config.update_one(
         query,
@@ -428,19 +440,19 @@ class GiftCardConfigResponse(BaseModel):
     allow_add: bool = False
 
 @router.get("/gift-card-config")
-async def get_gift_card_config(current_user: dict = Depends(get_current_user)):
+async def get_gift_card_config(workspace_id: Optional[str] = None, current_user: dict = Depends(get_current_user)):
     """Get whether operators can add balance to gift cards. Defaults to False
     (redeem-only) — matches the client's request that adding funds is the
     exception, not the default."""
-    ws_id = current_user.get("workspace_id")
+    ws_id = resolve_workspace_id(current_user, workspace_id)
     query = {"workspace_id": ws_id} if ws_id else {}
     config = await db.gift_card_config.find_one(query, {"_id": 0})
     return GiftCardConfigResponse(success=True, allow_add=config.get("allow_add", False) if config else False)
 
 @router.post("/gift-card-config")
-async def set_gift_card_config(request: GiftCardConfigRequest, current_user: dict = Depends(require_super_admin)):
-    """Set whether operators can add balance to gift cards. Devotio-only."""
-    ws_id = current_user.get("workspace_id")
+async def set_gift_card_config(request: GiftCardConfigRequest, workspace_id: Optional[str] = None, current_user: dict = Depends(require_super_admin)):
+    """Set whether operators can add balance to gift cards for a workspace. Devotio-only."""
+    ws_id = resolve_workspace_id(current_user, workspace_id)
     query = {"workspace_id": ws_id} if ws_id else {}
     await db.gift_card_config.update_one(
         query,

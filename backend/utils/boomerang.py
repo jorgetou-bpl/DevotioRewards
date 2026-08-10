@@ -223,14 +223,15 @@ def build_comment_with_gerente(original_comment: str, gerente_name: str) -> str:
     return gerente_tag
 
 
-async def validate_comment_for_card_type(card_type: str, comment: str, workspace_id: str) -> None:
-    """Enforce the configured comment mode for a card type before an action is
-    submitted. In 'invoice_number' mode the comment must be a plain number and
-    must not have been used before in this workspace's operation history —
-    raises HTTPException(400) if either check fails. No-op in 'open' mode."""
+async def validate_comment(comment: str, workspace_id: str) -> None:
+    """Enforce the workspace's configured comment mode before an action is
+    submitted, regardless of card type. In 'invoice_number' mode the comment
+    must be a plain number and must not have been used before anywhere in
+    this workspace's operation history — raises HTTPException(400) if either
+    check fails. No-op in 'open' mode."""
     from fastapi import HTTPException
 
-    query = {"workspace_id": workspace_id, "card_type": card_type} if workspace_id else {"card_type": card_type}
+    query = {"workspace_id": workspace_id} if workspace_id else {}
     config = await db.comment_config.find_one(query, {"_id": 0})
     mode = config.get("mode", "open") if config else "open"
 

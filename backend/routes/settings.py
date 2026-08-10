@@ -221,42 +221,54 @@ async def set_card_accrual_mode(
     return AccrualModeResponse(success=True, card_id=str(card_id), mode=request.mode)
 
 
-# ============ DISCOUNT TIER CONFIGURATION ============
+# ============ DISCOUNT/CASHBACK TIER CONFIGURATION (separate per card type) ============
+# Client feedback: "Debe haber una sección de configuración para cada tipo de
+# tarjeta por separado. Cashback, Sellos, Puntos, Descuentos" — Cashback and
+# Descuento used to share one tier list; each now has its own.
+
+TIER_CARD_TYPES = ['cashback', 'discount']
 
 class DiscountTier(BaseModel):
     name: str
     threshold: float  # Amount to spend to reach this tier
-    percentage: float  # Discount percentage for this tier
+    percentage: float  # Discount/cashback percentage for this tier
 
 class DiscountTiersRequest(BaseModel):
     tiers: List[DiscountTier]
 
 class DiscountTiersResponse(BaseModel):
     success: bool
+    card_type: str
     tiers: List[dict] = []
 
-@router.get("/discount-tiers")
-async def get_discount_tiers(current_user: dict = Depends(get_current_user)):
-    """Get the discount tier configuration for the user's workspace."""
+def _validate_tier_card_type(card_type: str) -> None:
+    if card_type not in TIER_CARD_TYPES:
+        raise HTTPException(status_code=400, detail=f"Tipo de tarjeta inválido. Use: {', '.join(TIER_CARD_TYPES)}")
+
+@router.get("/discount-tiers/{card_type}")
+async def get_discount_tiers(card_type: str, current_user: dict = Depends(get_current_user)):
+    """Get the tier configuration for 'cashback' or 'discount' cards, for the user's workspace."""
+    _validate_tier_card_type(card_type)
     ws_id = current_user.get("workspace_id")
-    query = {"workspace_id": ws_id} if ws_id else {"type": "global"}
+    query = {"workspace_id": ws_id, "card_type": card_type} if ws_id else {"card_type": card_type}
     config = await db.discount_tiers.find_one(query, {"_id": 0})
     if config and config.get("tiers"):
-        return DiscountTiersResponse(success=True, tiers=config["tiers"])
-    return DiscountTiersResponse(success=True, tiers=[])
+        return DiscountTiersResponse(success=True, card_type=card_type, tiers=config["tiers"])
+    return DiscountTiersResponse(success=True, card_type=card_type, tiers=[])
 
-@router.post("/discount-tiers")
-async def save_discount_tiers(request: DiscountTiersRequest, current_user: dict = Depends(require_super_admin)):
-    """Save the discount tier configuration for the user's workspace. Devotio-only."""
+@router.post("/discount-tiers/{card_type}")
+async def save_discount_tiers(card_type: str, request: DiscountTiersRequest, current_user: dict = Depends(require_super_admin)):
+    """Save the tier configuration for 'cashback' or 'discount' cards. Devotio-only."""
+    _validate_tier_card_type(card_type)
     tiers_data = [t.model_dump() for t in request.tiers]
     tiers_data.sort(key=lambda x: x["threshold"])
-    
+
     ws_id = current_user.get("workspace_id")
-    query = {"workspace_id": ws_id} if ws_id else {"type": "global"}
+    query = {"workspace_id": ws_id, "card_type": card_type} if ws_id else {"card_type": card_type}
     await db.discount_tiers.update_one(
         query,
         {"$set": {
-            "type": "global",
+            "card_type": card_type,
             "workspace_id": ws_id,
             "tiers": tiers_data,
             "updated_by": current_user.get("email", ""),
@@ -264,7 +276,7 @@ async def save_discount_tiers(request: DiscountTiersRequest, current_user: dict 
         }},
         upsert=True
     )
-    return DiscountTiersResponse(success=True, tiers=tiers_data)
+    return DiscountTiersResponse(success=True, card_type=card_type, tiers=tiers_data)
 
 
 # ============ TIER PROGRESS TRACKING (for discount/cashback cards) ============
@@ -278,23 +290,12 @@ class TierProgressResponse(BaseModel):
     next_threshold: Optional[float] = None
     amount_to_next: Optional[float] = None
 
-@router.get("/tier-progress/{card_id}")
-async def get_tier_progress(card_id: str, current_user: dict = Depends(get_current_user)):
-    """Get accumulated purchase amount for a card (for tier tracking)."""
-    progress = await db.tier_progress.find_one({"card_id": str(card_id)}, {"_id": 0})
-    accumulated = progress.get("accumulated_amount", 0) if progress else 0
-    
-    # Get tier config filtered by workspace
-    ws_id = current_user.get("workspace_id")
-    tier_query = {"workspace_id": ws_id} if ws_id else {"type": "global"}
-    config = await db.discount_tiers.find_one(tier_query, {"_id": 0})
-    tiers = sorted(config.get("tiers", []), key=lambda x: x["threshold"]) if config else []
-    
+def _compute_tier_position(tiers: list, accumulated: float):
     current_tier = None
     next_tier = None
     next_threshold = None
     amount_to_next = None
-    
+
     for i in range(len(tiers) - 1, -1, -1):
         if accumulated >= tiers[i]["threshold"]:
             current_tier = tiers[i]["name"]
@@ -303,14 +304,31 @@ async def get_tier_progress(card_id: str, current_user: dict = Depends(get_curre
                 next_threshold = tiers[i + 1]["threshold"]
                 amount_to_next = max(0, tiers[i + 1]["threshold"] - accumulated)
             break
-    
+
     if not current_tier and tiers:
         current_tier = tiers[0]["name"]
         if len(tiers) > 1:
             next_tier = tiers[1]["name"]
             next_threshold = tiers[1]["threshold"]
             amount_to_next = max(0, tiers[1]["threshold"] - accumulated)
-    
+
+    return current_tier, next_tier, next_threshold, amount_to_next
+
+@router.get("/tier-progress/{card_id}")
+async def get_tier_progress(card_id: str, card_type: str, current_user: dict = Depends(get_current_user)):
+    """Get accumulated purchase amount for a card, positioned against its
+    card type's own tier list (cashback and discount tiers are separate)."""
+    _validate_tier_card_type(card_type)
+    progress = await db.tier_progress.find_one({"card_id": str(card_id)}, {"_id": 0})
+    accumulated = progress.get("accumulated_amount", 0) if progress else 0
+
+    ws_id = current_user.get("workspace_id")
+    tier_query = {"workspace_id": ws_id, "card_type": card_type} if ws_id else {"card_type": card_type}
+    config = await db.discount_tiers.find_one(tier_query, {"_id": 0})
+    tiers = sorted(config.get("tiers", []), key=lambda x: x["threshold"]) if config else []
+
+    current_tier, next_tier, next_threshold, amount_to_next = _compute_tier_position(tiers, accumulated)
+
     return TierProgressResponse(
         success=True,
         card_id=str(card_id),
@@ -322,12 +340,14 @@ async def get_tier_progress(card_id: str, current_user: dict = Depends(get_curre
     )
 
 @router.post("/tier-progress/{card_id}/add")
-async def add_tier_progress(card_id: str, amount: float, current_user: dict = Depends(get_current_user)):
-    """Add a purchase amount to the tier progress tracker."""
+async def add_tier_progress(card_id: str, amount: float, card_type: str, current_user: dict = Depends(get_current_user)):
+    """Add a purchase amount to the tier progress tracker, positioned against
+    the given card type's own tier list."""
+    _validate_tier_card_type(card_type)
     progress = await db.tier_progress.find_one({"card_id": str(card_id)})
     current_amount = progress.get("accumulated_amount", 0) if progress else 0
     new_amount = current_amount + amount
-    
+
     ws_id = current_user.get("workspace_id")
     await db.tier_progress.update_one(
         {"card_id": str(card_id)},
@@ -340,33 +360,13 @@ async def add_tier_progress(card_id: str, amount: float, current_user: dict = De
         }},
         upsert=True
     )
-    
-    # Get tier config filtered by workspace
-    tier_query = {"workspace_id": ws_id} if ws_id else {"type": "global"}
+
+    tier_query = {"workspace_id": ws_id, "card_type": card_type} if ws_id else {"card_type": card_type}
     config = await db.discount_tiers.find_one(tier_query, {"_id": 0})
     tiers = sorted(config.get("tiers", []), key=lambda x: x["threshold"]) if config else []
-    
-    current_tier = None
-    next_tier = None
-    next_threshold = None
-    amount_to_next = None
-    
-    for i in range(len(tiers) - 1, -1, -1):
-        if new_amount >= tiers[i]["threshold"]:
-            current_tier = tiers[i]["name"]
-            if i < len(tiers) - 1:
-                next_tier = tiers[i + 1]["name"]
-                next_threshold = tiers[i + 1]["threshold"]
-                amount_to_next = max(0, tiers[i + 1]["threshold"] - new_amount)
-            break
-    
-    if not current_tier and tiers:
-        current_tier = tiers[0]["name"]
-        if len(tiers) > 1:
-            next_tier = tiers[1]["name"]
-            next_threshold = tiers[1]["threshold"]
-            amount_to_next = max(0, tiers[1]["threshold"] - new_amount)
-    
+
+    current_tier, next_tier, next_threshold, amount_to_next = _compute_tier_position(tiers, new_amount)
+
     return TierProgressResponse(
         success=True,
         card_id=str(card_id),
@@ -378,50 +378,44 @@ async def add_tier_progress(card_id: str, amount: float, current_user: dict = De
     )
 
 
-# ============ COMMENT CONFIGURATION (per card type) ============
-
-VALID_CARD_TYPES = ['stamp', 'cashback', 'multipass', 'coupon', 'discount', 'gift', 'membership', 'reward']
+# ============ COMMENT CONFIGURATION (global — applies to every action) ============
 
 class CommentConfigRequest(BaseModel):
     mode: str  # 'open' or 'invoice_number'
 
 class CommentConfigResponse(BaseModel):
     success: bool
-    card_type: str
     mode: str = 'open'
 
-@router.get("/comment-config/{card_type}")
-async def get_comment_config(card_type: str, current_user: dict = Depends(get_current_user)):
-    """Get the comment mode for a card type. Readable by any authenticated user —
+@router.get("/comment-config")
+async def get_comment_config(current_user: dict = Depends(get_current_user)):
+    """Get the workspace's comment mode. Readable by any authenticated user —
     operators need this to know what the confirmation modal should ask for."""
     ws_id = current_user.get("workspace_id")
-    query = {"workspace_id": ws_id, "card_type": card_type} if ws_id else {"card_type": card_type}
+    query = {"workspace_id": ws_id} if ws_id else {}
     config = await db.comment_config.find_one(query, {"_id": 0})
-    return CommentConfigResponse(success=True, card_type=card_type, mode=config.get("mode", "open") if config else "open")
+    return CommentConfigResponse(success=True, mode=config.get("mode", "open") if config else "open")
 
-@router.post("/comment-config/{card_type}")
-async def set_comment_config(card_type: str, request: CommentConfigRequest, current_user: dict = Depends(require_super_admin)):
-    """Set the comment mode for a card type. Devotio-only."""
-    if card_type not in VALID_CARD_TYPES:
-        raise HTTPException(status_code=400, detail=f"Tipo de tarjeta inválido. Use: {', '.join(VALID_CARD_TYPES)}")
+@router.post("/comment-config")
+async def set_comment_config(request: CommentConfigRequest, current_user: dict = Depends(require_super_admin)):
+    """Set the workspace's comment mode. Devotio-only."""
     valid_modes = ['open', 'invoice_number']
     if request.mode not in valid_modes:
         raise HTTPException(status_code=400, detail=f"Modo inválido. Use: {', '.join(valid_modes)}")
 
     ws_id = current_user.get("workspace_id")
-    query = {"workspace_id": ws_id, "card_type": card_type} if ws_id else {"card_type": card_type}
+    query = {"workspace_id": ws_id} if ws_id else {}
     await db.comment_config.update_one(
         query,
         {"$set": {
             "workspace_id": ws_id,
-            "card_type": card_type,
             "mode": request.mode,
             "updated_by": current_user.get("email", ""),
             "updated_at": datetime.now(timezone.utc).isoformat()
         }},
         upsert=True
     )
-    return CommentConfigResponse(success=True, card_type=card_type, mode=request.mode)
+    return CommentConfigResponse(success=True, mode=request.mode)
 
 
 # ============ GIFT CARD "AGREGAR" TOGGLE ============

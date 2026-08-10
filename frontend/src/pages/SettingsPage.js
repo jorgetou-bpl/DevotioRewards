@@ -45,18 +45,19 @@ const SettingsPage = () => {
   const [stampConfigLoading, setStampConfigLoading] = useState(true);
   const [savingStampConfig, setSavingStampConfig] = useState(false);
 
-  // Discount tier configuration state
-  const [discountTiers, setDiscountTiers] = useState([]);
-  const [discountTiersLoading, setDiscountTiersLoading] = useState(true);
-  const [savingDiscountTiers, setSavingDiscountTiers] = useState(false);
+  // Tier configuration state — separate per card type (Cashback and Descuento
+  // used to share one list; the client asked for each type to have its own).
+  const [tiersByType, setTiersByType] = useState({ cashback: [], discount: [] });
+  const [tiersLoading, setTiersLoading] = useState(true);
+  const [savingTiersType, setSavingTiersType] = useState('');
 
   // Gift card "Agregar" toggle state
   const [giftCardAllowAdd, setGiftCardAllowAdd] = useState(false);
   const [savingGiftCardConfig, setSavingGiftCardConfig] = useState(false);
 
-  // Comment mode state (per card type — currently enforced for stamp and coupon)
-  const [commentModes, setCommentModes] = useState({ stamp: 'open', coupon: 'open' });
-  const [savingCommentMode, setSavingCommentMode] = useState('');
+  // Comment mode state — one workspace-wide setting, applies to every action
+  const [commentMode, setCommentMode] = useState('open');
+  const [savingCommentMode, setSavingCommentMode] = useState(false);
 
   // Load stamp configuration on mount
   useEffect(() => {
@@ -81,24 +82,27 @@ const SettingsPage = () => {
     loadStampConfig();
   }, []);
 
-  // Load discount tier configuration on mount
+  // Load tier configuration (Cashback and Descuento independently) on mount
   useEffect(() => {
-    const loadDiscountTiers = async () => {
+    const loadTiers = async () => {
+      const token = localStorage.getItem('token');
+      const headers = { Authorization: `Bearer ${token}` };
       try {
-        const token = localStorage.getItem('token');
-        const response = await axios.get(`${API}/discount-tiers`, {
-          headers: { Authorization: `Bearer ${token}` }
+        const [cashbackResp, discountResp] = await Promise.all([
+          axios.get(`${API}/discount-tiers/cashback`, { headers }),
+          axios.get(`${API}/discount-tiers/discount`, { headers })
+        ]);
+        setTiersByType({
+          cashback: cashbackResp.data.tiers || [],
+          discount: discountResp.data.tiers || []
         });
-        if (response.data.tiers && response.data.tiers.length > 0) {
-          setDiscountTiers(response.data.tiers);
-        }
       } catch (error) {
-        console.error('Error loading discount tiers:', error);
+        console.error('Error loading tiers:', error);
       } finally {
-        setDiscountTiersLoading(false);
+        setTiersLoading(false);
       }
     };
-    loadDiscountTiers();
+    loadTiers();
   }, []);
 
   // Load gift card "Agregar" toggle and comment modes on mount (Devotio-only settings)
@@ -111,10 +115,8 @@ const SettingsPage = () => {
       .then((res) => setGiftCardAllowAdd(!!res.data?.allow_add))
       .catch((error) => console.error('Error loading gift card config:', error));
 
-    Promise.all(['stamp', 'coupon'].map((cardType) =>
-      axios.get(`${API}/comment-config/${cardType}`, { headers }).then((res) => [cardType, res.data?.mode || 'open'])
-    ))
-      .then((entries) => setCommentModes(Object.fromEntries(entries)))
+    axios.get(`${API}/comment-config`, { headers })
+      .then((res) => setCommentMode(res.data?.mode || 'open'))
       .catch((error) => console.error('Error loading comment config:', error));
   }, [isSuperAdmin]);
 
@@ -134,19 +136,19 @@ const SettingsPage = () => {
     }
   };
 
-  const handleSaveCommentMode = async (cardType, mode) => {
-    setSavingCommentMode(cardType);
+  const handleSaveCommentMode = async (mode) => {
+    setSavingCommentMode(true);
     try {
       const token = localStorage.getItem('token');
-      await axios.post(`${API}/comment-config/${cardType}`, { mode }, {
+      await axios.post(`${API}/comment-config`, { mode }, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setCommentModes((prev) => ({ ...prev, [cardType]: mode }));
+      setCommentMode(mode);
       toast.success('Modo de comentario guardado');
     } catch (error) {
       toast.error('Error al guardar configuración');
     } finally {
-      setSavingCommentMode('');
+      setSavingCommentMode(false);
     }
   };
 
@@ -170,46 +172,51 @@ const SettingsPage = () => {
     }
   };
 
-  const handleAddDiscountTier = () => {
-    const lastTier = discountTiers[discountTiers.length - 1];
-    setDiscountTiers([...discountTiers, {
-      name: '',
-      threshold: lastTier ? lastTier.threshold + 5000 : 0,
-      percentage: lastTier ? lastTier.percentage + 2 : 1
-    }]);
+  const handleAddTier = (cardType) => {
+    const tiers = tiersByType[cardType];
+    const lastTier = tiers[tiers.length - 1];
+    setTiersByType({
+      ...tiersByType,
+      [cardType]: [...tiers, {
+        name: '',
+        threshold: lastTier ? lastTier.threshold + 5000 : 0,
+        percentage: lastTier ? lastTier.percentage + 2 : 1
+      }]
+    });
   };
 
-  const handleUpdateDiscountTier = (index, field, value) => {
-    const updated = [...discountTiers];
+  const handleUpdateTier = (cardType, index, field, value) => {
+    const updated = [...tiersByType[cardType]];
     updated[index] = { ...updated[index], [field]: field === 'name' ? value : (parseFloat(value) || 0) };
-    setDiscountTiers(updated);
+    setTiersByType({ ...tiersByType, [cardType]: updated });
   };
 
-  const handleRemoveDiscountTier = (index) => {
-    setDiscountTiers(discountTiers.filter((_, i) => i !== index));
+  const handleRemoveTier = (cardType, index) => {
+    setTiersByType({ ...tiersByType, [cardType]: tiersByType[cardType].filter((_, i) => i !== index) });
   };
 
-  const handleSaveDiscountTiers = async () => {
-    if (discountTiers.length === 0) {
+  const handleSaveTiers = async (cardType) => {
+    const tiers = tiersByType[cardType];
+    if (tiers.length === 0) {
       toast.error('Agregue al menos un nivel');
       return;
     }
-    if (discountTiers.some(t => !t.name.trim())) {
+    if (tiers.some(t => !t.name.trim())) {
       toast.error('Todos los niveles necesitan un nombre');
       return;
     }
-    
-    setSavingDiscountTiers(true);
+
+    setSavingTiersType(cardType);
     try {
       const token = localStorage.getItem('token');
-      await axios.post(`${API}/discount-tiers`, { tiers: discountTiers }, {
+      await axios.post(`${API}/discount-tiers/${cardType}`, { tiers }, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      toast.success('Niveles de descuento guardados');
+      toast.success('Niveles guardados');
     } catch (error) {
       toast.error('Error al guardar niveles');
     } finally {
-      setSavingDiscountTiers(false);
+      setSavingTiersType('');
     }
   };
 
@@ -504,104 +511,106 @@ const SettingsPage = () => {
             </div>
 
             {/* Discount Tier Configuration */}
-            <div className="card-brutalist mt-6">
-              <div className="flex items-center gap-3 mb-4">
-                <Percent className="h-5 w-5 text-[#120627]" />
-                <p className="text-xs sm:text-sm font-semibold uppercase tracking-widest text-zinc-500">
-                  Niveles (Descuento / Cashback)
-                </p>
-              </div>
-
-              {discountTiersLoading ? (
-                <div className="flex justify-center py-6">
-                  <Loader2 className="h-6 w-6 animate-spin text-[#120627]" />
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  <p className="text-xs text-zinc-500">
-                    Configure los niveles que coincidan con su configuración en Devotio Rewards. Aplica para tarjetas de descuento y cashback.
+            {[{ type: 'cashback', label: 'Niveles — Cashback' }, { type: 'discount', label: 'Niveles — Descuento' }].map(({ type, label }) => (
+              <div key={type} className="card-brutalist mt-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <Percent className="h-5 w-5 text-[#120627]" />
+                  <p className="text-xs sm:text-sm font-semibold uppercase tracking-widest text-zinc-500">
+                    {label}
                   </p>
+                </div>
 
-                  {discountTiers.map((tier, index) => (
-                    <div key={index} className="flex gap-2 items-start" data-testid={`discount-tier-${index}`}>
-                      <div className="flex-1">
-                        <Input
-                          value={tier.name}
-                          onChange={(e) => handleUpdateDiscountTier(index, 'name', e.target.value)}
-                          placeholder="Nombre"
-                          className="h-10 border-2 border-zinc-200 rounded-lg text-sm"
-                          data-testid={`discount-tier-name-${index}`}
-                        />
-                      </div>
-                      <div className="w-24">
-                        <Input
-                          type="text"
-                          inputMode="decimal"
-                          value={formatWithThousands(tier.threshold)}
-                          onChange={(e) => handleUpdateDiscountTier(index, 'threshold', stripThousandsFormatting(e.target.value))}
-                          placeholder="Gasto"
-                          className="h-10 border-2 border-zinc-200 rounded-lg text-sm"
-                          disabled={index === 0}
-                          data-testid={`discount-tier-threshold-${index}`}
-                        />
-                      </div>
-                      <div className="w-16">
-                        <div className="relative">
+                {tiersLoading ? (
+                  <div className="flex justify-center py-6">
+                    <Loader2 className="h-6 w-6 animate-spin text-[#120627]" />
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <p className="text-xs text-zinc-500">
+                      Configure los niveles que coincidan con su configuración en Devotio Rewards para tarjetas de {type === 'cashback' ? 'cashback' : 'descuento'}.
+                    </p>
+
+                    {tiersByType[type].map((tier, index) => (
+                      <div key={index} className="flex gap-2 items-start" data-testid={`${type}-tier-${index}`}>
+                        <div className="flex-1">
                           <Input
-                            type="number"
-                            value={tier.percentage}
-                            onChange={(e) => handleUpdateDiscountTier(index, 'percentage', e.target.value)}
-                            placeholder="%"
-                            className="h-10 border-2 border-zinc-200 rounded-lg text-sm pr-6"
-                            data-testid={`discount-tier-percentage-${index}`}
+                            value={tier.name}
+                            onChange={(e) => handleUpdateTier(type, index, 'name', e.target.value)}
+                            placeholder="Nombre"
+                            className="h-10 border-2 border-zinc-200 rounded-lg text-sm"
+                            data-testid={`${type}-tier-name-${index}`}
                           />
-                          <span className="absolute right-2 top-1/2 -translate-y-1/2 text-zinc-400 text-xs">%</span>
                         </div>
+                        <div className="w-24">
+                          <Input
+                            type="text"
+                            inputMode="decimal"
+                            value={formatWithThousands(tier.threshold)}
+                            onChange={(e) => handleUpdateTier(type, index, 'threshold', stripThousandsFormatting(e.target.value))}
+                            placeholder="Gasto"
+                            className="h-10 border-2 border-zinc-200 rounded-lg text-sm"
+                            disabled={index === 0}
+                            data-testid={`${type}-tier-threshold-${index}`}
+                          />
+                        </div>
+                        <div className="w-16">
+                          <div className="relative">
+                            <Input
+                              type="number"
+                              value={tier.percentage}
+                              onChange={(e) => handleUpdateTier(type, index, 'percentage', e.target.value)}
+                              placeholder="%"
+                              className="h-10 border-2 border-zinc-200 rounded-lg text-sm pr-6"
+                              data-testid={`${type}-tier-percentage-${index}`}
+                            />
+                            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-zinc-400 text-xs">%</span>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => handleRemoveTier(type, index)}
+                          className="p-2 text-zinc-400 hover:text-red-500 transition-colors"
+                          data-testid={`${type}-tier-remove-${index}`}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
                       </div>
-                      <button
-                        onClick={() => handleRemoveDiscountTier(index)}
-                        className="p-2 text-zinc-400 hover:text-red-500 transition-colors"
-                        data-testid={`discount-tier-remove-${index}`}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </div>
-                  ))}
+                    ))}
 
-                  <Button
-                    onClick={handleAddDiscountTier}
-                    variant="outline"
-                    className="w-full h-10 border-2 border-dashed border-zinc-300 text-zinc-500 hover:border-[#120627] hover:text-[#120627]"
-                    data-testid="add-discount-tier"
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Agregar nivel
-                  </Button>
-
-                  {discountTiers.length > 0 && (
                     <Button
-                      onClick={handleSaveDiscountTiers}
-                      disabled={savingDiscountTiers}
-                      className="w-full h-12 bg-[#120627] hover:bg-[#1e0a3d] text-white"
-                      data-testid="save-discount-tiers"
+                      onClick={() => handleAddTier(type)}
+                      variant="outline"
+                      className="w-full h-10 border-2 border-dashed border-zinc-300 text-zinc-500 hover:border-[#120627] hover:text-[#120627]"
+                      data-testid={`add-${type}-tier`}
                     >
-                      {savingDiscountTiers ? (
-                        <Loader2 className="h-5 w-5 animate-spin" />
-                      ) : (
-                        <>
-                          <Save className="h-4 w-4 mr-2" />
-                          Guardar Niveles
-                        </>
-                      )}
+                      <Plus className="h-4 w-4 mr-2" />
+                      Agregar nivel
                     </Button>
-                  )}
 
-                  <p className="text-xs text-zinc-400">
-                    Los nombres y umbrales deben coincidir con la configuración de Devotio Rewards
-                  </p>
-                </div>
-              )}
-            </div>
+                    {tiersByType[type].length > 0 && (
+                      <Button
+                        onClick={() => handleSaveTiers(type)}
+                        disabled={savingTiersType === type}
+                        className="w-full h-12 bg-[#120627] hover:bg-[#1e0a3d] text-white"
+                        data-testid={`save-${type}-tiers`}
+                      >
+                        {savingTiersType === type ? (
+                          <Loader2 className="h-5 w-5 animate-spin" />
+                        ) : (
+                          <>
+                            <Save className="h-4 w-4 mr-2" />
+                            Guardar Niveles
+                          </>
+                        )}
+                      </Button>
+                    )}
+
+                    <p className="text-xs text-zinc-400">
+                      Los nombres y umbrales deben coincidir con la configuración de Devotio Rewards
+                    </p>
+                  </div>
+                )}
+              </div>
+            ))}
 
             {/* Gift Card "Agregar" Toggle */}
             <div className="card-brutalist mt-6">
@@ -628,32 +637,30 @@ const SettingsPage = () => {
               </div>
             </div>
 
-            {/* Comment Mode per Card Type */}
+            {/* Comment Mode — one setting, applies to every action */}
             <div className="card-brutalist mt-6">
               <div className="flex items-center gap-3 mb-4">
                 <MessageSquare className="h-5 w-5 text-[#120627]" />
                 <p className="text-xs sm:text-sm font-semibold uppercase tracking-widest text-zinc-500">
-                  Comentario por Tipo de Tarjeta
+                  Comentario
                 </p>
               </div>
               <p className="text-xs text-zinc-500 mb-4">
-                "Abierto" acepta cualquier nota. "# de Factura" exige un número que no se haya usado antes en este negocio.
+                "Abierto" acepta cualquier nota. "# de Factura" exige un número que no se haya usado antes en este negocio. Aplica a todas las tarjetas por igual.
               </p>
-              {[{ key: 'stamp', label: 'Sellos' }, { key: 'coupon', label: 'Cupón' }].map(({ key, label }) => (
-                <div key={key} className="settings-row py-2">
-                  <p className="font-medium text-[#120627] text-sm sm:text-base flex-1">{label}</p>
-                  <select
-                    value={commentModes[key] || 'open'}
-                    onChange={(e) => handleSaveCommentMode(key, e.target.value)}
-                    disabled={savingCommentMode === key}
-                    className="h-9 border border-zinc-200 rounded-lg px-3 text-sm bg-white"
-                    data-testid={`comment-mode-${key}`}
-                  >
-                    <option value="open">Abierto</option>
-                    <option value="invoice_number"># de Factura</option>
-                  </select>
-                </div>
-              ))}
+              <div className="settings-row py-2">
+                <p className="font-medium text-[#120627] text-sm sm:text-base flex-1">Modo de comentario</p>
+                <select
+                  value={commentMode}
+                  onChange={(e) => handleSaveCommentMode(e.target.value)}
+                  disabled={savingCommentMode}
+                  className="h-9 border border-zinc-200 rounded-lg px-3 text-sm bg-white"
+                  data-testid="comment-mode"
+                >
+                  <option value="open">Abierto</option>
+                  <option value="invoice_number"># de Factura</option>
+                </select>
+              </div>
             </div>
             </>
             )}

@@ -15,7 +15,7 @@ from utils.boomerang import (
     extract_card_id_from_qr,
     log_operation,
     build_comment_with_gerente,
-    validate_comment_for_card_type,
+    validate_comment,
     get_user_friendly_error,
     parse_api_error,
     get_workspace_api_key
@@ -233,7 +233,7 @@ async def add_stamp(card_id: str, action_data: CardActionRequest, current_user: 
     original_comment = action_data.comment
     gerente_name = action_data.gerente or current_user.get('name', '')
 
-    await validate_comment_for_card_type('stamp', original_comment, current_user.get('workspace_id'))
+    await validate_comment(original_comment, current_user.get('workspace_id'))
     
     # Get current card state to detect new rewards
     pre_response = await call_boomerang_api('GET', f'/cards/{card_id}', {}, raise_on_error=False, api_key=api_key)
@@ -354,6 +354,7 @@ async def subtract_reward(card_id: str, action_data: CardActionRequest, current_
     """
     gerente_name = action_data.gerente or current_user.get('name', '')
     gerente_email = current_user.get('email', '')
+    await validate_comment(action_data.comment, current_user.get('workspace_id'))
     comment_with_gerente = build_comment_with_gerente(action_data.comment, gerente_name)
     
     payload = {"rewards": int(action_data.amount or 1)}
@@ -420,6 +421,7 @@ async def subtract_reward(card_id: str, action_data: CardActionRequest, current_
 async def add_points(card_id: str, action_data: CardActionRequest, current_user: dict = Depends(get_current_user), api_key: str = Depends(get_api_key)):
     """Add points to cards."""
     gerente_name = action_data.gerente or current_user.get('name', '')
+    await validate_comment(action_data.comment, current_user.get('workspace_id'))
     comment_with_gerente = build_comment_with_gerente(action_data.comment, gerente_name)
     
     amount = float(action_data.amount or 1)
@@ -462,6 +464,7 @@ async def add_points(card_id: str, action_data: CardActionRequest, current_user:
 async def subtract_point(card_id: str, action_data: CardActionRequest, current_user: dict = Depends(get_current_user), api_key: str = Depends(get_api_key)):
     """Subtract points from certificate/gift/cashback cards."""
     gerente_name = action_data.gerente or current_user.get('name', '')
+    await validate_comment(action_data.comment, current_user.get('workspace_id'))
     comment_with_gerente = build_comment_with_gerente(action_data.comment, gerente_name)
     
     amount = float(action_data.amount or 1)
@@ -494,6 +497,7 @@ async def subtract_point(card_id: str, action_data: CardActionRequest, current_u
 async def redeem_points(card_id: str, action_data: CardActionRequest, current_user: dict = Depends(get_current_user), api_key: str = Depends(get_api_key)):
     """Redeem points."""
     gerente_name = action_data.gerente or current_user.get('name', '')
+    await validate_comment(action_data.comment, current_user.get('workspace_id'))
     comment_with_gerente = build_comment_with_gerente(action_data.comment, gerente_name)
     
     payload = {"points": action_data.amount or 1}
@@ -522,6 +526,7 @@ async def redeem_points(card_id: str, action_data: CardActionRequest, current_us
 async def add_visit(card_id: str, action_data: CardActionRequest, current_user: dict = Depends(get_current_user), api_key: str = Depends(get_api_key)):
     """Add visits to customer."""
     gerente_name = action_data.gerente or current_user.get('name', '')
+    await validate_comment(action_data.comment, current_user.get('workspace_id'))
     comment_with_gerente = build_comment_with_gerente(action_data.comment, gerente_name)
     
     payload = {"visits": action_data.amount or 1}
@@ -551,6 +556,7 @@ async def add_visit(card_id: str, action_data: CardActionRequest, current_user: 
 async def redeem_visit(card_id: str, action_data: CardActionRequest, current_user: dict = Depends(get_current_user), api_key: str = Depends(get_api_key)):
     """Redeem visits."""
     gerente_name = action_data.gerente or current_user.get('name', '')
+    await validate_comment(action_data.comment, current_user.get('workspace_id'))
     comment_with_gerente = build_comment_with_gerente(action_data.comment, gerente_name)
     
     payload = {"visits": action_data.amount or 1}
@@ -580,6 +586,7 @@ async def redeem_visit(card_id: str, action_data: CardActionRequest, current_use
 async def subtract_visit(card_id: str, action_data: CardActionRequest, current_user: dict = Depends(get_current_user), api_key: str = Depends(get_api_key)):
     """Customer uses a visit."""
     gerente_name = action_data.gerente or current_user.get('name', '')
+    await validate_comment(action_data.comment, current_user.get('workspace_id'))
     comment_with_gerente = build_comment_with_gerente(action_data.comment, gerente_name)
     
     payload = {"visits": action_data.amount or 1}
@@ -610,7 +617,7 @@ async def subtract_visit(card_id: str, action_data: CardActionRequest, current_u
 @router.post("/cards/{card_id}/use-coupon")
 async def use_coupon(card_id: str, action_data: CardActionRequest, current_user: dict = Depends(get_current_user), api_key: str = Depends(get_api_key)):
     """Redeem a coupon."""
-    await validate_comment_for_card_type('coupon', action_data.comment, current_user.get('workspace_id'))
+    await validate_comment(action_data.comment, current_user.get('workspace_id'))
     gerente_name = action_data.gerente or current_user.get('name', '')
     comment_with_gerente = build_comment_with_gerente(action_data.comment, gerente_name)
     
@@ -642,6 +649,7 @@ async def use_coupon(card_id: str, action_data: CardActionRequest, current_user:
 async def redeem_reward(card_id: str, action_data: CardActionRequest, current_user: dict = Depends(get_current_user), api_key: str = Depends(get_api_key)):
     """Redeem reward."""
     gerente_name = action_data.gerente or current_user.get('name', '')
+    await validate_comment(action_data.comment, current_user.get('workspace_id'))
     comment_with_gerente = build_comment_with_gerente(action_data.comment, gerente_name)
     
     payload = {"id": action_data.amount or 1}
@@ -667,6 +675,7 @@ async def redeem_reward(card_id: str, action_data: CardActionRequest, current_us
 async def add_reward(card_id: str, action_data: CardActionRequest, current_user: dict = Depends(get_current_user), api_key: str = Depends(get_api_key)):
     """Add rewards to reward cards."""
     gerente_name = action_data.gerente or current_user.get('name', '')
+    await validate_comment(action_data.comment, current_user.get('workspace_id'))
     comment_with_gerente = build_comment_with_gerente(action_data.comment, gerente_name)
     
     payload = {"rewards": int(action_data.amount or 1)}
@@ -696,6 +705,7 @@ async def add_reward(card_id: str, action_data: CardActionRequest, current_user:
 async def add_scores(card_id: str, action_data: CardActionRequest, current_user: dict = Depends(get_current_user), api_key: str = Depends(get_api_key)):
     """Add scores/points to reward cards (manual points mode)."""
     gerente_name = action_data.gerente or current_user.get('name', '')
+    await validate_comment(action_data.comment, current_user.get('workspace_id'))
     comment_with_gerente = build_comment_with_gerente(action_data.comment, gerente_name)
     
     payload = {"scores": int(action_data.amount or 1)}
@@ -725,6 +735,7 @@ async def add_scores(card_id: str, action_data: CardActionRequest, current_user:
 async def add_purchase(card_id: str, action_data: CardActionRequest, current_user: dict = Depends(get_current_user), api_key: str = Depends(get_api_key)):
     """Add purchase to reward/stamp cards (spend mode - points calculated by system rules)."""
     gerente_name = action_data.gerente or current_user.get('name', '')
+    await validate_comment(action_data.comment, current_user.get('workspace_id'))
     comment_with_gerente = build_comment_with_gerente(action_data.comment, gerente_name)
     
     # For spend mode, the 'amount' field represents the purchase amount
@@ -757,6 +768,7 @@ async def add_purchase(card_id: str, action_data: CardActionRequest, current_use
 async def add_visit_reward(card_id: str, action_data: CardActionRequest, current_user: dict = Depends(get_current_user), api_key: str = Depends(get_api_key)):
     """Add visit to reward cards (visit mode - points calculated per visit)."""
     gerente_name = action_data.gerente or current_user.get('name', '')
+    await validate_comment(action_data.comment, current_user.get('workspace_id'))
     comment_with_gerente = build_comment_with_gerente(action_data.comment, gerente_name)
     
     payload = {"visits": int(action_data.amount or 1)}
@@ -789,6 +801,7 @@ async def add_points_auto(card_id: str, action_data: CardActionRequest, current_
     Tries add-purchase (spend), add-visit, or add-scores based on template config.
     """
     gerente_name = action_data.gerente or current_user.get('name', '')
+    await validate_comment(action_data.comment, current_user.get('workspace_id'))
     comment_with_gerente = build_comment_with_gerente(action_data.comment, gerente_name)
     
     # Determine the accrual program from request or try auto-detection
@@ -903,6 +916,7 @@ async def detect_accrual_mode(card_id: str, current_user: dict = Depends(get_cur
 async def subtract_scores(card_id: str, action_data: CardActionRequest, current_user: dict = Depends(get_current_user), api_key: str = Depends(get_api_key)):
     """Subtract scores/points from cards."""
     gerente_name = action_data.gerente or current_user.get('name', '')
+    await validate_comment(action_data.comment, current_user.get('workspace_id'))
     comment_with_gerente = build_comment_with_gerente(action_data.comment, gerente_name)
     
     payload = {"scores": int(action_data.amount or 1)}
@@ -932,6 +946,7 @@ async def subtract_scores(card_id: str, action_data: CardActionRequest, current_
 async def receive_reward(card_id: str, action_data: CardActionRequest, current_user: dict = Depends(get_current_user), api_key: str = Depends(get_api_key)):
     """Receive/redeem reward from reward cards."""
     gerente_name = action_data.gerente or current_user.get('name', '')
+    await validate_comment(action_data.comment, current_user.get('workspace_id'))
     comment_with_gerente = build_comment_with_gerente(action_data.comment, gerente_name)
     
     payload = {"id": int(action_data.amount or 1)}

@@ -149,8 +149,8 @@ const ResultPage = () => {
       const token = localStorage.getItem('token');
       try {
         const [tiersResp, progressResp] = await Promise.all([
-          axios.get(`${API}/discount-tiers`, { headers: { Authorization: `Bearer ${token}` } }),
-          axios.get(`${API}/tier-progress/${card.id}`, { headers: { Authorization: `Bearer ${token}` } })
+          axios.get(`${API}/discount-tiers/${normalizedType}`, { headers: { Authorization: `Bearer ${token}` } }),
+          axios.get(`${API}/tier-progress/${card.id}`, { params: { card_type: normalizedType }, headers: { Authorization: `Bearer ${token}` } })
         ]);
         if (tiersResp.data.tiers) setDiscountTiers(tiersResp.data.tiers);
         if (progressResp.data) setTierProgress(progressResp.data);
@@ -159,19 +159,18 @@ const ResultPage = () => {
     fetchDiscountTiers();
   }, [card?.id, cardType]);
 
-  // Load comment mode (open text vs invoice number) for the current card type
+  // Load comment mode (open text vs invoice number) — a single workspace-wide
+  // setting, applies the same regardless of card type.
   useEffect(() => {
     const fetchCommentMode = async () => {
-      const normalizedType = cardType ? cardType.replace('_card', '') : '';
-      if (!normalizedType) return;
       const token = localStorage.getItem('token');
       try {
-        const response = await axios.get(`${API}/comment-config/${normalizedType}`, { headers: { Authorization: `Bearer ${token}` } });
+        const response = await axios.get(`${API}/comment-config`, { headers: { Authorization: `Bearer ${token}` } });
         setCommentMode(response.data?.mode || 'open');
       } catch { setCommentMode('open'); }
     };
     fetchCommentMode();
-  }, [cardType]);
+  }, []);
 
   // Load gift card "Agregar" toggle
   useEffect(() => {
@@ -424,7 +423,7 @@ const ResultPage = () => {
         // Update tier progress for discount/cashback
         if (['discount', 'cashback'].includes(normalizedType) && purchaseVal > 0) {
           try {
-            const tpResp = await axios.post(`${API}/tier-progress/${card.id}/add?amount=${purchaseVal}`, {}, { headers: { Authorization: `Bearer ${token}` } });
+            const tpResp = await axios.post(`${API}/tier-progress/${card.id}/add`, {}, { params: { amount: purchaseVal, card_type: normalizedType }, headers: { Authorization: `Bearer ${token}` } });
             if (tpResp.data) setTierProgress(tpResp.data);
           } catch { /* ignore */ }
         }

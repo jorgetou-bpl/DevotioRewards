@@ -7,7 +7,7 @@ import { Input } from '../components/ui/input';
 import {
   Shield, Building2, Users, Activity, ChevronDown, ChevronUp,
   Key, RefreshCw, Loader2, ArrowLeft, MapPin, UserPlus,
-  ToggleLeft, ToggleRight, Copy, Check, Plus, X, Settings
+  ToggleLeft, ToggleRight, Copy, Check, Plus, X, Settings, Trash2, AlertTriangle
 } from 'lucide-react';
 
 import { API_BASE_URL as API } from '../config/api';
@@ -33,6 +33,11 @@ const SuperAdminDashboard = () => {
   const [resetResult, setResetResult] = useState(null);
   const [copiedPassword, setCopiedPassword] = useState(false);
   const [editingRole, setEditingRole] = useState(null);
+
+  // Delete workspace state
+  const [deleteModal, setDeleteModal] = useState({ open: false, workspace: null });
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [deleting, setDeleting] = useState(false);
 
   // Create workspace state
   const [workspaceName, setWorkspaceName] = useState('');
@@ -99,6 +104,23 @@ const SuperAdminDashboard = () => {
       toast.success(resp.data.message);
       fetchDashboard();
     } catch { toast.error('Error al cambiar estado'); }
+  };
+
+  const handleDeleteWorkspace = async () => {
+    if (!deleteModal.workspace) return;
+    setDeleting(true);
+    const token = localStorage.getItem('token');
+    try {
+      const resp = await axios.delete(`${API}/admin/dashboard/workspaces/${deleteModal.workspace.id}`, { headers: { Authorization: `Bearer ${token}` } });
+      toast.success(resp.data.message);
+      setDeleteModal({ open: false, workspace: null });
+      setDeleteConfirmText('');
+      fetchDashboard();
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Error al eliminar workspace');
+    } finally {
+      setDeleting(false);
+    }
   };
 
   const handleResetPassword = async () => {
@@ -493,6 +515,11 @@ const SuperAdminDashboard = () => {
                           data-testid={`toggle-workspace-${ws.slug}`}>
                           {ws.active ? <><ToggleRight className="h-4 w-4" /> Desactivar</> : <><ToggleLeft className="h-4 w-4" /> Activar</>}
                         </Button>
+                        <Button variant="outline" size="sm" onClick={() => { setDeleteModal({ open: true, workspace: ws }); setDeleteConfirmText(''); }}
+                          className="gap-2 text-xs text-red-700 hover:bg-red-50 border-red-200"
+                          data-testid={`delete-workspace-${ws.slug}`}>
+                          <Trash2 className="h-4 w-4" /> Eliminar
+                        </Button>
                       </div>
                     </div>
                   )}
@@ -509,6 +536,36 @@ const SuperAdminDashboard = () => {
           </>
         )}
       </main>
+
+      {/* Delete Workspace Modal */}
+      {deleteModal.open && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setDeleteModal({ open: false, workspace: null })}>
+          <div className="bg-white rounded-2xl w-full max-w-md p-6" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center gap-3 mb-1">
+              <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
+                <AlertTriangle className="h-5 w-5 text-red-600" />
+              </div>
+              <h3 className="text-lg font-bold text-[#120627]">Eliminar workspace</h3>
+            </div>
+            <p className="text-sm text-zinc-500 mt-3 mb-4">
+              Esto borra permanentemente <strong>{deleteModal.workspace?.name}</strong>: sus usuarios (excepto
+              cuentas Devotio), sucursales, configuración de tarjetas e historial de operaciones. No se puede deshacer.
+            </p>
+            <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500 block mb-2">
+              Escriba <span className="font-mono normal-case">{deleteModal.workspace?.slug}</span> para confirmar
+            </label>
+            <Input type="text" value={deleteConfirmText} onChange={(e) => setDeleteConfirmText(e.target.value)}
+              placeholder={deleteModal.workspace?.slug} className="input-brutalist mb-4" data-testid="delete-confirm-input" />
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => setDeleteModal({ open: false, workspace: null })} className="flex-1">Cancelar</Button>
+              <Button onClick={handleDeleteWorkspace} disabled={deleting || deleteConfirmText !== deleteModal.workspace?.slug}
+                className="flex-1 bg-red-600 hover:bg-red-700 text-white" data-testid="confirm-delete-workspace-btn">
+                {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Eliminar permanentemente'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Reset Password Modal */}
       {resetModal.open && (

@@ -371,3 +371,33 @@ async def toggle_workspace_active(workspace_id: str, current_user: dict = Depend
     )
     
     return {"success": True, "active": new_status, "message": f"Workspace {'activado' if new_status else 'desactivado'}"}
+
+@router.delete("/dashboard/workspaces/{workspace_id}")
+async def delete_workspace(workspace_id: str, current_user: dict = Depends(require_super_admin)):
+    """Permanently delete a workspace and all its data. Super admin only."""
+    ws = await db.workspaces.find_one({"id": workspace_id})
+    if not ws:
+        raise HTTPException(status_code=404, detail="Workspace no encontrado")
+
+    # Detach (never delete) any super_admin accounts pointing at this workspace
+    await db.users.update_many(
+        {"workspace_id": workspace_id, "role": "super_admin"},
+        {"$set": {"workspace_id": None}}
+    )
+
+    deleted_user_ids = [
+        u["id"] async for u in db.users.find({"workspace_id": workspace_id}, {"_id": 0, "id": 1})
+    ]
+    await db.users.delete_many({"workspace_id": workspace_id})
+    if deleted_user_ids:
+        await db.settings.delete_many({"user_id": {"$in": deleted_user_ids}})
+
+    await db.operations.delete_many({"workspace_id": workspace_id})
+    await db.comment_config.delete_many({"workspace_id": workspace_id})
+    await db.discount_tiers.delete_many({"workspace_id": workspace_id})
+    await db.gift_card_config.delete_many({"workspace_id": workspace_id})
+    await db.stamp_config.delete_many({"workspace_id": workspace_id})
+    await db.card_accrual_modes.delete_many({"workspace_id": workspace_id})
+    await db.workspaces.delete_one({"id": workspace_id})
+
+    return {"success": True, "message": f"Workspace '{ws.get('name')}' eliminado permanentemente"}

@@ -17,11 +17,16 @@ export const StampAddAction = ({
   // The card balance only reflects progress toward the NEXT reward tier — for
   // multi-tier cards (e.g. a reward at 2 stamps and another at 5), find the
   // tier after that one so the operator sees the full structure, not just "de 2".
-  const laterTierThresholds = stampRewardTiers
+  const allTierThresholds = stampRewardTiers
     .map((t) => t.threshold)
-    .filter((threshold) => typeof threshold === 'number' && threshold > displayTotal)
+    .filter((threshold) => typeof threshold === 'number')
     .sort((a, b) => a - b);
+  const laterTierThresholds = allTierThresholds.filter((threshold) => threshold > displayTotal);
   const nextTierAfterThreshold = laterTierThresholds[0];
+  const hasMultipleTiers = allTierThresholds.length > 1;
+  const tierListLabel = allTierThresholds.length > 2
+    ? `${allTierThresholds.slice(0, -1).join(', ')} y ${allTierThresholds[allTierThresholds.length - 1]}`
+    : allTierThresholds.join(' y ');
   const stampMode = stampConfig.stamp_mode;
   const isSpendMode = stampMode === 'spend';
   const isVisitMode = stampMode === 'visit';
@@ -46,6 +51,11 @@ export const StampAddAction = ({
             ? `${stampsBeforeReward} sello${stampsBeforeReward !== 1 ? 's' : ''} hasta la próxima recompensa`
             : '¡Recompensa disponible!'}
         </p>
+        {hasMultipleTiers && (
+          <p className="text-xs text-zinc-400 mt-1">
+            Esta tarjeta tiene recompensas en {tierListLabel} sellos
+          </p>
+        )}
       </div>
       
       {isSpendMode && stampProgress.accumulated_amount > 0 && (

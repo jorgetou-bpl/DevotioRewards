@@ -76,10 +76,9 @@ const ResultPage = () => {
   useEffect(() => {
     const fetchTemplateRewardTiers = async () => {
       const normalizedType = cardType ? cardType.replace('_card', '') : '';
-      const hasUnusedRewards = card?.balance?.numberRewardsUnused > 0;
       const hasTemplateId = card?.templateId;
       const hasNoTiersFromCard = !card?.availableRewardTiers || card.availableRewardTiers.length === 0;
-      if (normalizedType === 'stamp' && hasUnusedRewards && hasTemplateId && hasNoTiersFromCard) {
+      if (normalizedType === 'stamp' && hasTemplateId && hasNoTiersFromCard) {
         setLoadingTemplate(true);
         try {
           const response = await axios.get(`${API}/templates/${card.templateId}`);

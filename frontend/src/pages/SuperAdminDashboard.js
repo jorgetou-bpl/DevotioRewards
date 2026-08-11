@@ -479,7 +479,7 @@ const SuperAdminDashboard = () => {
                       </div>
 
                       <div className="flex gap-2">
-                        <Button variant="outline" size="sm" onClick={() => navigate(`/admin?workspace=${ws.id}`)}
+                        <Button variant="outline" size="sm" onClick={() => navigate(`/admin/workspace?workspace=${ws.id}`)}
                           className="gap-2 text-xs text-[#120627] hover:bg-[#120627]/5"
                           data-testid={`manage-workspace-${ws.slug}`}>
                           <Settings className="h-4 w-4" /> Gestionar

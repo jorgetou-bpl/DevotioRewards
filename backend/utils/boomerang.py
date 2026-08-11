@@ -11,7 +11,11 @@ logger = logging.getLogger(__name__)
 
 async def get_workspace_api_key(user: dict) -> str:
     """Get the Boomerangme API key for the user's workspace. Falls back to global key."""
-    workspace_id = user.get("workspace_id")
+    return await get_api_key_for_workspace(user.get("workspace_id"))
+
+async def get_api_key_for_workspace(workspace_id: str) -> str:
+    """Get the Boomerangme API key for an explicit workspace_id. Falls back to global key.
+    Used by super_admin flows that manage a workspace other than their own."""
     if workspace_id:
         ws = await db.workspaces.find_one({"id": workspace_id}, {"_id": 0, "boomerangme_api_key": 1})
         if ws and ws.get("boomerangme_api_key"):

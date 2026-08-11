@@ -52,6 +52,8 @@ const WorkspaceAdminPage = () => {
   const [savingGiftCardConfig, setSavingGiftCardConfig] = useState(false);
   const [commentMode, setCommentMode] = useState('open');
   const [savingCommentMode, setSavingCommentMode] = useState(false);
+  const [stampTemplates, setStampTemplates] = useState([]);
+  const [loadingStampTemplates, setLoadingStampTemplates] = useState(true);
 
   const fetchWorkspace = useCallback(async (wsId) => {
     try {
@@ -184,6 +186,23 @@ const WorkspaceAdminPage = () => {
       })
       .catch((error) => console.error('Error loading card configuration:', error))
       .finally(() => setConfigLoading(false));
+  }, [targetWorkspaceId, user]);
+
+  // Reward tier structure for each stamp card, read directly from Boomerangme —
+  // this is the source of truth (e.g. rewards at 2 and 5 stamps), not something
+  // we duplicate as app-side config. Fetched separately since it hits Boomerangme
+  // directly and shouldn't block the rest of the config UI if it's slow or errors.
+  useEffect(() => {
+    if (!targetWorkspaceId || user?.role !== 'super_admin') return;
+    const token = localStorage.getItem('token');
+    setLoadingStampTemplates(true);
+    axios.get(`${API}/templates/stamp-cards`, {
+      params: { workspace_id: targetWorkspaceId },
+      headers: { Authorization: `Bearer ${token}` }
+    })
+      .then((resp) => setStampTemplates(resp.data.templates || []))
+      .catch((error) => { console.error('Error loading stamp templates:', error); setStampTemplates([]); })
+      .finally(() => setLoadingStampTemplates(false));
   }, [targetWorkspaceId, user]);
 
   const handleSaveStampConfig = async () => {
@@ -559,6 +578,41 @@ const WorkspaceAdminPage = () => {
                 <Button onClick={handleSaveStampConfig} disabled={savingStampConfig || !stampConfig.stamp_mode} className="w-full h-10 btn-primary" data-testid="save-stamp-config">
                   {savingStampConfig ? <Loader2 className="h-5 w-5 animate-spin" /> : <><Save className="h-4 w-4 mr-2" /> Guardar Configuración</>}
                 </Button>
+              </div>
+
+              {/* Read-only: reward tier structure per stamp template, sourced live from Boomerangme */}
+              <div className="bg-white rounded-xl border border-zinc-200 p-4 space-y-3">
+                <div className="flex items-center gap-3">
+                  <Stamp className="h-5 w-5 text-[#120627]" />
+                  <p className="text-xs sm:text-sm font-semibold uppercase tracking-widest text-zinc-500">Estructura de Tarjetas (Boomerangme)</p>
+                </div>
+                <p className="text-xs text-zinc-500">
+                  Niveles de recompensa configurados directamente en Boomerangme para cada tarjeta de sellos de este
+                  negocio. Solo lectura — para cambiarlos, se editan desde Boomerangme, no desde acá.
+                </p>
+                {loadingStampTemplates ? (
+                  <div className="flex justify-center py-4"><Loader2 className="h-5 w-5 animate-spin text-zinc-400" /></div>
+                ) : stampTemplates.length > 0 ? (
+                  <div className="space-y-2">
+                    {stampTemplates.map((tpl) => (
+                      <div key={tpl.id} className="bg-zinc-50 rounded-lg p-3" data-testid={`stamp-template-${tpl.id}`}>
+                        <p className="text-sm font-medium text-[#120627]">{tpl.name}</p>
+                        {tpl.rewardTiers.length > 0 ? (
+                          <p className="text-xs text-zinc-500 mt-1">
+                            Recompensas en {tpl.rewardTiers.map((t) => t.threshold).join(' y ')} sellos
+                            {tpl.rewardTiers.length > 1 ? ' — tarjeta con múltiples niveles' : ''}
+                          </p>
+                        ) : (
+                          <p className="text-xs text-zinc-400 mt-1">Sin niveles de recompensa configurados</p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs text-zinc-400 text-center py-2">
+                    No se encontraron tarjetas de sellos configuradas en Boomerangme para este negocio.
+                  </p>
+                )}
               </div>
 
               {/* Tier sections — Cashback and Descuento, independent */}

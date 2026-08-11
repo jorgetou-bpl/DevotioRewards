@@ -2,11 +2,46 @@
 
 from fastapi import APIRouter, HTTPException, Depends
 import logging
-from utils.auth import get_current_user
-from utils.boomerang import call_boomerang_api, get_user_friendly_error
+from utils.auth import get_current_user, require_super_admin
+from utils.boomerang import call_boomerang_api, get_user_friendly_error, get_api_key_for_workspace
 
 logger = logging.getLogger(__name__)
 router = APIRouter(tags=["templates"])
+
+STAMP_TEMPLATE_TYPE = 0
+
+@router.get("/templates/stamp-cards")
+async def list_stamp_card_templates(workspace_id: str, current_user: dict = Depends(require_super_admin)):
+    """List a workspace's stamp card templates with their configured reward tiers,
+    read directly from Boomerangme — this is the source of truth for a card's reward
+    structure (e.g. a reward at 2 stamps and another at 5), not something we duplicate
+    as separate app-side configuration."""
+    api_key = await get_api_key_for_workspace(workspace_id)
+    response = await call_boomerang_api(
+        'GET', '/templates', {"itemsPerPage": 100}, raise_on_error=False, api_key=api_key
+    )
+    if response.get('code') != 200:
+        raise HTTPException(status_code=502, detail=get_user_friendly_error("api_error"))
+
+    templates = []
+    for t in response.get('data', []) or []:
+        if t.get('type') != STAMP_TEMPLATE_TYPE:
+            continue
+        tiers = sorted(
+            (
+                {"id": tier.get("id"), "name": tier.get("name"), "threshold": tier.get("threshold")}
+                for tier in (t.get('rewardTiers') or [])
+                if tier.get("threshold") is not None
+            ),
+            key=lambda tier: tier["threshold"]
+        )
+        templates.append({
+            "id": t.get("id"),
+            "name": t.get("name") or f"Tarjeta de sellos #{t.get('id')}",
+            "rewardTiers": tiers
+        })
+
+    return {"success": True, "templates": templates}
 
 @router.get("/templates/{template_id}")
 async def get_template(template_id: str, current_user: dict = Depends(get_current_user)):

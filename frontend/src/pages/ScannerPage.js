@@ -176,8 +176,11 @@ const ScannerPage = () => {
     { icon: Home, label: 'Inicio', action: () => navigate('/'), testId: 'menu-home' },
     { icon: ClipboardList, label: 'Operaciones', action: () => navigate('/operations'), testId: 'menu-operations' },
     { icon: Settings, label: 'Configuración', action: () => navigate('/settings'), testId: 'menu-settings' },
-    ...(user?.role === 'workspace_admin' || user?.role === 'super_admin' ? [
+    ...(user?.role === 'workspace_admin' ? [
       { icon: Building2, label: 'Admin Workspace', action: () => navigate('/admin/workspace'), testId: 'menu-admin' }
+    ] : []),
+    ...(user?.role === 'super_admin' ? [
+      { icon: Building2, label: 'Panel Super Admin', action: () => navigate('/admin/dashboard'), testId: 'menu-admin' }
     ] : []),
     { icon: LogOut, label: 'Cerrar Sesión', action: handleLogout, testId: 'menu-logout' }
   ];

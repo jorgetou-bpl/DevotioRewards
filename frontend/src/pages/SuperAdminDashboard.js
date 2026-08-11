@@ -311,8 +311,12 @@ const SuperAdminDashboard = () => {
                   </>
                 )}
               </div>
+              <Button onClick={() => navigate(`/admin/workspace?workspace=${createdWorkspace.workspace.id}`)}
+                className="w-full btn-primary gap-2" data-testid="manage-new-workspace-btn">
+                <Settings className="h-4 w-4" /> Gestionar este workspace
+              </Button>
               <div className="flex gap-2">
-                <Button onClick={resetCreateForm} className="flex-1 btn-primary" data-testid="create-another-btn">
+                <Button onClick={resetCreateForm} variant="outline" className="flex-1" data-testid="create-another-btn">
                   <Plus className="h-4 w-4 mr-1" /> Crear otro
                 </Button>
                 <Button onClick={backToDashboard} variant="outline" className="flex-1">Volver al Dashboard</Button>

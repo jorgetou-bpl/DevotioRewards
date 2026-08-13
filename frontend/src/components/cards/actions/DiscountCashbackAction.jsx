@@ -3,12 +3,14 @@ import { PurchaseAmountInput, ActionButton, getCurrentTierInfo } from '../shared
 
 export const DiscountCashbackAction = ({
   cardType, balance, discountTiers, tierProgress, purchaseAmount, setPurchaseAmount,
-  activeTab, loading, openConfirmation, formatCurrency, currencyInfo, actionConfig
+  activeTab, loading, openConfirmation, formatCurrency, currencyInfo, actionConfig, minAmount = 0
 }) => {
   const normalizedType = cardType.replace('_card', '');
   const discountLevel = balance.discountLevel ?? balance.discountPercentage ?? null;
   const isCashback = normalizedType === 'cashback' || normalizedType === 'cashback_card';
   const rateLabel = isCashback ? 'Cashback actual' : 'Descuento actual';
+  const purchaseVal = parseFloat(purchaseAmount) || 0;
+  const belowMinimum = minAmount > 0 && purchaseAmount !== '' && purchaseVal < minAmount;
 
   const {
     percentage: displayPercentage,
@@ -70,11 +72,12 @@ export const DiscountCashbackAction = ({
         onChange={setPurchaseAmount}
         currencyInfo={currencyInfo}
         testId="purchase-amount-input"
+        error={belowMinimum ? `El monto mínimo es ${formatCurrency(minAmount)} — montos menores no acumulan` : null}
       />
-      
+
       <ActionButton
         onClick={() => openConfirmation(activeTab)}
-        disabled={loading || !purchaseAmount}
+        disabled={loading || !purchaseAmount || belowMinimum}
         loading={loading}
         label={actionConfig.label}
         testId="add-points-button"

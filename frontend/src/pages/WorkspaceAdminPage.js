@@ -7,7 +7,7 @@ import { Input } from '../components/ui/input';
 import {
   ArrowLeft, Building2, Users, MapPin, Key, Plus, Trash2, Loader2, Save,
   Eye, EyeOff, UserPlus, Activity, ChevronDown, ChevronUp, RefreshCw,
-  Settings, Stamp, Percent, Gift, MessageSquare
+  Settings, Stamp, Percent, Gift, MessageSquare, DollarSign, AlertTriangle
 } from 'lucide-react';
 
 import { API_BASE_URL as API } from '../config/api';
@@ -54,6 +54,14 @@ const WorkspaceAdminPage = () => {
   const [savingCommentMode, setSavingCommentMode] = useState(false);
   const [stampTemplates, setStampTemplates] = useState([]);
   const [loadingStampTemplates, setLoadingStampTemplates] = useState(true);
+
+  // Montos tab — visible to workspace_admin too, not Devotio-only, since this
+  // is the business's own minimum-purchase and data-entry-safety policy.
+  const [amountsLoading, setAmountsLoading] = useState(true);
+  const [minAmounts, setMinAmounts] = useState({ cashback: 0, discount: 0, stamp: 0 });
+  const [savingMinAmountType, setSavingMinAmountType] = useState('');
+  const [highAmountThreshold, setHighAmountThreshold] = useState(1000000);
+  const [savingHighAmountThreshold, setSavingHighAmountThreshold] = useState(false);
 
   const fetchWorkspace = useCallback(async (wsId) => {
     try {
@@ -205,6 +213,59 @@ const WorkspaceAdminPage = () => {
       .finally(() => setLoadingStampTemplates(false));
   }, [targetWorkspaceId, user]);
 
+  // Montos tab data — available to workspace_admin AND super_admin (unlike the
+  // rest of Config. Tarjetas, this isn't Devotio-only).
+  useEffect(() => {
+    if (!targetWorkspaceId) return;
+    const token = localStorage.getItem('token');
+    const params = { workspace_id: targetWorkspaceId };
+    const headers = { Authorization: `Bearer ${token}` };
+    setAmountsLoading(true);
+
+    Promise.all([
+      axios.get(`${API}/min-amount/cashback`, { params, headers }),
+      axios.get(`${API}/min-amount/discount`, { params, headers }),
+      axios.get(`${API}/min-amount/stamp`, { params, headers }),
+      axios.get(`${API}/high-amount-alert-config`, { params, headers })
+    ])
+      .then(([cashbackResp, discountResp, stampResp, highResp]) => {
+        setMinAmounts({
+          cashback: cashbackResp.data.min_amount || 0,
+          discount: discountResp.data.min_amount || 0,
+          stamp: stampResp.data.min_amount || 0
+        });
+        setHighAmountThreshold(highResp.data.threshold || 1000000);
+      })
+      .catch((error) => console.error('Error loading amount settings:', error))
+      .finally(() => setAmountsLoading(false));
+  }, [targetWorkspaceId, user]);
+
+  const handleSaveMinAmount = async (cardType) => {
+    setSavingMinAmountType(cardType);
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post(`${API}/min-amount/${cardType}`, { min_amount: minAmounts[cardType] || 0 }, {
+        params: { workspace_id: targetWorkspaceId },
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success('Monto mínimo guardado');
+    } catch { toast.error('Error al guardar monto mínimo'); }
+    finally { setSavingMinAmountType(''); }
+  };
+
+  const handleSaveHighAmountThreshold = async () => {
+    setSavingHighAmountThreshold(true);
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post(`${API}/high-amount-alert-config`, { threshold: highAmountThreshold || 1000000 }, {
+        params: { workspace_id: targetWorkspaceId },
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success('Umbral de alerta guardado');
+    } catch { toast.error('Error al guardar umbral de alerta'); }
+    finally { setSavingHighAmountThreshold(false); }
+  };
+
   const handleSaveStampConfig = async () => {
     if (!stampConfig.stamp_mode) { toast.error('Seleccione un modo de acumulación'); return; }
     setSavingStampConfig(true);
@@ -308,6 +369,9 @@ const WorkspaceAdminPage = () => {
     { key: 'overview', label: 'General', icon: Building2 },
     { key: 'users', label: 'Usuarios', icon: Users },
     { key: 'locations', label: 'Sucursales', icon: MapPin },
+    // Montos is the business's own transaction-amount policy — visible to
+    // workspace_admin too, unlike the Devotio-only sections below.
+    { key: 'amounts', label: 'Montos', icon: DollarSign },
     // API Key and card configuration are Devotio-only — the client's own
     // workspace_admin never sees them.
     ...(isSuperAdmin ? [
@@ -505,6 +569,67 @@ const WorkspaceAdminPage = () => {
               </Button>
             )}
           </div>
+        )}
+
+        {/* Montos Tab — visible to workspace_admin and super_admin */}
+        {activeTab === 'amounts' && (
+          amountsLoading ? (
+            <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-[#120627]" /></div>
+          ) : (
+            <div className="space-y-4">
+              <div className="bg-white rounded-xl border border-zinc-200 p-4 space-y-4">
+                <div className="flex items-center gap-3">
+                  <DollarSign className="h-5 w-5 text-[#120627]" />
+                  <p className="text-xs sm:text-sm font-semibold uppercase tracking-widest text-zinc-500">Monto Mínimo de Compra</p>
+                </div>
+                <p className="text-xs text-zinc-500">
+                  Si la compra es menor al mínimo configurado, el escáner no permite acumular y muestra un aviso
+                  con el monto requerido. 0 significa sin mínimo.
+                </p>
+                {[
+                  { type: 'cashback', label: 'Cashback' },
+                  { type: 'discount', label: 'Descuento' },
+                  { type: 'stamp', label: 'Sellos (modo por monto)' }
+                ].map(({ type, label }) => (
+                  <div key={type} className="flex gap-2 items-end" data-testid={`min-amount-row-${type}`}>
+                    <div className="flex-1">
+                      <label className="text-xs text-zinc-500 block mb-1">{label}</label>
+                      <Input type="text" inputMode="decimal" value={formatWithThousands(minAmounts[type])}
+                        onChange={(e) => setMinAmounts({ ...minAmounts, [type]: parseFloat(stripThousandsFormatting(e.target.value)) || 0 })}
+                        className="h-10" data-testid={`min-amount-input-${type}`} />
+                    </div>
+                    <Button onClick={() => handleSaveMinAmount(type)} disabled={savingMinAmountType === type}
+                      className="h-10 btn-primary shrink-0" data-testid={`save-min-amount-${type}`}>
+                      {savingMinAmountType === type ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                    </Button>
+                  </div>
+                ))}
+              </div>
+
+              <div className="bg-white rounded-xl border border-zinc-200 p-4 space-y-3">
+                <div className="flex items-center gap-3">
+                  <AlertTriangle className="h-5 w-5 text-[#120627]" />
+                  <p className="text-xs sm:text-sm font-semibold uppercase tracking-widest text-zinc-500">Alerta de Monto Alto</p>
+                </div>
+                <p className="text-xs text-zinc-500">
+                  Si el operador ingresa un monto igual o mayor a este valor, se muestra una advertencia antes de
+                  confirmar — ayuda a detectar errores de digitación (ej. un cero de más) sin bloquear la operación.
+                </p>
+                <div className="flex gap-2 items-end">
+                  <div className="flex-1">
+                    <label className="text-xs text-zinc-500 block mb-1">Monto que dispara la alerta</label>
+                    <Input type="text" inputMode="decimal" value={formatWithThousands(highAmountThreshold)}
+                      onChange={(e) => setHighAmountThreshold(parseFloat(stripThousandsFormatting(e.target.value)) || 0)}
+                      className="h-10" data-testid="high-amount-threshold-input" />
+                  </div>
+                  <Button onClick={handleSaveHighAmountThreshold} disabled={savingHighAmountThreshold}
+                    className="h-10 btn-primary shrink-0" data-testid="save-high-amount-threshold">
+                    {savingHighAmountThreshold ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )
         )}
 
         {/* API Key Tab */}

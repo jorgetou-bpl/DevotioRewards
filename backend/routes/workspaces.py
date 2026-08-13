@@ -398,6 +398,8 @@ async def delete_workspace(workspace_id: str, current_user: dict = Depends(requi
     await db.gift_card_config.delete_many({"workspace_id": workspace_id})
     await db.stamp_config.delete_many({"workspace_id": workspace_id})
     await db.card_accrual_modes.delete_many({"workspace_id": workspace_id})
+    await db.min_amount_config.delete_many({"workspace_id": workspace_id})
+    await db.high_amount_alert_config.delete_many({"workspace_id": workspace_id})
     await db.workspaces.delete_one({"id": workspace_id})
 
     return {"success": True, "message": f"Workspace '{ws.get('name')}' eliminado permanentemente"}

@@ -5,7 +5,7 @@ from pydantic import BaseModel
 from typing import Optional, List
 from models import SettingsUpdate, SettingsResponse
 from utils.config import db
-from utils.auth import get_current_user, require_super_admin
+from utils.auth import get_current_user, require_super_admin, require_workspace_admin
 from datetime import datetime, timezone
 
 router = APIRouter(tags=["settings"])
@@ -465,3 +465,106 @@ async def set_gift_card_config(request: GiftCardConfigRequest, workspace_id: Opt
         upsert=True
     )
     return GiftCardConfigResponse(success=True, allow_add=request.allow_add)
+
+# ============ MINIMUM TRANSACTION AMOUNT (per card type) ============
+# Unlike stamp/tier/comment/gift-card config, this is editable by the business's
+# own workspace_admin too, not just Devotio — the client asked for direct control
+# over their own minimum-purchase policy per card type.
+
+MIN_AMOUNT_CARD_TYPES = ['cashback', 'discount', 'stamp']
+
+class MinAmountRequest(BaseModel):
+    min_amount: float
+
+class MinAmountResponse(BaseModel):
+    success: bool
+    card_type: str
+    min_amount: float = 0
+
+def _validate_min_amount_card_type(card_type: str):
+    if card_type not in MIN_AMOUNT_CARD_TYPES:
+        raise HTTPException(status_code=400, detail=f"Tipo de tarjeta inválido. Use: {', '.join(MIN_AMOUNT_CARD_TYPES)}")
+
+@router.get("/min-amount/{card_type}")
+async def get_min_amount(card_type: str, workspace_id: Optional[str] = None, current_user: dict = Depends(get_current_user)):
+    """Get the minimum purchase amount required to accumulate for a card type.
+    0 means no minimum is enforced."""
+    _validate_min_amount_card_type(card_type)
+    ws_id = resolve_workspace_id(current_user, workspace_id)
+    query = {"workspace_id": ws_id, "card_type": card_type} if ws_id else {"card_type": card_type}
+    config = await db.min_amount_config.find_one(query, {"_id": 0})
+    return MinAmountResponse(success=True, card_type=card_type, min_amount=config.get("min_amount", 0) if config else 0)
+
+@router.post("/min-amount/{card_type}")
+async def set_min_amount(
+    card_type: str,
+    request: MinAmountRequest,
+    workspace_id: Optional[str] = None,
+    current_user: dict = Depends(require_workspace_admin)
+):
+    """Set the minimum purchase amount for a card type. Business admins and
+    Devotio can both configure this — it's the business's own policy call."""
+    _validate_min_amount_card_type(card_type)
+    if request.min_amount < 0:
+        raise HTTPException(status_code=400, detail="El monto mínimo no puede ser negativo")
+
+    ws_id = resolve_workspace_id(current_user, workspace_id)
+    query = {"workspace_id": ws_id, "card_type": card_type} if ws_id else {"card_type": card_type}
+    await db.min_amount_config.update_one(
+        query,
+        {"$set": {
+            "workspace_id": ws_id,
+            "card_type": card_type,
+            "min_amount": request.min_amount,
+            "updated_by": current_user.get("email", ""),
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }},
+        upsert=True
+    )
+    return MinAmountResponse(success=True, card_type=card_type, min_amount=request.min_amount)
+
+# ============ HIGH-AMOUNT ALERT THRESHOLD ============
+# A soft warning, not a block — helps catch operator data-entry mistakes
+# (e.g. an extra zero) before a large amount gets accumulated.
+
+DEFAULT_HIGH_AMOUNT_THRESHOLD = 1000000
+
+class HighAmountAlertRequest(BaseModel):
+    threshold: float
+
+class HighAmountAlertResponse(BaseModel):
+    success: bool
+    threshold: float = DEFAULT_HIGH_AMOUNT_THRESHOLD
+
+@router.get("/high-amount-alert-config")
+async def get_high_amount_alert_config(workspace_id: Optional[str] = None, current_user: dict = Depends(get_current_user)):
+    """Get the purchase amount that triggers a confirmation warning before accepting it."""
+    ws_id = resolve_workspace_id(current_user, workspace_id)
+    query = {"workspace_id": ws_id} if ws_id else {}
+    config = await db.high_amount_alert_config.find_one(query, {"_id": 0})
+    threshold = config.get("threshold", DEFAULT_HIGH_AMOUNT_THRESHOLD) if config else DEFAULT_HIGH_AMOUNT_THRESHOLD
+    return HighAmountAlertResponse(success=True, threshold=threshold)
+
+@router.post("/high-amount-alert-config")
+async def set_high_amount_alert_config(
+    request: HighAmountAlertRequest,
+    workspace_id: Optional[str] = None,
+    current_user: dict = Depends(require_workspace_admin)
+):
+    """Set the high-amount alert threshold. Business admins and Devotio can both configure this."""
+    if request.threshold <= 0:
+        raise HTTPException(status_code=400, detail="El umbral debe ser mayor a 0")
+
+    ws_id = resolve_workspace_id(current_user, workspace_id)
+    query = {"workspace_id": ws_id} if ws_id else {}
+    await db.high_amount_alert_config.update_one(
+        query,
+        {"$set": {
+            "workspace_id": ws_id,
+            "threshold": request.threshold,
+            "updated_by": current_user.get("email", ""),
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }},
+        upsert=True
+    )
+    return HighAmountAlertResponse(success=True, threshold=request.threshold)

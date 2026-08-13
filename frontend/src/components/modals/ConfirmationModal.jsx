@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Loader2 } from 'lucide-react';
+import { X, Loader2, AlertTriangle } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { toast } from 'sonner';
@@ -15,7 +15,8 @@ const ConfirmationModal = ({
   loading,
   purchaseAmountFromParent,
   requireComments = true,
-  commentMode = 'open'
+  commentMode = 'open',
+  warning = null
 }) => {
   const [comment, setComment] = useState('');
   const [commentError, setCommentError] = useState('');
@@ -72,7 +73,14 @@ const ConfirmationModal = ({
             </div>
           ))}
         </div>
-        
+
+        {warning && (
+          <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4" data-testid="high-amount-warning">
+            <AlertTriangle className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" />
+            <p className="text-xs text-amber-800">{warning}</p>
+          </div>
+        )}
+
         {/* Comment - conditionally mandatory, format depends on the card type's configured mode */}
         <div className="mb-4 sm:mb-6">
           <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500 block mb-2">

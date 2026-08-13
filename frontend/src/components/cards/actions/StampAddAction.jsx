@@ -7,7 +7,7 @@ import { PurchaseAmountInput, AmountCounter, ActionButton } from '../shared';
 export const StampAddAction = ({
   balance, stampConfig, stampProgress, purchaseAmount, setPurchaseAmount,
   actionAmount, setActionAmount, loading, openConfirmation, formatCurrency, currencyInfo,
-  stampRewardTiers = []
+  stampRewardTiers = [], minAmount = 0
 }) => {
   const activeStamps = balance.currentNumberOfUses ?? 0;
   const stampsBeforeReward = balance.stampsBeforeReward ?? 0;
@@ -31,6 +31,10 @@ export const StampAddAction = ({
   const isSpendMode = stampMode === 'spend';
   const isVisitMode = stampMode === 'visit';
   const isManualMode = stampMode === 'manual' || !stampMode;
+  // Minimum purchase amount only gates accumulation in spend mode, where the
+  // stamp is actually calculated from the purchase amount.
+  const purchaseVal = parseFloat(purchaseAmount) || 0;
+  const belowMinimum = isSpendMode && minAmount > 0 && purchaseAmount !== '' && purchaseVal < minAmount;
 
   return (
     <div className="space-y-4 sm:space-y-6">
@@ -81,7 +85,13 @@ export const StampAddAction = ({
         currencyInfo={currencyInfo}
         required
         testId="stamp-purchase-amount"
-        error={!isPurchaseValid && purchaseAmount !== '' ? 'El monto de compra debe ser mayor a 0' : null}
+        error={
+          !isPurchaseValid && purchaseAmount !== ''
+            ? 'El monto de compra debe ser mayor a 0'
+            : belowMinimum
+              ? `El monto mínimo es ${formatCurrency(minAmount)} — montos menores no acumulan`
+              : null
+        }
         hint={isSpendMode ? `Se gana 1 sello cada ${formatCurrency(stampConfig.spend_threshold)}. El progreso se acumula entre compras.` : null}
       />
       
@@ -108,7 +118,7 @@ export const StampAddAction = ({
       
       <ActionButton
         onClick={() => openConfirmation('Agregar')}
-        disabled={loading || (isManualMode && actionAmount < 1) || !isPurchaseValid}
+        disabled={loading || (isManualMode && actionAmount < 1) || !isPurchaseValid || belowMinimum}
         loading={loading}
         label="Agregar Sellos"
         testId="add-stamp-button"

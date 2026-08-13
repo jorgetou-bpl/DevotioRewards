@@ -49,6 +49,8 @@ const ResultPage = () => {
   const [tierProgress, setTierProgress] = useState(null);
   const [commentMode, setCommentMode] = useState('open');
   const [giftCardConfig, setGiftCardConfig] = useState({ allow_add: false });
+  const [minAmount, setMinAmount] = useState(0);
+  const [highAmountThreshold, setHighAmountThreshold] = useState(1000000);
 
   const currencyInfo = getCurrencyInfo();
   const cardType = card ? normalizeCardType(card.type) : null;
@@ -185,6 +187,34 @@ const ResultPage = () => {
     fetchGiftCardConfig();
   }, [cardType]);
 
+  // Load minimum purchase amount for card types where it applies — below this,
+  // the scanner blocks accumulation and tells the operator the minimum required.
+  useEffect(() => {
+    const fetchMinAmount = async () => {
+      const normalizedType = cardType ? cardType.replace('_card', '') : '';
+      if (!['cashback', 'discount', 'stamp'].includes(normalizedType)) { setMinAmount(0); return; }
+      const token = localStorage.getItem('token');
+      try {
+        const response = await axios.get(`${API}/min-amount/${normalizedType}`, { headers: { Authorization: `Bearer ${token}` } });
+        setMinAmount(response.data?.min_amount || 0);
+      } catch { setMinAmount(0); }
+    };
+    fetchMinAmount();
+  }, [cardType]);
+
+  // Load the amount that triggers a "this looks high, please confirm" warning —
+  // a data-entry safety net, not a card-type-specific setting.
+  useEffect(() => {
+    const fetchHighAmountThreshold = async () => {
+      const token = localStorage.getItem('token');
+      try {
+        const response = await axios.get(`${API}/high-amount-alert-config`, { headers: { Authorization: `Bearer ${token}` } });
+        setHighAmountThreshold(response.data?.threshold || 1000000);
+      } catch { setHighAmountThreshold(1000000); }
+    };
+    fetchHighAmountThreshold();
+  }, []);
+
   // Fetch accrual mode for reward cards
   useEffect(() => {
     const fetchAccrualMode = async () => {
@@ -293,7 +323,11 @@ const ResultPage = () => {
     }
     
     const shouldIncludePurchaseAmount = config.requiresPurchaseAmount || normalizedType === 'stamp' || normalizedType === 'coupon';
-    setConfirmModal({ open: true, action, details, purchaseAmount: shouldIncludePurchaseAmount ? purchaseAmount : '', rewardTier });
+    const purchaseVal = parseFloat(purchaseAmount) || 0;
+    const warning = highAmountThreshold > 0 && purchaseVal >= highAmountThreshold
+      ? `El monto ingresado (${formatCurrency(purchaseVal)}) es inusualmente alto. Verifique que sea correcto antes de confirmar.`
+      : null;
+    setConfirmModal({ open: true, action, details, purchaseAmount: shouldIncludePurchaseAmount ? purchaseAmount : '', rewardTier, warning });
   };
 
   // ============ HANDLE ACTION (Transaction Logic) ============
@@ -312,6 +346,11 @@ const ResultPage = () => {
       if (normalizedType === 'stamp' && actionKey === 'agregar' && stampConfig.stamp_mode === 'spend') {
         const amount = parseFloat(confirmPurchaseAmount || purchaseAmount) || 0;
         if (amount <= 0) { toast.error('El monto de compra debe ser mayor a 0'); setLoading(false); return; }
+        if (minAmount > 0 && amount < minAmount) {
+          toast.error(`El monto mínimo es ${formatCurrency(minAmount)} — no aplica para acumular`);
+          setLoading(false);
+          return;
+        }
         const progressResponse = await axios.post(`${API}/stamp-progress/${card.id}/add?amount=${amount}`, {}, { headers: { Authorization: `Bearer ${token}` } });
         const { stamps_to_add, accumulated_amount, threshold, progress_percent } = progressResponse.data;
         
@@ -359,6 +398,13 @@ const ResultPage = () => {
       let endpoint, payload;
       const basePayload = { amount: actionAmount, comment: comment || '', gerente: gerente_name };
       const purchaseVal = parseFloat(confirmPurchaseAmount || purchaseAmount) || 0;
+
+      if ((actionKey === 'agregar' || actionKey === 'aplicar') && ['cashback', 'discount'].includes(normalizedType)
+        && minAmount > 0 && purchaseVal < minAmount) {
+        toast.error(`El monto mínimo es ${formatCurrency(minAmount)} — no aplica para acumular`);
+        setLoading(false);
+        return;
+      }
       if (purchaseVal > 0) basePayload.purchaseSum = purchaseVal;
       
       if (normalizedType === 'stamp' && actionKey === 'agregar') {
@@ -449,7 +495,7 @@ const ResultPage = () => {
     const actionConfig = config.actions[tabLower];
     if (!actionConfig) return null;
     const normalizedType = cardType.replace('_card', '');
-    const commonProps = { balance, purchaseAmount, setPurchaseAmount, actionAmount, setActionAmount, loading, openConfirmation, formatCurrency, currencyInfo };
+    const commonProps = { balance, purchaseAmount, setPurchaseAmount, actionAmount, setActionAmount, loading, openConfirmation, formatCurrency, currencyInfo, minAmount };
 
     // Stamp Agregar
     if (normalizedType === 'stamp' && activeTab === 'Agregar') {
@@ -561,6 +607,7 @@ const ResultPage = () => {
         formatCurrency={formatCurrency}
         requireComments={settings.require_comments !== false}
         commentMode={commentMode}
+        warning={confirmModal.warning}
       />
 
       <SuccessModal

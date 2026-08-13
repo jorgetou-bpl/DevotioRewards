@@ -16,7 +16,7 @@ export const CARD_TYPE_CONFIG = {
   stamp: {
     name: 'Tarjeta de Sellos',
     icon: Stamp,
-    color: '#8A2BE2',
+    color: '#5B7CF7',
     tabs: ['Agregar', 'Canjear'],
     actions: {
       agregar: { label: 'Agregar Sellos', endpoint: 'add-stamp' },
@@ -26,7 +26,7 @@ export const CARD_TYPE_CONFIG = {
   stamp_card: { // Alias for demo cards
     name: 'Tarjeta de Sellos',
     icon: Stamp,
-    color: '#8A2BE2',
+    color: '#5B7CF7',
     tabs: ['Agregar', 'Canjear'],
     actions: {
       agregar: { label: 'Agregar Sellos', endpoint: 'add-stamp' },
@@ -37,7 +37,7 @@ export const CARD_TYPE_CONFIG = {
   cashback: {
     name: 'Tarjeta Cashback',
     icon: Wallet,
-    color: '#F040A0',
+    color: '#8CA4FE',
     tabs: ['Agregar', 'Canjear'],
     requiresPurchaseAmount: true,
     actions: {
@@ -48,7 +48,7 @@ export const CARD_TYPE_CONFIG = {
   cashback_card: { // Alias for demo cards
     name: 'Tarjeta Cashback',
     icon: Wallet,
-    color: '#F040A0',
+    color: '#8CA4FE',
     tabs: ['Agregar', 'Canjear'],
     requiresPurchaseAmount: true,
     actions: {
@@ -60,7 +60,7 @@ export const CARD_TYPE_CONFIG = {
   multipass: {
     name: 'Multipase',
     icon: CreditCard,
-    color: '#8A2BE2',
+    color: '#5B7CF7',
     tabs: ['Visitas', 'Puntos'],
     actions: {
       visitas: { label: 'Visitas', endpoint: null },
@@ -76,7 +76,7 @@ export const CARD_TYPE_CONFIG = {
   subscription: {
     name: 'Multipase',
     icon: CreditCard,
-    color: '#8A2BE2',
+    color: '#5B7CF7',
     tabs: ['Visitas', 'Puntos'],
     actions: {
       visitas: { label: 'Visitas', endpoint: null },
@@ -93,7 +93,7 @@ export const CARD_TYPE_CONFIG = {
   coupon: {
     name: 'Cupón',
     icon: Ticket,
-    color: '#F040A0',
+    color: '#8CA4FE',
     tabs: ['Usar'],
     singleUse: true,
     requiresPurchaseAmount: true,
@@ -105,7 +105,7 @@ export const CARD_TYPE_CONFIG = {
   discount: {
     name: 'Tarjeta de Descuento',
     icon: Percent,
-    color: '#F040A0',
+    color: '#8CA4FE',
     tabs: ['Aplicar'],
     requiresPurchaseAmount: true,
     actions: {
@@ -115,7 +115,7 @@ export const CARD_TYPE_CONFIG = {
   discount_card: {
     name: 'Tarjeta de Descuento',
     icon: Percent,
-    color: '#F040A0',
+    color: '#8CA4FE',
     tabs: ['Aplicar'],
     requiresPurchaseAmount: true,
     actions: {
@@ -126,7 +126,7 @@ export const CARD_TYPE_CONFIG = {
   gift: {
     name: 'Tarjeta de Regalo',
     icon: Gift,
-    color: '#8A2BE2',
+    color: '#5B7CF7',
     tabs: ['Agregar', 'Canjear'],
     actions: {
       agregar: { label: 'Agregar Saldo', endpoint: 'add-point' },
@@ -136,7 +136,7 @@ export const CARD_TYPE_CONFIG = {
   certificate: {
     name: 'Tarjeta de Regalo',
     icon: Gift,
-    color: '#8A2BE2',
+    color: '#5B7CF7',
     tabs: ['Agregar', 'Canjear'],
     actions: {
       agregar: { label: 'Agregar Saldo', endpoint: 'add-point' },
@@ -146,7 +146,7 @@ export const CARD_TYPE_CONFIG = {
   gift_card: {
     name: 'Tarjeta de Regalo',
     icon: Gift,
-    color: '#8A2BE2',
+    color: '#5B7CF7',
     tabs: ['Agregar', 'Canjear'],
     actions: {
       agregar: { label: 'Agregar Saldo', endpoint: 'add-point' },
@@ -157,7 +157,7 @@ export const CARD_TYPE_CONFIG = {
   membership: {
     name: 'Membresía',
     icon: User,
-    color: '#8A2BE2',
+    color: '#5B7CF7',
     tabs: ['Canjear'], // Only redeem - membership visits are pre-configured
     actions: {
       canjear: { label: 'Canjear Visita', endpoint: 'subtract-visit' }
@@ -166,7 +166,7 @@ export const CARD_TYPE_CONFIG = {
   membership_card: {
     name: 'Membresía',
     icon: User,
-    color: '#8A2BE2',
+    color: '#5B7CF7',
     tabs: ['Canjear'], // Only redeem - membership visits are pre-configured
     actions: {
       canjear: { label: 'Canjear Visita', endpoint: 'subtract-visit' }
@@ -176,7 +176,7 @@ export const CARD_TYPE_CONFIG = {
   reward: {
     name: 'Tarjeta de Recompensa',
     icon: Star,
-    color: '#F040A0',
+    color: '#8CA4FE',
     tabs: ['Agregar', 'Canjear'],
     requiresPurchaseAmount: true,
     actions: {
@@ -187,7 +187,7 @@ export const CARD_TYPE_CONFIG = {
   reward_card: {
     name: 'Tarjeta de Recompensa',
     icon: Star,
-    color: '#F040A0',
+    color: '#8CA4FE',
     tabs: ['Agregar', 'Canjear'],
     requiresPurchaseAmount: true,
     actions: {
@@ -199,7 +199,7 @@ export const CARD_TYPE_CONFIG = {
   points_card: {
     name: 'Tarjeta de Puntos',
     icon: Star,
-    color: '#F040A0',
+    color: '#8CA4FE',
     tabs: ['Agregar', 'Canjear'],
     actions: {
       agregar: { label: 'Agregar Puntos', endpoint: 'add-point' },
@@ -209,7 +209,7 @@ export const CARD_TYPE_CONFIG = {
   vip_card: {
     name: 'Tarjeta VIP',
     icon: Star,
-    color: '#8A2BE2',
+    color: '#5B7CF7',
     tabs: ['Agregar', 'Canjear'],
     actions: {
       agregar: { label: 'Agregar Puntos', endpoint: 'add-point' },

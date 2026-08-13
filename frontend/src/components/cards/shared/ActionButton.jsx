@@ -5,8 +5,8 @@ import { Loader2 } from 'lucide-react';
 export const ActionButton = ({ onClick, disabled, loading, label, variant = 'primary', testId }) => {
   const cls = variant === 'primary' 
     ? 'btn-primary' 
-    : 'border-2 bg-white hover:bg-[#ee478a] hover:border-[#ee478a] hover:text-white';
-  const style = variant === 'secondary' ? { borderColor: '#120627', color: '#120627' } : {};
+    : 'border-2 bg-white hover:bg-[#5B7CF7] hover:border-[#5B7CF7] hover:text-white';
+  const style = variant === 'secondary' ? { borderColor: '#0B0B16', color: '#0B0B16' } : {};
 
   return (
     <Button

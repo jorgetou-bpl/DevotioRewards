@@ -202,7 +202,7 @@ const SuperAdminDashboard = () => {
     return (
       <div className="min-h-screen bg-white">
         <header className="nav-header">
-          <button onClick={() => navigate('/')} className="flex items-center gap-2 p-2 hover:bg-[#ee478a] hover:text-white rounded-lg transition-colors">
+          <button onClick={() => navigate('/')} className="flex items-center gap-2 p-2 hover:bg-[#5B7CF7] hover:text-white rounded-lg transition-colors">
             <ArrowLeft className="h-5 w-5" /><span className="font-medium hidden sm:inline">Volver</span>
           </button>
           <img src="/fonts/logo.png" alt="Devotio Rewards" className="h-8 sm:h-10" />
@@ -210,10 +210,10 @@ const SuperAdminDashboard = () => {
         </header>
         <main className="max-w-md mx-auto p-6 pt-8">
           <div className="text-center mb-8">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-[#120627] flex items-center justify-center">
+            <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-[#5B7CF7] flex items-center justify-center">
               <Shield className="h-8 w-8 text-white" />
             </div>
-            <h1 className="text-2xl font-bold text-[#120627] mb-2">Panel Super Admin</h1>
+            <h1 className="text-2xl font-bold text-[#0B0B16] mb-2">Panel Super Admin</h1>
             <p className="text-sm text-zinc-500">Ingrese el código maestro para acceder</p>
           </div>
           <div className="space-y-4">
@@ -235,7 +235,7 @@ const SuperAdminDashboard = () => {
     return (
       <div className="min-h-screen bg-zinc-50">
         <header className="nav-header">
-          <button onClick={backToDashboard} className="flex items-center gap-2 p-2 hover:bg-[#ee478a] hover:text-white rounded-lg transition-colors">
+          <button onClick={backToDashboard} className="flex items-center gap-2 p-2 hover:bg-[#5B7CF7] hover:text-white rounded-lg transition-colors">
             <ArrowLeft className="h-5 w-5" /><span className="font-medium hidden sm:inline">Dashboard</span>
           </button>
           <img src="/fonts/logo.png" alt="Devotio Rewards" className="h-8 sm:h-10" />
@@ -243,14 +243,14 @@ const SuperAdminDashboard = () => {
         </header>
 
         <main className="max-w-lg mx-auto p-4 sm:p-6">
-          <h1 className="text-xl font-bold text-[#120627] mb-6">Crear Nuevo Workspace</h1>
+          <h1 className="text-xl font-bold text-[#0B0B16] mb-6">Crear Nuevo Workspace</h1>
 
           {!createdWorkspace ? (
             <div className="space-y-4">
               {/* Workspace Info */}
               <div className="bg-white rounded-xl border border-zinc-200 p-4 space-y-4">
                 <div className="flex items-center gap-2 mb-2">
-                  <Building2 className="h-5 w-5 text-[#120627]" />
+                  <Building2 className="h-5 w-5 text-[#0B0B16]" />
                   <h2 className="font-semibold text-sm uppercase tracking-wider text-zinc-700">Datos del Workspace</h2>
                 </div>
                 <Input value={workspaceName} onChange={e => setWorkspaceName(e.target.value)}
@@ -265,7 +265,7 @@ const SuperAdminDashboard = () => {
               {/* Locations */}
               <div className="bg-white rounded-xl border border-zinc-200 p-4 space-y-3">
                 <div className="flex items-center gap-2 mb-2">
-                  <MapPin className="h-5 w-5 text-[#120627]" />
+                  <MapPin className="h-5 w-5 text-[#0B0B16]" />
                   <h2 className="font-semibold text-sm uppercase tracking-wider text-zinc-700">Sucursales</h2>
                 </div>
                 {locations.map((loc, i) => (
@@ -293,7 +293,7 @@ const SuperAdminDashboard = () => {
               {/* Admin User */}
               <div className="bg-white rounded-xl border border-zinc-200 p-4 space-y-3">
                 <div className="flex items-center gap-2 mb-2">
-                  <UserPlus className="h-5 w-5 text-[#120627]" />
+                  <UserPlus className="h-5 w-5 text-[#0B0B16]" />
                   <h2 className="font-semibold text-sm uppercase tracking-wider text-zinc-700">Administrador del Workspace</h2>
                 </div>
                 <p className="text-xs text-zinc-500">Este usuario podrá gestionar el workspace, crear operadores y configurar settings.</p>
@@ -354,7 +354,7 @@ const SuperAdminDashboard = () => {
   return (
     <div className="min-h-screen bg-zinc-50">
       <header className="nav-header">
-        <button onClick={() => navigate('/')} className="flex items-center gap-2 p-2 hover:bg-[#ee478a] hover:text-white rounded-lg transition-colors">
+        <button onClick={() => navigate('/')} className="flex items-center gap-2 p-2 hover:bg-[#5B7CF7] hover:text-white rounded-lg transition-colors">
           <ArrowLeft className="h-5 w-5" /><span className="font-medium hidden sm:inline">Volver</span>
         </button>
         <img src="/fonts/logo.png" alt="Devotio Rewards" className="h-8 sm:h-10" />
@@ -364,7 +364,7 @@ const SuperAdminDashboard = () => {
       <main className="max-w-4xl mx-auto p-4 sm:p-6">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-[#120627]">Panel Super Admin</h1>
+            <h1 className="text-xl sm:text-2xl font-bold text-[#0B0B16]">Panel Super Admin</h1>
             <p className="text-sm text-zinc-500">Gestión de todos los workspaces</p>
           </div>
           <Button onClick={fetchDashboard} variant="outline" size="sm" className="gap-2" data-testid="refresh-dashboard">
@@ -373,7 +373,7 @@ const SuperAdminDashboard = () => {
         </div>
 
         {loading && !dashboard && (
-          <div className="text-center py-12"><Loader2 className="h-8 w-8 animate-spin mx-auto text-[#120627]" /></div>
+          <div className="text-center py-12"><Loader2 className="h-8 w-8 animate-spin mx-auto text-[#0B0B16]" /></div>
         )}
 
         {dashboard && (
@@ -381,18 +381,18 @@ const SuperAdminDashboard = () => {
             {/* Summary cards */}
             <div className="grid grid-cols-3 gap-3 sm:gap-4 mb-6">
               <div className="bg-white rounded-xl p-4 border border-zinc-200 text-center">
-                <Building2 className="h-6 w-6 mx-auto mb-2 text-[#120627]" />
-                <p className="text-2xl sm:text-3xl font-bold text-[#120627]" data-testid="total-workspaces">{dashboard.totals.workspaces}</p>
+                <Building2 className="h-6 w-6 mx-auto mb-2 text-[#0B0B16]" />
+                <p className="text-2xl sm:text-3xl font-bold text-[#0B0B16]" data-testid="total-workspaces">{dashboard.totals.workspaces}</p>
                 <p className="text-xs text-zinc-500">Workspaces</p>
               </div>
               <div className="bg-white rounded-xl p-4 border border-zinc-200 text-center">
-                <Users className="h-6 w-6 mx-auto mb-2 text-[#ee478a]" />
-                <p className="text-2xl sm:text-3xl font-bold text-[#120627]" data-testid="total-users">{dashboard.totals.users}</p>
+                <Users className="h-6 w-6 mx-auto mb-2 text-[#5B7CF7]" />
+                <p className="text-2xl sm:text-3xl font-bold text-[#0B0B16]" data-testid="total-users">{dashboard.totals.users}</p>
                 <p className="text-xs text-zinc-500">Usuarios</p>
               </div>
               <div className="bg-white rounded-xl p-4 border border-zinc-200 text-center">
                 <Activity className="h-6 w-6 mx-auto mb-2 text-green-600" />
-                <p className="text-2xl sm:text-3xl font-bold text-[#120627]" data-testid="total-operations">{dashboard.totals.operations}</p>
+                <p className="text-2xl sm:text-3xl font-bold text-[#0B0B16]" data-testid="total-operations">{dashboard.totals.operations}</p>
                 <p className="text-xs text-zinc-500">Operaciones</p>
               </div>
             </div>
@@ -404,12 +404,12 @@ const SuperAdminDashboard = () => {
                   <button onClick={() => toggleWorkspace(ws.id)}
                     className="w-full flex items-center justify-between p-4 hover:bg-zinc-50 transition-colors text-left">
                     <div className="flex items-center gap-3 flex-1 min-w-0">
-                      <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${ws.active ? 'bg-[#120627]' : 'bg-zinc-300'}`}>
+                      <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${ws.active ? 'bg-[#5B7CF7]' : 'bg-zinc-300'}`}>
                         <Building2 className="h-5 w-5 text-white" />
                       </div>
                       <div className="min-w-0">
                         <div className="flex items-center gap-2">
-                          <h3 className="font-semibold text-[#120627] truncate">{ws.name}</h3>
+                          <h3 className="font-semibold text-[#0B0B16] truncate">{ws.name}</h3>
                           {!ws.active && <span className="text-xs px-2 py-0.5 rounded-full bg-red-100 text-red-600 font-medium flex-shrink-0">Inactivo</span>}
                         </div>
                         <div className="flex items-center gap-3 text-xs text-zinc-500 mt-0.5">
@@ -427,15 +427,15 @@ const SuperAdminDashboard = () => {
                     <div className="border-t border-zinc-200 p-4 bg-zinc-50">
                       <div className="grid grid-cols-3 gap-3 mb-4">
                         <div className="text-center p-2 bg-white rounded-lg">
-                          <p className="text-lg font-bold text-[#120627]">{ws.admin_count}</p>
+                          <p className="text-lg font-bold text-[#0B0B16]">{ws.admin_count}</p>
                           <p className="text-xs text-zinc-500">Admins</p>
                         </div>
                         <div className="text-center p-2 bg-white rounded-lg">
-                          <p className="text-lg font-bold text-[#120627]">{ws.operator_count}</p>
+                          <p className="text-lg font-bold text-[#0B0B16]">{ws.operator_count}</p>
                           <p className="text-xs text-zinc-500">Operadores</p>
                         </div>
                         <div className="text-center p-2 bg-white rounded-lg">
-                          <p className="text-lg font-bold text-[#120627]">{ws.locations?.length || 0}</p>
+                          <p className="text-lg font-bold text-[#0B0B16]">{ws.locations?.length || 0}</p>
                           <p className="text-xs text-zinc-500">Sucursales</p>
                         </div>
                       </div>
@@ -469,7 +469,7 @@ const SuperAdminDashboard = () => {
                               return (
                               <div key={u.id} className="flex items-center justify-between bg-white p-3 rounded-lg">
                                 <div>
-                                  <p className="font-medium text-sm text-[#120627]">{u.name}</p>
+                                  <p className="font-medium text-sm text-[#0B0B16]">{u.name}</p>
                                   <p className="text-xs text-zinc-500">{u.email}</p>
                                   <div className="flex items-center gap-2 mt-1">
                                     {isEditing ? (
@@ -482,7 +482,7 @@ const SuperAdminDashboard = () => {
                                       </select>
                                     ) : (
                                       <button onClick={() => canEditRole && setEditingRole(u.id)}
-                                        className={`text-xs px-2 py-0.5 rounded-full font-medium ${roleCls} ${canEditRole ? 'cursor-pointer hover:ring-2 hover:ring-[#120627]/20' : 'cursor-default'}`}
+                                        className={`text-xs px-2 py-0.5 rounded-full font-medium ${roleCls} ${canEditRole ? 'cursor-pointer hover:ring-2 hover:ring-[#0B0B16]/20' : 'cursor-default'}`}
                                         title={canEditRole ? 'Click para cambiar rol' : ''}
                                         data-testid={`role-badge-${u.id}`}>
                                         {roleLabel}
@@ -492,7 +492,7 @@ const SuperAdminDashboard = () => {
                                   </div>
                                 </div>
                                 <Button variant="ghost" size="sm" onClick={() => { setResetModal({ open: true, user: u }); setResetResult(null); setManualPassword(''); setResetMode('auto'); }}
-                                  className="text-xs gap-1 text-[#ee478a] hover:bg-[#ee478a]/10" data-testid={`reset-password-${u.email}`}>
+                                  className="text-xs gap-1 text-[#5B7CF7] hover:bg-[#5B7CF7]/10" data-testid={`reset-password-${u.email}`}>
                                   <RefreshCw className="h-3 w-3" /> Restablecer
                                 </Button>
                               </div>
@@ -506,7 +506,7 @@ const SuperAdminDashboard = () => {
 
                       <div className="flex gap-2">
                         <Button variant="outline" size="sm" onClick={() => navigate(`/admin/workspace?workspace=${ws.id}`)}
-                          className="gap-2 text-xs text-[#120627] hover:bg-[#120627]/5"
+                          className="gap-2 text-xs text-[#0B0B16] hover:bg-[#5B7CF7]/5"
                           data-testid={`manage-workspace-${ws.slug}`}>
                           <Settings className="h-4 w-4" /> Gestionar
                         </Button>
@@ -545,7 +545,7 @@ const SuperAdminDashboard = () => {
               <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
                 <AlertTriangle className="h-5 w-5 text-red-600" />
               </div>
-              <h3 className="text-lg font-bold text-[#120627]">Eliminar workspace</h3>
+              <h3 className="text-lg font-bold text-[#0B0B16]">Eliminar workspace</h3>
             </div>
             <p className="text-sm text-zinc-500 mt-3 mb-4">
               Esto borra permanentemente <strong>{deleteModal.workspace?.name}</strong>: sus usuarios (excepto
@@ -571,7 +571,7 @@ const SuperAdminDashboard = () => {
       {resetModal.open && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setResetModal({ open: false, user: null })}>
           <div className="bg-white rounded-2xl w-full max-w-md p-6" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-lg font-bold text-[#120627] mb-1">Restablecer Contraseña</h3>
+            <h3 className="text-lg font-bold text-[#0B0B16] mb-1">Restablecer Contraseña</h3>
             <p className="text-sm text-zinc-500 mb-4">
               Usuario: <span className="font-medium">{resetModal.user?.name}</span> ({resetModal.user?.email})
             </p>
@@ -582,10 +582,10 @@ const SuperAdminDashboard = () => {
                   <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Método</label>
                   <div className="grid grid-cols-2 gap-2">
                     <button onClick={() => setResetMode('auto')}
-                      className={`p-3 border-2 rounded-xl text-center text-sm transition-all ${resetMode === 'auto' ? 'border-[#120627] bg-[#120627]/5 font-semibold' : 'border-zinc-200'}`}
+                      className={`p-3 border-2 rounded-xl text-center text-sm transition-all ${resetMode === 'auto' ? 'border-[#0B0B16] bg-[#5B7CF7]/5 font-semibold' : 'border-zinc-200'}`}
                       data-testid="reset-mode-auto">Automática</button>
                     <button onClick={() => setResetMode('manual')}
-                      className={`p-3 border-2 rounded-xl text-center text-sm transition-all ${resetMode === 'manual' ? 'border-[#120627] bg-[#120627]/5 font-semibold' : 'border-zinc-200'}`}
+                      className={`p-3 border-2 rounded-xl text-center text-sm transition-all ${resetMode === 'manual' ? 'border-[#0B0B16] bg-[#5B7CF7]/5 font-semibold' : 'border-zinc-200'}`}
                       data-testid="reset-mode-manual">Manual</button>
                   </div>
                 </div>
@@ -609,7 +609,7 @@ const SuperAdminDashboard = () => {
                 <div className="p-4 bg-green-50 rounded-xl border border-green-200">
                   <p className="text-sm text-green-800 font-medium mb-2">Contraseña restablecida exitosamente</p>
                   <div className="flex items-center gap-2 bg-white p-3 rounded-lg border">
-                    <code className="flex-1 text-lg font-mono font-bold text-[#120627]" data-testid="new-password-display">{resetResult.new_password}</code>
+                    <code className="flex-1 text-lg font-mono font-bold text-[#0B0B16]" data-testid="new-password-display">{resetResult.new_password}</code>
                     <Button variant="ghost" size="sm" onClick={() => copyToClipboard(resetResult.new_password)} data-testid="copy-password-btn">
                       {copiedPassword ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
                     </Button>

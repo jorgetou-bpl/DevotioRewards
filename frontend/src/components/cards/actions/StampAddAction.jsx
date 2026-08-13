@@ -69,7 +69,7 @@ export const StampAddAction = ({
           </p>
           <div className="w-full bg-zinc-200 rounded-full h-3 mb-2">
             <div 
-              className="bg-gradient-to-r from-[#F040A0] to-[#120627] h-3 rounded-full transition-all"
+              className="bg-gradient-to-r from-[#8CA4FE] to-[#1447E6] h-3 rounded-full transition-all"
               style={{ width: `${stampProgress.progress_percent}%` }}
             />
           </div>
@@ -109,7 +109,7 @@ export const StampAddAction = ({
           <div className="flex items-center justify-center gap-3">
             <User className="h-6 w-6 text-green-600" />
             <div className="text-center">
-              <span className="text-3xl font-mono font-bold text-[#120627]">1</span>
+              <span className="text-3xl font-mono font-bold text-[#0B0B16]">1</span>
               <p className="text-xs text-zinc-500">sello por visita</p>
             </div>
           </div>

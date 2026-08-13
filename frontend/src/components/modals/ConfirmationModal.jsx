@@ -59,7 +59,7 @@ const ConfirmationModal = ({
         </div>
         
         {/* Card Type Header */}
-        <div className="bg-[#120627] text-white rounded-lg p-3 sm:p-4 mb-4">
+        <div className="bg-[#5B7CF7] text-white rounded-lg p-3 sm:p-4 mb-4">
           <p className="text-xs font-semibold uppercase tracking-wider text-white/70 mb-1">Tipo de Tarjeta</p>
           <p className="font-medium text-sm sm:text-base">{config?.name || 'Tarjeta'}</p>
         </div>

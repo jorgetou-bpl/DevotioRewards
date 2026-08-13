@@ -32,8 +32,8 @@ export const RewardRedeemAction = ({
               key={tier.id}
               onClick={() => { setActionAmount(tier.id); openConfirmation('Canjear', tier); }}
               disabled={loading || !purchaseAmount}
-              className={`w-full p-4 border-2 rounded-xl text-left transition-all ${!purchaseAmount ? 'opacity-50 cursor-not-allowed' : 'hover:border-[#120627] hover:bg-zinc-50'}`}
-              style={{ borderColor: actionAmount === tier.id ? '#120627' : '#e4e4e7' }}
+              className={`w-full p-4 border-2 rounded-xl text-left transition-all ${!purchaseAmount ? 'opacity-50 cursor-not-allowed' : 'hover:border-[#0B0B16] hover:bg-zinc-50'}`}
+              style={{ borderColor: actionAmount === tier.id ? '#0B0B16' : '#e4e4e7' }}
               data-testid={`reward-tier-${tier.id}`}
             >
               <div className="flex justify-between items-center">
@@ -41,12 +41,12 @@ export const RewardRedeemAction = ({
                   <p className="font-medium text-sm sm:text-base">{tier.name}</p>
                   <p className="text-xs text-zinc-500 mt-1">Requiere: {tier.threshold} puntos</p>
                 </div>
-                <Gift className="h-5 w-5 text-[#120627]" />
+                <Gift className="h-5 w-5 text-[#0B0B16]" />
               </div>
             </button>
           ))}
           {!purchaseAmount && (
-            <p className="text-xs text-[#ee478a] text-center">Ingrese el monto de compra para canjear una recompensa</p>
+            <p className="text-xs text-[#5B7CF7] text-center">Ingrese el monto de compra para canjear una recompensa</p>
           )}
         </div>
       ) : (

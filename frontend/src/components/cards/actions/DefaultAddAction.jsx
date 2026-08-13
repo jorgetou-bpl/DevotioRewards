@@ -59,7 +59,7 @@ export const DefaultAddAction = ({
           <div className="flex items-center gap-3">
             <Button variant="outline" size="icon" onClick={() => setActionAmount(Math.max(1, actionAmount - 1))}
               className="h-12 w-12 sm:h-14 sm:w-14 border-2 rounded-lg bg-white hover:bg-zinc-50 flex-shrink-0"
-              style={{ borderColor: '#120627', color: '#120627' }}>
+              style={{ borderColor: '#0B0B16', color: '#0B0B16' }}>
               <Minus className="h-5 w-5 sm:h-6 sm:w-6" />
             </Button>
             <Input type="number" value={actionAmount}
@@ -68,7 +68,7 @@ export const DefaultAddAction = ({
               data-testid="default-amount-input" />
             <Button variant="outline" size="icon" onClick={() => setActionAmount(actionAmount + 1)}
               className="h-12 w-12 sm:h-14 sm:w-14 border-2 rounded-lg bg-white hover:bg-zinc-50 flex-shrink-0"
-              style={{ borderColor: '#120627', color: '#120627' }}>
+              style={{ borderColor: '#0B0B16', color: '#0B0B16' }}>
               <Plus className="h-5 w-5 sm:h-6 sm:w-6" />
             </Button>
           </div>

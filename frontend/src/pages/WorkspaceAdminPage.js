@@ -348,7 +348,7 @@ const WorkspaceAdminPage = () => {
   };
 
   if (loading) {
-    return <div className="min-h-screen bg-white flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-[#120627]" /></div>;
+    return <div className="min-h-screen bg-white flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-[#0B0B16]" /></div>;
   }
 
   if (!workspace) {
@@ -384,7 +384,7 @@ const WorkspaceAdminPage = () => {
     <div className="min-h-screen bg-zinc-50" data-testid="workspace-admin-page">
       {/* Header — matching SuperAdminDashboard style */}
       <header className="nav-header">
-        <button onClick={() => navigate('/')} className="flex items-center gap-2 p-2 hover:bg-[#ee478a] hover:text-white rounded-lg transition-colors">
+        <button onClick={() => navigate('/')} className="flex items-center gap-2 p-2 hover:bg-[#5B7CF7] hover:text-white rounded-lg transition-colors">
           <ArrowLeft className="h-5 w-5" /><span className="font-medium hidden sm:inline">Volver</span>
         </button>
         <img src="/fonts/logo.png" alt="Devotio Rewards" className="h-8 sm:h-10" />
@@ -395,7 +395,7 @@ const WorkspaceAdminPage = () => {
         {/* Title section */}
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-[#120627]">{workspace.name}</h1>
+            <h1 className="text-xl sm:text-2xl font-bold text-[#0B0B16]">{workspace.name}</h1>
             <p className="text-sm text-zinc-500">Panel de Administración</p>
           </div>
           <Button onClick={() => { fetchWorkspace(targetWorkspaceId); fetchUsers(targetWorkspaceId); }} variant="outline" size="sm" className="gap-2">
@@ -408,7 +408,7 @@ const WorkspaceAdminPage = () => {
           {tabs.map(tab => (
             <button key={tab.key} onClick={() => setActiveTab(tab.key)} data-testid={`tab-${tab.key}`}
               className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium whitespace-nowrap transition-all ${
-                activeTab === tab.key ? 'bg-[#120627] text-white' : 'bg-white text-zinc-600 border border-zinc-200 hover:border-[#120627] hover:text-[#120627]'
+                activeTab === tab.key ? 'bg-[#5B7CF7] text-white' : 'bg-white text-zinc-600 border border-zinc-200 hover:border-[#0B0B16] hover:text-[#0B0B16]'
               }`}>
               <tab.icon className="h-4 w-4" />
               {tab.label}
@@ -422,18 +422,18 @@ const WorkspaceAdminPage = () => {
             {/* Stats cards — matching dashboard style */}
             <div className="grid grid-cols-3 gap-3">
               <div className="bg-white rounded-xl p-4 border border-zinc-200 text-center">
-                <Users className="h-6 w-6 mx-auto mb-2 text-[#120627]" />
-                <p className="text-2xl font-bold text-[#120627]">{workspace.user_count}</p>
+                <Users className="h-6 w-6 mx-auto mb-2 text-[#0B0B16]" />
+                <p className="text-2xl font-bold text-[#0B0B16]">{workspace.user_count}</p>
                 <p className="text-xs text-zinc-500">Usuarios</p>
               </div>
               <div className="bg-white rounded-xl p-4 border border-zinc-200 text-center">
-                <MapPin className="h-6 w-6 mx-auto mb-2 text-[#ee478a]" />
-                <p className="text-2xl font-bold text-[#120627]">{workspace.locations?.length || 0}</p>
+                <MapPin className="h-6 w-6 mx-auto mb-2 text-[#5B7CF7]" />
+                <p className="text-2xl font-bold text-[#0B0B16]">{workspace.locations?.length || 0}</p>
                 <p className="text-xs text-zinc-500">Sucursales</p>
               </div>
               <div className="bg-white rounded-xl p-4 border border-zinc-200 text-center">
                 <Key className="h-6 w-6 mx-auto mb-2 text-green-600" />
-                <p className="text-2xl font-bold text-[#120627]">{workspace.has_api_key ? 'OK' : 'No'}</p>
+                <p className="text-2xl font-bold text-[#0B0B16]">{workspace.has_api_key ? 'OK' : 'No'}</p>
                 <p className="text-xs text-zinc-500">API Key</p>
               </div>
             </div>
@@ -499,7 +499,7 @@ const WorkspaceAdminPage = () => {
                     <div key={u.id} className="bg-white rounded-xl border border-zinc-200 p-4" data-testid={`user-${u.id}`}>
                       <div className="flex items-center justify-between">
                         <div className="flex-1">
-                          <p className="font-medium text-sm text-[#120627]">{u.name}</p>
+                          <p className="font-medium text-sm text-[#0B0B16]">{u.name}</p>
                           <p className="text-xs text-zinc-500">{u.email}</p>
                           <div className="flex items-center gap-2 mt-1.5">
                             {isEditing ? (
@@ -514,7 +514,7 @@ const WorkspaceAdminPage = () => {
                             ) : (
                               <button
                                 onClick={() => canEdit && setEditingRole(u.id)}
-                                className={`text-xs px-2 py-0.5 rounded-full font-medium ${roleInfo.bg} ${roleInfo.text} ${canEdit ? 'cursor-pointer hover:ring-2 hover:ring-[#120627]/20' : 'cursor-default'}`}
+                                className={`text-xs px-2 py-0.5 rounded-full font-medium ${roleInfo.bg} ${roleInfo.text} ${canEdit ? 'cursor-pointer hover:ring-2 hover:ring-[#0B0B16]/20' : 'cursor-default'}`}
                                 title={canEdit ? 'Click para cambiar rol' : ''}
                                 data-testid={`role-badge-${u.id}`}
                               >
@@ -574,12 +574,12 @@ const WorkspaceAdminPage = () => {
         {/* Montos Tab — visible to workspace_admin and super_admin */}
         {activeTab === 'amounts' && (
           amountsLoading ? (
-            <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-[#120627]" /></div>
+            <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-[#0B0B16]" /></div>
           ) : (
             <div className="space-y-4">
               <div className="bg-white rounded-xl border border-zinc-200 p-4 space-y-4">
                 <div className="flex items-center gap-3">
-                  <DollarSign className="h-5 w-5 text-[#120627]" />
+                  <DollarSign className="h-5 w-5 text-[#0B0B16]" />
                   <p className="text-xs sm:text-sm font-semibold uppercase tracking-widest text-zinc-500">Monto Mínimo de Compra</p>
                 </div>
                 <p className="text-xs text-zinc-500">
@@ -608,7 +608,7 @@ const WorkspaceAdminPage = () => {
 
               <div className="bg-white rounded-xl border border-zinc-200 p-4 space-y-3">
                 <div className="flex items-center gap-3">
-                  <AlertTriangle className="h-5 w-5 text-[#120627]" />
+                  <AlertTriangle className="h-5 w-5 text-[#0B0B16]" />
                   <p className="text-xs sm:text-sm font-semibold uppercase tracking-widest text-zinc-500">Alerta de Monto Alto</p>
                 </div>
                 <p className="text-xs text-zinc-500">
@@ -669,13 +669,13 @@ const WorkspaceAdminPage = () => {
         {/* Config. Tarjetas Tab */}
         {activeTab === 'config' && (
           configLoading ? (
-            <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-[#120627]" /></div>
+            <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-[#0B0B16]" /></div>
           ) : (
             <div className="space-y-4">
               {/* Stamp Card Configuration */}
               <div className="bg-white rounded-xl border border-zinc-200 p-4 space-y-3">
                 <div className="flex items-center gap-3">
-                  <Stamp className="h-5 w-5 text-[#120627]" />
+                  <Stamp className="h-5 w-5 text-[#0B0B16]" />
                   <p className="text-xs sm:text-sm font-semibold uppercase tracking-widest text-zinc-500">Tarjetas de Sellos</p>
                 </div>
                 <div className="space-y-2">
@@ -686,7 +686,7 @@ const WorkspaceAdminPage = () => {
                   ].map(mode => (
                     <button key={mode.value} onClick={() => setStampConfig({ ...stampConfig, stamp_mode: mode.value })}
                       className={`w-full text-left px-4 py-3 rounded-lg border-2 text-sm transition-colors ${
-                        stampConfig.stamp_mode === mode.value ? 'border-[#120627] bg-[#120627]/5 font-medium' : 'border-zinc-200'
+                        stampConfig.stamp_mode === mode.value ? 'border-[#0B0B16] bg-[#5B7CF7]/5 font-medium' : 'border-zinc-200'
                       }`}>
                       {mode.label}
                     </button>
@@ -708,7 +708,7 @@ const WorkspaceAdminPage = () => {
               {/* Read-only: reward tier structure per stamp template, sourced live from Boomerangme */}
               <div className="bg-white rounded-xl border border-zinc-200 p-4 space-y-3">
                 <div className="flex items-center gap-3">
-                  <Stamp className="h-5 w-5 text-[#120627]" />
+                  <Stamp className="h-5 w-5 text-[#0B0B16]" />
                   <p className="text-xs sm:text-sm font-semibold uppercase tracking-widest text-zinc-500">Estructura de Tarjetas (Boomerangme)</p>
                 </div>
                 <p className="text-xs text-zinc-500">
@@ -721,7 +721,7 @@ const WorkspaceAdminPage = () => {
                   <div className="space-y-2">
                     {stampTemplates.map((tpl) => (
                       <div key={tpl.id} className="bg-zinc-50 rounded-lg p-3" data-testid={`stamp-template-${tpl.id}`}>
-                        <p className="text-sm font-medium text-[#120627]">{tpl.name}</p>
+                        <p className="text-sm font-medium text-[#0B0B16]">{tpl.name}</p>
                         {tpl.rewardTiers.length > 0 ? (
                           <p className="text-xs text-zinc-500 mt-1">
                             Recompensas en {tpl.rewardTiers.map((t) => t.threshold).join(' y ')} sellos
@@ -744,7 +744,7 @@ const WorkspaceAdminPage = () => {
               {[{ type: 'cashback', label: 'Niveles — Cashback' }, { type: 'discount', label: 'Niveles — Descuento' }].map(({ type, label }) => (
                 <div key={type} className="bg-white rounded-xl border border-zinc-200 p-4 space-y-3">
                   <div className="flex items-center gap-3">
-                    <Percent className="h-5 w-5 text-[#120627]" />
+                    <Percent className="h-5 w-5 text-[#0B0B16]" />
                     <p className="text-xs sm:text-sm font-semibold uppercase tracking-widest text-zinc-500">{label}</p>
                   </div>
                   {tiersByType[type].map((tier, index) => (
@@ -779,16 +779,16 @@ const WorkspaceAdminPage = () => {
               {/* Gift Card "Agregar" Toggle */}
               <div className="bg-white rounded-xl border border-zinc-200 p-4">
                 <div className="flex items-center gap-3 mb-3">
-                  <Gift className="h-5 w-5 text-[#120627]" />
+                  <Gift className="h-5 w-5 text-[#0B0B16]" />
                   <p className="text-xs sm:text-sm font-semibold uppercase tracking-widest text-zinc-500">Tarjetas de Regalo</p>
                 </div>
                 <div className="flex items-center justify-between">
                   <div className="flex-1 pr-3">
-                    <p className="font-medium text-[#120627] text-sm">Permitir "Agregar" saldo</p>
+                    <p className="font-medium text-[#0B0B16] text-sm">Permitir "Agregar" saldo</p>
                     <p className="text-xs text-zinc-500">Por defecto los operadores solo canjean. Actívelo si este negocio necesita cargar saldo desde el escáner.</p>
                   </div>
                   <button onClick={() => handleSaveGiftCardConfig(!giftCardAllowAdd)} disabled={savingGiftCardConfig}
-                    className={`shrink-0 w-11 h-6 rounded-full transition-colors ${giftCardAllowAdd ? 'bg-[#120627]' : 'bg-zinc-300'}`}
+                    className={`shrink-0 w-11 h-6 rounded-full transition-colors ${giftCardAllowAdd ? 'bg-[#5B7CF7]' : 'bg-zinc-300'}`}
                     data-testid="gift-card-allow-add-switch">
                     <span className={`block w-5 h-5 bg-white rounded-full transition-transform ${giftCardAllowAdd ? 'translate-x-5' : 'translate-x-0.5'}`} />
                   </button>
@@ -798,12 +798,12 @@ const WorkspaceAdminPage = () => {
               {/* Comment Mode */}
               <div className="bg-white rounded-xl border border-zinc-200 p-4">
                 <div className="flex items-center gap-3 mb-3">
-                  <MessageSquare className="h-5 w-5 text-[#120627]" />
+                  <MessageSquare className="h-5 w-5 text-[#0B0B16]" />
                   <p className="text-xs sm:text-sm font-semibold uppercase tracking-widest text-zinc-500">Comentario</p>
                 </div>
                 <p className="text-xs text-zinc-500 mb-3">Aplica a todas las acciones del escáner por igual.</p>
                 <div className="flex items-center justify-between">
-                  <p className="font-medium text-[#120627] text-sm">Modo de comentario</p>
+                  <p className="font-medium text-[#0B0B16] text-sm">Modo de comentario</p>
                   <select value={commentMode} onChange={(e) => handleSaveCommentMode(e.target.value)} disabled={savingCommentMode}
                     className="h-9 border border-zinc-200 rounded-lg px-3 text-sm bg-white" data-testid="comment-mode">
                     <option value="open">Abierto</option>

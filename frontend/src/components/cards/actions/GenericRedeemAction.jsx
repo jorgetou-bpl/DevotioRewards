@@ -75,8 +75,8 @@ export const GenericRedeemAction = ({
           <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500 block mb-2">Cantidad a canjear</label>
           <div className="flex items-center gap-3">
             <Button variant="outline" size="icon" onClick={() => setActionAmount(Math.max(1, actionAmount - 1))}
-              className="h-12 w-12 sm:h-14 sm:w-14 border-2 rounded-lg bg-white hover:bg-[#ee478a] hover:border-[#ee478a] hover:text-white flex-shrink-0"
-              style={{ borderColor: '#120627', color: '#120627' }} data-testid="decrease-redeem">
+              className="h-12 w-12 sm:h-14 sm:w-14 border-2 rounded-lg bg-white hover:bg-[#5B7CF7] hover:border-[#5B7CF7] hover:text-white flex-shrink-0"
+              style={{ borderColor: '#0B0B16', color: '#0B0B16' }} data-testid="decrease-redeem">
               <Minus className="h-5 w-5 sm:h-6 sm:w-6" />
             </Button>
             <Input type="number" value={actionAmount}
@@ -90,8 +90,8 @@ export const GenericRedeemAction = ({
             <Button variant="outline" size="icon" 
               onClick={() => setActionAmount(Math.min(availableAmount || 999999, actionAmount + 1))}
               disabled={availableAmount > 0 && actionAmount >= availableAmount}
-              className="h-12 w-12 sm:h-14 sm:w-14 border-2 rounded-lg bg-white hover:bg-[#ee478a] hover:border-[#ee478a] hover:text-white flex-shrink-0"
-              style={{ borderColor: '#120627', color: '#120627' }} data-testid="increase-redeem">
+              className="h-12 w-12 sm:h-14 sm:w-14 border-2 rounded-lg bg-white hover:bg-[#5B7CF7] hover:border-[#5B7CF7] hover:text-white flex-shrink-0"
+              style={{ borderColor: '#0B0B16', color: '#0B0B16' }} data-testid="increase-redeem">
               <Plus className="h-5 w-5 sm:h-6 sm:w-6" />
             </Button>
           </div>

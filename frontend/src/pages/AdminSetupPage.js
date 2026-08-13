@@ -72,7 +72,7 @@ const AdminSetupPage = () => {
 
   return (
     <div className="min-h-screen bg-zinc-50" data-testid="admin-setup-page">
-      <div className="bg-[#120627] text-white px-4 py-4">
+      <div className="bg-[#5B7CF7] text-white px-4 py-4">
         <div className="max-w-lg mx-auto flex items-center gap-3">
           <button onClick={() => navigate('/')} className="p-1">
             <ArrowLeft className="h-5 w-5" />
@@ -90,7 +90,7 @@ const AdminSetupPage = () => {
         {!verified && (
           <div className="bg-white rounded-xl border border-zinc-200 p-6 space-y-4" data-testid="master-code-section">
             <div className="text-center mb-4">
-              <Shield className="h-10 w-10 text-[#120627] mx-auto mb-2" />
+              <Shield className="h-10 w-10 text-[#0B0B16] mx-auto mb-2" />
               <h2 className="font-bold text-lg">Acceso Restringido</h2>
               <p className="text-sm text-zinc-500">Ingrese el código maestro para continuar</p>
             </div>
@@ -103,7 +103,7 @@ const AdminSetupPage = () => {
               onKeyDown={e => e.key === 'Enter' && handleVerify()}
               data-testid="master-code-input"
             />
-            <Button onClick={handleVerify} disabled={verifying} className="w-full h-12 bg-[#120627] hover:bg-[#1e0a3d] text-white" data-testid="verify-btn">
+            <Button onClick={handleVerify} disabled={verifying} className="w-full h-12 bg-[#5B7CF7] hover:bg-[#3D64EF] text-white" data-testid="verify-btn">
               {verifying ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Verificar'}
             </Button>
           </div>
@@ -115,7 +115,7 @@ const AdminSetupPage = () => {
             {/* Workspace Info */}
             <div className="bg-white rounded-xl border border-zinc-200 p-4 space-y-4">
               <div className="flex items-center gap-2 mb-2">
-                <Building2 className="h-5 w-5 text-[#120627]" />
+                <Building2 className="h-5 w-5 text-[#0B0B16]" />
                 <h2 className="font-semibold text-sm uppercase tracking-wider text-zinc-700">Nuevo Workspace</h2>
               </div>
               <Input
@@ -140,7 +140,7 @@ const AdminSetupPage = () => {
             {/* Locations */}
             <div className="bg-white rounded-xl border border-zinc-200 p-4 space-y-3">
               <div className="flex items-center gap-2 mb-2">
-                <MapPin className="h-5 w-5 text-[#120627]" />
+                <MapPin className="h-5 w-5 text-[#0B0B16]" />
                 <h2 className="font-semibold text-sm uppercase tracking-wider text-zinc-700">Sucursales</h2>
               </div>
               {locations.map((loc, i) => (
@@ -176,7 +176,7 @@ const AdminSetupPage = () => {
             {/* Admin User */}
             <div className="bg-white rounded-xl border border-zinc-200 p-4 space-y-3">
               <div className="flex items-center gap-2 mb-2">
-                <UserPlus className="h-5 w-5 text-[#120627]" />
+                <UserPlus className="h-5 w-5 text-[#0B0B16]" />
                 <h2 className="font-semibold text-sm uppercase tracking-wider text-zinc-700">Administrador del Workspace</h2>
               </div>
               <p className="text-xs text-zinc-500">Este usuario podrá gestionar el workspace, crear operadores y configurar settings.</p>
@@ -205,7 +205,7 @@ const AdminSetupPage = () => {
               />
             </div>
 
-            <Button onClick={handleCreateWorkspace} disabled={creating} className="w-full h-12 bg-[#120627] hover:bg-[#1e0a3d] text-white" data-testid="create-workspace-btn">
+            <Button onClick={handleCreateWorkspace} disabled={creating} className="w-full h-12 bg-[#5B7CF7] hover:bg-[#3D64EF] text-white" data-testid="create-workspace-btn">
               {creating ? <Loader2 className="h-5 w-5 animate-spin" /> : <><Building2 className="h-4 w-4 mr-2" /> Crear Workspace</>}
             </Button>
           </div>
@@ -252,7 +252,7 @@ const AdminSetupPage = () => {
             </div>
 
             <div className="flex gap-2">
-              <Button onClick={resetForm} className="flex-1 bg-[#120627] hover:bg-[#1e0a3d] text-white" data-testid="create-another-btn">
+              <Button onClick={resetForm} className="flex-1 bg-[#5B7CF7] hover:bg-[#3D64EF] text-white" data-testid="create-another-btn">
                 <Plus className="h-4 w-4 mr-1" /> Crear otro
               </Button>
               <Button onClick={() => navigate('/')} variant="outline" className="flex-1">Volver</Button>

@@ -546,7 +546,7 @@ const ResultPage = () => {
   return (
     <div className="min-h-screen bg-white" data-testid="result-page">
       <header className="nav-header">
-        <button onClick={() => navigate('/')} className="flex items-center gap-1 sm:gap-2 p-2 hover:bg-[#ee478a] hover:text-white rounded-lg transition-colors" data-testid="back-button">
+        <button onClick={() => navigate('/')} className="flex items-center gap-1 sm:gap-2 p-2 hover:bg-[#5B7CF7] hover:text-white rounded-lg transition-colors" data-testid="back-button">
           <ArrowLeft className="h-5 w-5" />
           <span className="font-medium hidden sm:inline">Volver</span>
         </button>
@@ -572,10 +572,10 @@ const ResultPage = () => {
         )}
 
         {config.tabs.length > 1 && (
-          <div className="flex border rounded-xl mb-4 sm:mb-6 overflow-hidden" style={{ borderColor: '#120627' }}>
+          <div className="flex border rounded-xl mb-4 sm:mb-6 overflow-hidden" style={{ borderColor: '#0B0B16' }}>
             {config.tabs.map((tab) => (
               <button key={tab} onClick={() => { setActiveTab(tab); setActionAmount(1); }}
-                className={`flex-1 py-2.5 sm:py-3 text-xs sm:text-sm font-semibold uppercase tracking-wider transition-colors ${activeTab === tab ? 'bg-[#120627] text-white hover:bg-[#ffca32] hover:text-[#120627]' : 'bg-white text-[#120627] hover:bg-[#ee478a] hover:text-white'}`}
+                className={`flex-1 py-2.5 sm:py-3 text-xs sm:text-sm font-semibold uppercase tracking-wider transition-colors ${activeTab === tab ? 'bg-[#5B7CF7] text-white hover:bg-[#ffca32] hover:text-[#0B0B16]' : 'bg-white text-[#0B0B16] hover:bg-[#5B7CF7] hover:text-white'}`}
                 data-testid={`tab-${tab.toLowerCase()}`}>
                 {tab}
               </button>

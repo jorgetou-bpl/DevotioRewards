@@ -7,8 +7,8 @@ export const CustomerInfoPanel = ({ card, show, onToggle }) => (
       className="w-full flex items-center justify-between p-3 sm:p-4 hover:bg-zinc-50 transition-colors rounded-xl"
       data-testid="toggle-customer-info">
       <div className="flex items-center gap-2">
-        <User className="h-4 w-4 sm:h-5 sm:w-5 text-[#120627]" />
-        <span className="font-semibold text-xs sm:text-sm uppercase tracking-wider text-[#120627]">Información del cliente</span>
+        <User className="h-4 w-4 sm:h-5 sm:w-5 text-[#0B0B16]" />
+        <span className="font-semibold text-xs sm:text-sm uppercase tracking-wider text-[#0B0B16]">Información del cliente</span>
       </div>
       {show ? <ChevronUp className="h-5 w-5 text-zinc-400" /> : <ChevronDown className="h-5 w-5 text-zinc-400" />}
     </button>
@@ -45,8 +45,8 @@ export const CardInfoPanel = ({ card, cardType, balance, show, onToggle, formatC
         className="w-full flex items-center justify-between p-3 sm:p-4 hover:bg-zinc-50 transition-colors rounded-xl"
         data-testid="toggle-card-info">
         <div className="flex items-center gap-2">
-          <CreditCard className="h-4 w-4 sm:h-5 sm:w-5 text-[#120627]" />
-          <span className="font-semibold text-xs sm:text-sm uppercase tracking-wider text-[#120627]">Información de tarjeta</span>
+          <CreditCard className="h-4 w-4 sm:h-5 sm:w-5 text-[#0B0B16]" />
+          <span className="font-semibold text-xs sm:text-sm uppercase tracking-wider text-[#0B0B16]">Información de tarjeta</span>
         </div>
         {show ? <ChevronUp className="h-5 w-5 text-zinc-400" /> : <ChevronDown className="h-5 w-5 text-zinc-400" />}
       </button>

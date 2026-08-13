@@ -24,7 +24,7 @@ const StampGrid = ({ activeStamps, stampsUntilReward, totalStampsForReward = 10,
         key={i}
         className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full border-2 flex items-center justify-center transition-all ${
           i < fillCount
-            ? 'bg-[#120627] border-transparent'
+            ? 'bg-[#5B7CF7] border-transparent'
             : 'bg-white border-zinc-300'
         }`}
       >
@@ -47,7 +47,7 @@ const StampGrid = ({ activeStamps, stampsUntilReward, totalStampsForReward = 10,
       {/* Show label count - can be hidden for multipass */}
       {!hideLabel && (
         <div className="text-center">
-          <span className="text-3xl sm:text-4xl font-mono font-bold text-[#120627]">{fillCount}</span>
+          <span className="text-3xl sm:text-4xl font-mono font-bold text-[#0B0B16]">{fillCount}</span>
           <span className="text-lg text-zinc-400 ml-2">{label}</span>
         </div>
       )}

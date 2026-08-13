@@ -44,14 +44,14 @@ export const StampRedeemAction = ({
                   key={reward.id}
                   onClick={() => setSelectedRewardId(reward.id)}
                   disabled={loading}
-                  className={`w-full p-4 border-2 rounded-xl text-left transition-all ${isSelected ? 'border-[#120627] bg-zinc-50' : 'border-zinc-200 bg-white hover:border-zinc-300'}`}
+                  className={`w-full p-4 border-2 rounded-xl text-left transition-all ${isSelected ? 'border-[#0B0B16] bg-zinc-50' : 'border-zinc-200 bg-white hover:border-zinc-300'}`}
                   data-testid={`pending-reward-${index}`}
                 >
                   <div className="flex justify-between items-center">
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
-                        <span className="flex items-center justify-center w-6 h-6 rounded-full bg-[#F040A0] text-white text-xs font-bold">{index + 1}</span>
-                        <p className="font-medium text-sm sm:text-base text-[#120627]">
+                        <span className="flex items-center justify-center w-6 h-6 rounded-full bg-[#8CA4FE] text-white text-xs font-bold">{index + 1}</span>
+                        <p className="font-medium text-sm sm:text-base text-[#0B0B16]">
                           Recompensa {reward.reward_threshold !== '?' ? `(${reward.reward_threshold} sellos)` : ''}
                         </p>
                       </div>
@@ -60,7 +60,7 @@ export const StampRedeemAction = ({
                         Ganado: {formatRewardDate(reward.earned_at)}
                       </p>
                     </div>
-                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${isSelected ? 'border-[#120627] bg-[#120627]' : 'border-zinc-300'}`}>
+                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${isSelected ? 'border-[#0B0B16] bg-[#5B7CF7]' : 'border-zinc-300'}`}>
                       {isSelected && <Check className="h-3 w-3 text-white" />}
                     </div>
                   </div>

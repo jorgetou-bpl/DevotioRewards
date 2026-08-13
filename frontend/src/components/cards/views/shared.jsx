@@ -24,8 +24,8 @@ export const AmountCounter = ({
         size="icon"
         onClick={() => onChange(Math.max(min, value - 1))}
         disabled={loading}
-        className="h-12 w-12 sm:h-14 sm:w-14 border-2 rounded-lg bg-white hover:bg-[#ee478a] hover:border-[#ee478a] hover:text-white flex-shrink-0"
-        style={{ borderColor: '#120627', color: '#120627' }}
+        className="h-12 w-12 sm:h-14 sm:w-14 border-2 rounded-lg bg-white hover:bg-[#5B7CF7] hover:border-[#5B7CF7] hover:text-white flex-shrink-0"
+        style={{ borderColor: '#0B0B16', color: '#0B0B16' }}
         data-testid={`${testIdPrefix}-decrease`}
       >
         <Minus className="h-5 w-5 sm:h-6 sm:w-6" />
@@ -47,8 +47,8 @@ export const AmountCounter = ({
         size="icon"
         onClick={() => onChange(Math.min(max, value + 1))}
         disabled={loading}
-        className="h-12 w-12 sm:h-14 sm:w-14 border-2 rounded-lg bg-white hover:bg-[#ee478a] hover:border-[#ee478a] hover:text-white flex-shrink-0"
-        style={{ borderColor: '#120627', color: '#120627' }}
+        className="h-12 w-12 sm:h-14 sm:w-14 border-2 rounded-lg bg-white hover:bg-[#5B7CF7] hover:border-[#5B7CF7] hover:text-white flex-shrink-0"
+        style={{ borderColor: '#0B0B16', color: '#0B0B16' }}
         data-testid={`${testIdPrefix}-increase`}
       >
         <Plus className="h-5 w-5 sm:h-6 sm:w-6" />
@@ -119,9 +119,9 @@ export const ActionButton = ({
       className={`w-full h-12 sm:h-14 text-base sm:text-lg ${
         isPrimary 
           ? 'btn-primary' 
-          : 'border-2 bg-white hover:bg-[#ee478a] hover:border-[#ee478a] hover:text-white'
+          : 'border-2 bg-white hover:bg-[#5B7CF7] hover:border-[#5B7CF7] hover:text-white'
       }`}
-      style={!isPrimary ? { borderColor: '#120627', color: '#120627' } : {}}
+      style={!isPrimary ? { borderColor: '#0B0B16', color: '#0B0B16' } : {}}
       data-testid={testId}
     >
       {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : label}

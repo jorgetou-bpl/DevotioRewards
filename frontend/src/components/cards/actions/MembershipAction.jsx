@@ -18,11 +18,11 @@ export const MembershipAction = ({
   return (
     <div className="space-y-4 sm:space-y-6">
       <div className="text-center p-4 sm:p-6 bg-gradient-to-br from-zinc-50 to-zinc-100 rounded-2xl border border-zinc-200">
-        <div className="w-20 h-20 sm:w-24 sm:h-24 mx-auto mb-3 rounded-full bg-gradient-to-br from-[#120627] to-[#ee478a] flex items-center justify-center shadow-lg">
+        <div className="w-20 h-20 sm:w-24 sm:h-24 mx-auto mb-3 rounded-full bg-gradient-to-br from-[#1447E6] to-[#8CA4FE] flex items-center justify-center shadow-lg">
           <span className="text-2xl sm:text-3xl font-bold text-white">{initials}</span>
         </div>
-        <h3 className="text-xl sm:text-2xl font-bold text-[#120627] mb-3">{customerName}</h3>
-        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#120627] text-white text-sm font-semibold mb-2">
+        <h3 className="text-xl sm:text-2xl font-bold text-[#0B0B16] mb-3">{customerName}</h3>
+        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#5B7CF7] text-white text-sm font-semibold mb-2">
           <Star className="h-4 w-4" />
           {membershipTier.name || 'Membresía'}
         </div>
@@ -33,7 +33,7 @@ export const MembershipAction = ({
         </div>
       </div>
       
-      <div className="text-center p-6 bg-white rounded-xl border-2 border-[#120627]">
+      <div className="text-center p-6 bg-white rounded-xl border-2 border-[#0B0B16]">
         <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-2">Visitas Disponibles</p>
         <span className="text-5xl sm:text-6xl font-mono font-bold gradient-text">{availableVisits}</span>
       </div>

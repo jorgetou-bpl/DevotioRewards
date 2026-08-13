@@ -198,11 +198,11 @@ const ScannerPage = () => {
         />
         <button
           onClick={() => setMenuOpen(true)}
-          className="p-2 hover:bg-[#ee478a] hover:text-white rounded-lg transition-colors"
+          className="p-2 hover:bg-[#5B7CF7] hover:text-white rounded-lg transition-colors"
           data-testid="menu-button"
           aria-label="Abrir menú"
         >
-          <Menu className="h-6 w-6 text-[#120627]" strokeWidth={2} />
+          <Menu className="h-6 w-6 text-[#0B0B16]" strokeWidth={2} />
         </button>
       </header>
 
@@ -235,18 +235,18 @@ const ScannerPage = () => {
                   data-testid="stop-scan-button"
                   aria-label="Detener escaneo"
                 >
-                  <X className="h-5 w-5 text-[#120627]" />
+                  <X className="h-5 w-5 text-[#0B0B16]" />
                 </button>
                 {/* Scanning indicator */}
                 <div className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-white/90 backdrop-blur-sm px-4 py-2 rounded-full shadow-lg z-20">
-                  <p className="text-xs font-medium text-[#120627] flex items-center gap-2">
+                  <p className="text-xs font-medium text-[#0B0B16] flex items-center gap-2">
                     <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
                     Escaneando...
                   </p>
                 </div>
               </>
             ) : (
-              <div className="w-full h-full flex items-center justify-center bg-[#120627]">
+              <div className="w-full h-full flex items-center justify-center bg-[#0B0B16]">
                 {cameraError ? (
                   <div className="text-center text-zinc-300 p-4">
                     <CameraOff className="h-10 w-10 sm:h-12 sm:w-12 mx-auto mb-2" />
@@ -276,7 +276,7 @@ const ScannerPage = () => {
             {loading && (
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="bg-white/90 backdrop-blur-sm p-4 rounded-lg shadow-lg">
-                  <Loader2 className="h-8 w-8 animate-spin text-[#120627]" />
+                  <Loader2 className="h-8 w-8 animate-spin text-[#0B0B16]" />
                 </div>
               </div>
             )}
@@ -298,7 +298,7 @@ const ScannerPage = () => {
                   <Button
                     type="submit"
                     size="sm"
-                    className="absolute right-1 top-1/2 -translate-y-1/2 bg-[#120627] text-white px-3 sm:px-4 h-9 sm:h-10 rounded-lg hover:bg-[#ffca32] hover:text-[#120627] text-sm"
+                    className="absolute right-1 top-1/2 -translate-y-1/2 bg-[#5B7CF7] text-white px-3 sm:px-4 h-9 sm:h-10 rounded-lg hover:bg-[#ffca32] hover:text-[#0B0B16] text-sm"
                     data-testid="manual-submit"
                   >
                     Ir
@@ -331,7 +331,7 @@ const ScannerPage = () => {
               data-testid="close-menu-button"
               aria-label="Cerrar menú"
             >
-              <X className="h-5 w-5 text-[#120627]" />
+              <X className="h-5 w-5 text-[#0B0B16]" />
             </button>
           </div>
           
@@ -346,8 +346,8 @@ const ScannerPage = () => {
                 className="w-full flex items-center gap-3 sm:gap-4 p-3 sm:p-4 text-left hover:bg-zinc-100 rounded-lg transition-colors border-b border-zinc-100"
                 data-testid={item.testId}
               >
-                <item.icon className="h-5 w-5 text-[#120627]" strokeWidth={2} />
-                <span className="font-medium text-sm sm:text-base text-[#120627]">{item.label}</span>
+                <item.icon className="h-5 w-5 text-[#0B0B16]" strokeWidth={2} />
+                <span className="font-medium text-sm sm:text-base text-[#0B0B16]">{item.label}</span>
               </button>
             ))}
           </nav>

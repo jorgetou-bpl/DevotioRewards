@@ -34,7 +34,7 @@ export const DiscountCashbackAction = ({
       {discountLevel != null && (
         <div className="text-center p-4 sm:p-6 bg-zinc-50 rounded-xl">
           <span className="text-5xl sm:text-6xl font-mono font-bold gradient-text">{displayPercentage}%</span>
-          {currentTierName && <p className="text-sm font-semibold text-[#120627] mt-1">{currentTierName}</p>}
+          {currentTierName && <p className="text-sm font-semibold text-[#0B0B16] mt-1">{currentTierName}</p>}
           <p className="text-xs sm:text-sm text-zinc-500 mt-1">{rateLabel}</p>
           
           {accumulatedAmount > 0 && (
@@ -52,7 +52,7 @@ export const DiscountCashbackAction = ({
               </p>
               <div className="w-full bg-zinc-200 rounded-full h-2 mt-2">
                 <div
-                  className="bg-gradient-to-r from-[#F040A0] to-[#120627] h-2 rounded-full transition-all"
+                  className="bg-gradient-to-r from-[#8CA4FE] to-[#1447E6] h-2 rounded-full transition-all"
                   style={{ width: `${Math.min(100, (accumulatedAmount / nextThreshold) * 100)}%` }}
                 />
               </div>

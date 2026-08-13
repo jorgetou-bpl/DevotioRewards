@@ -23,15 +23,15 @@
 
 :root {
     /* Devotio Rewards Brand Colors */
-    --primary: #120627;
-    --primary-light: #301934;
+    --primary: #0B0B16;
+    --primary-light: #8CA4FE;
     --secondary: #FFFFFF;
-    --accent-pink: #F040A0;
-    --accent-purple: #120627;
-    --accent-gradient: linear-gradient(135deg, #F040A0 0%, #120627 100%);
+    --accent-pink: #8CA4FE;
+    --accent-purple: #0B0B16;
+    --accent-gradient: linear-gradient(135deg, #8CA4FE 0%, #1447E6 100%);
     --background: #FFFFFF;
     --surface: #F4F4F5;
-    --text-primary: #120627;
+    --text-primary: #0B0B16;
     --text-secondary: #71717A;
     --border: #E4E4E7;
     --success: #00C853;
@@ -73,24 +73,24 @@ code, .mono {
 @layer base {
     :root {
         --background: 0 0% 100%;
-        --foreground: 270 80% 18%;
+        --foreground: 240 33% 6%;
         --card: 0 0% 100%;
-        --card-foreground: 270 80% 18%;
+        --card-foreground: 240 33% 6%;
         --popover: 0 0% 100%;
-        --popover-foreground: 270 80% 18%;
-        --primary: 270 80% 18%;
+        --popover-foreground: 240 33% 6%;
+        --primary: 227 91% 66%;
         --primary-foreground: 0 0% 98%;
         --secondary: 0 0% 96.1%;
-        --secondary-foreground: 270 80% 18%;
+        --secondary-foreground: 240 33% 6%;
         --muted: 0 0% 96.1%;
         --muted-foreground: 0 0% 45.1%;
-        --accent: 320 88% 60%;
+        --accent: 227 91% 66%;
         --accent-foreground: 0 0% 98%;
         --destructive: 0 84.2% 60.2%;
         --destructive-foreground: 0 0% 98%;
         --border: 0 0% 89.8%;
         --input: 0 0% 89.8%;
-        --ring: 270 80% 18%;
+        --ring: 227 91% 66%;
         --radius: 0.5rem;
     }
 }
@@ -110,26 +110,26 @@ code, .mono {
         @apply text-white rounded-lg font-semibold tracking-wide h-12 
                shadow-lg active:translate-y-[1px] active:shadow-md 
                transition-all duration-200;
-        background: #120627;
+        background: #5B7CF7;
         border: 2px solid white;
     }
 
     .btn-primary:hover {
         background: #ffca32;
-        color: #120627;
+        color: #0B0B16;
     }
 
     .btn-secondary {
         @apply bg-white border-2 rounded-lg font-semibold 
                tracking-wide h-12 shadow-md active:translate-y-[1px] 
                active:shadow-sm transition-all duration-200;
-        border-color: #120627;
-        color: #120627;
+        border-color: #0B0B16;
+        color: #0B0B16;
     }
 
     .btn-secondary:hover {
-        background: #ee478a;
-        border-color: #ee478a;
+        background: #5B7CF7;
+        border-color: #5B7CF7;
         color: white;
     }
 
@@ -145,14 +145,14 @@ code, .mono {
     }
     
     .input-brutalist:focus {
-        border-color: #120627;
-        --tw-ring-color: rgba(138, 43, 226, 0.2);
+        border-color: #0B0B16;
+        --tw-ring-color: rgba(91, 124, 247, 0.2);
     }
 
     .text-heading {
         font-family: 'Figtree', sans-serif;
         font-weight: 600;
-        color: #120627;
+        color: #0B0B16;
     }
 
     .text-mono {
@@ -160,7 +160,7 @@ code, .mono {
     }
     
     .gradient-text {
-        background: linear-gradient(135deg, #F040A0 0%, #120627 100%);
+        background: linear-gradient(135deg, #8CA4FE 0%, #1447E6 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         background-clip: text;
@@ -172,7 +172,7 @@ code, .mono {
     font-family: 'Figtree', sans-serif;
     font-weight: 600;
     letter-spacing: -0.02em;
-    color: #120627;
+    color: #0B0B16;
 }
 
 /* Navigation styles */
@@ -211,7 +211,7 @@ code, .mono {
 .sidebar-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(46, 8, 84, 0.5);
+    background: rgba(11, 11, 22, 0.5);
     z-index: 100;
     opacity: 0;
     visibility: hidden;
@@ -233,7 +233,7 @@ code, .mono {
     z-index: 101;
     transition: right 200ms ease-out;
     border-left: 1px solid #E4E4E7;
-    box-shadow: -4px 0 20px rgba(46, 8, 84, 0.1);
+    box-shadow: -4px 0 20px rgba(11, 11, 22, 0.1);
     padding-top: env(safe-area-inset-top, 0px);
     padding-bottom: env(safe-area-inset-bottom, 0px);
 }
@@ -249,7 +249,7 @@ code, .mono {
     align-items: center;
     justify-content: center;
     padding: 1rem;
-    background: linear-gradient(135deg, #fdf4ff 0%, #FFFFFF 50%, #f3e8ff 100%);
+    background: linear-gradient(135deg, #F7F8FC 0%, #FFFFFF 50%, #E2E9FF 100%);
 }
 
 /* Card balance display */
@@ -286,7 +286,7 @@ code, .mono {
 
 .status-badge.pending {
     background: #FFD700;
-    color: #120627;
+    color: #0B0B16;
 }
 
 /* Action buttons grid */
@@ -337,9 +337,9 @@ code, .mono {
 }
 
 .customer-card:hover {
-    border-color: #120627;
+    border-color: #0B0B16;
     transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(138, 43, 226, 0.15);
+    box-shadow: 0 8px 20px rgba(91, 124, 247, 0.15);
 }
 
 /* Masked data styling */
@@ -354,7 +354,7 @@ code, .mono {
     width: 24px;
     height: 24px;
     border: 3px solid #E4E4E7;
-    border-top-color: #120627;
+    border-top-color: #0B0B16;
     border-radius: 50%;
     animation: spin 0.8s linear infinite;
 }
@@ -375,7 +375,7 @@ code, .mono {
     font-family: 'Figtree', sans-serif !important;
     border: 1px solid #E4E4E7 !important;
     border-radius: 0.75rem !important;
-    box-shadow: 0 8px 20px rgba(46, 8, 84, 0.1) !important;
+    box-shadow: 0 8px 20px rgba(11, 11, 22, 0.1) !important;
 }
 
 /* Mobile optimizations */
@@ -394,7 +394,7 @@ code, .mono {
     position: relative;
     width: 100%;
     aspect-ratio: 4/3;
-    background: #120627;
+    background: #5B7CF7;
     overflow: hidden;
     border-radius: 0.75rem;
 }
@@ -472,30 +472,30 @@ code, .mono {
 }
 
 ::-webkit-scrollbar-thumb {
-    background: linear-gradient(135deg, #F040A0 0%, #120627 100%);
+    background: linear-gradient(135deg, #8CA4FE 0%, #1447E6 100%);
     border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: #120627;
+    background: #5B7CF7;
 }
 
 /* Brand gradient backgrounds */
 .bg-brand-gradient {
-    background: #120627;
+    background: #5B7CF7;
 }
 
 .bg-brand-gradient-light {
-    background: linear-gradient(135deg, #F040A0 0%, #120627 100%);
+    background: linear-gradient(135deg, #8CA4FE 0%, #1447E6 100%);
 }
 
 .border-brand {
-    border-color: #120627;
+    border-color: #0B0B16;
 }
 
 /* Customer ID banner with gradient */
 .customer-id-banner {
-    background: linear-gradient(135deg, #120627 0%, #1a0a3a 100%);
+    background: linear-gradient(135deg, #0B0B16 0%, #1D293D 100%);
     color: white;
     border-radius: 0.75rem;
     padding: 1rem;

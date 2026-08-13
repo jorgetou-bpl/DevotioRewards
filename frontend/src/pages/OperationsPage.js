@@ -220,8 +220,8 @@ const OperationsPage = () => {
           className="flex items-center gap-2 p-2 hover:bg-zinc-100 rounded-lg transition-colors"
           data-testid="back-button"
         >
-          <ArrowLeft className="h-5 w-5 text-[#120627]" />
-          <span className="font-medium text-[#120627] hidden sm:inline">Volver</span>
+          <ArrowLeft className="h-5 w-5 text-[#0B0B16]" />
+          <span className="font-medium text-[#0B0B16] hidden sm:inline">Volver</span>
         </button>
         <img 
           src="/fonts/logo.png" 
@@ -248,8 +248,8 @@ const OperationsPage = () => {
             onClick={() => setActiveTab('historial')}
             className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
               activeTab === 'historial'
-                ? 'bg-white text-[#120627] shadow-sm'
-                : 'text-zinc-500 hover:text-[#120627]'
+                ? 'bg-white text-[#0B0B16] shadow-sm'
+                : 'text-zinc-500 hover:text-[#0B0B16]'
             }`}
             data-testid="tab-historial"
           >
@@ -260,8 +260,8 @@ const OperationsPage = () => {
             onClick={() => setActiveTab('dashboard')}
             className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
               activeTab === 'dashboard'
-                ? 'bg-white text-[#120627] shadow-sm'
-                : 'text-zinc-500 hover:text-[#120627]'
+                ? 'bg-white text-[#0B0B16] shadow-sm'
+                : 'text-zinc-500 hover:text-[#0B0B16]'
             }`}
             data-testid="tab-dashboard"
           >
@@ -304,10 +304,10 @@ const OperationsPage = () => {
                 </label>
                 <button
                   onClick={() => setDashboardCardTypeDropdownOpen(!dashboardCardTypeDropdownOpen)}
-                  className="w-full flex items-center justify-between p-2 border-2 border-zinc-200 rounded-md hover:border-[#120627] transition-colors bg-white h-10"
+                  className="w-full flex items-center justify-between p-2 border-2 border-zinc-200 rounded-md hover:border-[#0B0B16] transition-colors bg-white h-10"
                   data-testid="dashboard-card-type-dropdown"
                 >
-                  <span className={dashboardCardType ? 'text-[#120627]' : 'text-zinc-400'}>
+                  <span className={dashboardCardType ? 'text-[#0B0B16]' : 'text-zinc-400'}>
                     {dashboardCardType || 'Todos'}
                   </span>
                   <ChevronDown className={`h-4 w-4 text-zinc-400 transition-transform ${dashboardCardTypeDropdownOpen ? 'rotate-180' : ''}`} />
@@ -323,7 +323,7 @@ const OperationsPage = () => {
                       className={`w-full flex items-center justify-between p-2 hover:bg-zinc-50 ${!dashboardCardType ? 'bg-purple-50' : ''}`}
                     >
                       <span>Todos</span>
-                      {!dashboardCardType && <Check className="h-4 w-4 text-[#120627]" />}
+                      {!dashboardCardType && <Check className="h-4 w-4 text-[#0B0B16]" />}
                     </button>
                     {dashboardFilters.card_types?.map((cardType) => (
                       <button
@@ -335,7 +335,7 @@ const OperationsPage = () => {
                         className={`w-full flex items-center justify-between p-2 hover:bg-zinc-50 ${dashboardCardType === cardType ? 'bg-purple-50' : ''}`}
                       >
                         <span className="capitalize">{cardType || 'Sin tipo'}</span>
-                        {dashboardCardType === cardType && <Check className="h-4 w-4 text-[#120627]" />}
+                        {dashboardCardType === cardType && <Check className="h-4 w-4 text-[#0B0B16]" />}
                       </button>
                     ))}
                   </div>
@@ -367,13 +367,13 @@ const OperationsPage = () => {
           <div className="space-y-6">
             {dashboardLoading ? (
               <div className="flex justify-center py-12">
-                <Loader2 className="h-8 w-8 animate-spin text-[#120627]" />
+                <Loader2 className="h-8 w-8 animate-spin text-[#0B0B16]" />
               </div>
             ) : dashboardData ? (
               <>
                 {/* Summary Cards */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div className="card-brutalist p-6 bg-gradient-to-br from-[#120627] to-[#2a1a4a]">
+                  <div className="card-brutalist p-6 bg-gradient-to-br from-[#0B0B16] to-[#2a1a4a]">
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-zinc-300 text-sm">Total Operaciones</p>
@@ -387,7 +387,7 @@ const OperationsPage = () => {
                     </div>
                   </div>
                   
-                  <div className="card-brutalist p-6 bg-gradient-to-br from-[#F040A0] to-[#ee478a]">
+                  <div className="card-brutalist p-6 bg-gradient-to-br from-[#8CA4FE] to-[#5B7CF7]">
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-pink-100 text-sm">Ventas Totales</p>
@@ -419,8 +419,8 @@ const OperationsPage = () => {
                 {/* Gerente Leaderboard */}
                 <div className="card-brutalist">
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold text-[#120627] flex items-center gap-2">
-                      <Award className="h-5 w-5 text-[#F040A0]" />
+                    <h3 className="text-lg font-semibold text-[#0B0B16] flex items-center gap-2">
+                      <Award className="h-5 w-5 text-[#8CA4FE]" />
                       Rendimiento por Gerente
                     </h3>
                   </div>
@@ -444,19 +444,19 @@ const OperationsPage = () => {
                                   {index + 1}
                                 </span>
                                 <div>
-                                  <p className="font-medium text-[#120627]">{gerente._id || 'Sin nombre'}</p>
+                                  <p className="font-medium text-[#0B0B16]">{gerente._id || 'Sin nombre'}</p>
                                   <p className="text-xs text-zinc-500">
                                     {formatCurrency(gerente.total_purchase_sum || 0)} en ventas
                                   </p>
                                 </div>
                               </div>
-                              <span className="text-lg font-bold text-[#120627]">
+                              <span className="text-lg font-bold text-[#0B0B16]">
                                 {gerente.count}
                               </span>
                             </div>
                             <div className="h-2 bg-zinc-100 rounded-full overflow-hidden">
                               <div 
-                                className="h-full bg-gradient-to-r from-[#F040A0] to-[#ee478a] rounded-full transition-all duration-500"
+                                className="h-full bg-gradient-to-r from-[#8CA4FE] to-[#5B7CF7] rounded-full transition-all duration-500"
                                 style={{ width: `${percentage}%` }}
                               />
                             </div>
@@ -475,8 +475,8 @@ const OperationsPage = () => {
                 {/* Operations by Type */}
                 <div className="card-brutalist">
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold text-[#120627] flex items-center gap-2">
-                      <BarChart3 className="h-5 w-5 text-[#F040A0]" />
+                    <h3 className="text-lg font-semibold text-[#0B0B16] flex items-center gap-2">
+                      <BarChart3 className="h-5 w-5 text-[#8CA4FE]" />
                       Operaciones por Tipo
                     </h3>
                   </div>
@@ -488,7 +488,7 @@ const OperationsPage = () => {
                           key={type._id || index}
                           className="p-4 bg-zinc-50 rounded-xl text-center hover:bg-zinc-100 transition-colors"
                         >
-                          <p className="text-2xl font-bold text-[#120627]">{type.count}</p>
+                          <p className="text-2xl font-bold text-[#0B0B16]">{type.count}</p>
                           <p className="text-xs text-zinc-500 mt-1 truncate" title={type._id}>
                             {type._id || 'Sin tipo'}
                           </p>
@@ -506,7 +506,7 @@ const OperationsPage = () => {
                 {/* Operations by Card Type */}
                 <div className="card-brutalist">
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold text-[#120627] flex items-center gap-2">
+                    <h3 className="text-lg font-semibold text-[#0B0B16] flex items-center gap-2">
                       <Award className="h-5 w-5 text-[#10b981]" />
                       Por Tipo de Tarjeta
                     </h3>
@@ -519,7 +519,7 @@ const OperationsPage = () => {
                           key={cardType._id || index}
                           className="p-4 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl text-center hover:from-blue-100 hover:to-blue-200 transition-colors"
                         >
-                          <p className="text-2xl font-bold text-[#120627]">{cardType.count}</p>
+                          <p className="text-2xl font-bold text-[#0B0B16]">{cardType.count}</p>
                           <p className="text-xs text-blue-700 mt-1 truncate font-medium" title={cardType._id}>
                             {cardType._id || 'Sin tipo'}
                           </p>
@@ -556,12 +556,12 @@ const OperationsPage = () => {
                 <Button
                   variant="outline"
                   onClick={() => setShowFilters(!showFilters)}
-                  className={`border-2 ${hasActiveFilters ? 'border-[#F040A0] text-[#F040A0]' : 'border-zinc-200'}`}
+                  className={`border-2 ${hasActiveFilters ? 'border-[#8CA4FE] text-[#8CA4FE]' : 'border-zinc-200'}`}
                   data-testid="toggle-filters-btn"
                 >
                   <Filter className="h-4 w-4 mr-2" />
                   Filtros
-                  {hasActiveFilters && <span className="ml-2 bg-[#F040A0] text-white text-xs px-2 py-0.5 rounded-full">!</span>}
+                  {hasActiveFilters && <span className="ml-2 bg-[#8CA4FE] text-white text-xs px-2 py-0.5 rounded-full">!</span>}
                 </Button>
                 
                 <Button
@@ -585,7 +585,7 @@ const OperationsPage = () => {
                   {hasActiveFilters && (
                     <button
                       onClick={clearFilters}
-                      className="text-xs text-[#F040A0] hover:underline flex items-center gap-1"
+                      className="text-xs text-[#8CA4FE] hover:underline flex items-center gap-1"
                       data-testid="clear-filters-btn"
                     >
                       <X className="h-3 w-3" />
@@ -632,10 +632,10 @@ const OperationsPage = () => {
                         setGerenteDropdownOpen(!gerenteDropdownOpen);
                         setTypeDropdownOpen(false);
                       }}
-                      className="w-full flex items-center justify-between p-2 border-2 border-zinc-200 rounded-md hover:border-[#120627] transition-colors bg-white"
+                      className="w-full flex items-center justify-between p-2 border-2 border-zinc-200 rounded-md hover:border-[#0B0B16] transition-colors bg-white"
                       data-testid="gerente-dropdown"
                     >
-                      <span className={selectedGerente ? 'text-[#120627]' : 'text-zinc-400'}>
+                      <span className={selectedGerente ? 'text-[#0B0B16]' : 'text-zinc-400'}>
                         {selectedGerente || 'Todos'}
                       </span>
                       <ChevronDown className={`h-4 w-4 text-zinc-400 transition-transform ${gerenteDropdownOpen ? 'rotate-180' : ''}`} />
@@ -651,7 +651,7 @@ const OperationsPage = () => {
                           className={`w-full flex items-center justify-between p-2 hover:bg-zinc-50 ${!selectedGerente ? 'bg-purple-50' : ''}`}
                         >
                           <span>Todos</span>
-                          {!selectedGerente && <Check className="h-4 w-4 text-[#120627]" />}
+                          {!selectedGerente && <Check className="h-4 w-4 text-[#0B0B16]" />}
                         </button>
                         {filters.gerentes.map((gerente) => (
                           <button
@@ -663,7 +663,7 @@ const OperationsPage = () => {
                             className={`w-full flex items-center justify-between p-2 hover:bg-zinc-50 ${selectedGerente === gerente ? 'bg-purple-50' : ''}`}
                           >
                             <span>{gerente}</span>
-                            {selectedGerente === gerente && <Check className="h-4 w-4 text-[#120627]" />}
+                            {selectedGerente === gerente && <Check className="h-4 w-4 text-[#0B0B16]" />}
                           </button>
                         ))}
                       </div>
@@ -681,10 +681,10 @@ const OperationsPage = () => {
                         setGerenteDropdownOpen(false);
                         setCardTypeDropdownOpen(false);
                       }}
-                      className="w-full flex items-center justify-between p-2 border-2 border-zinc-200 rounded-md hover:border-[#120627] transition-colors bg-white"
+                      className="w-full flex items-center justify-between p-2 border-2 border-zinc-200 rounded-md hover:border-[#0B0B16] transition-colors bg-white"
                       data-testid="operation-type-dropdown"
                     >
-                      <span className={selectedOperationType ? 'text-[#120627]' : 'text-zinc-400'}>
+                      <span className={selectedOperationType ? 'text-[#0B0B16]' : 'text-zinc-400'}>
                         {selectedOperationType || 'Todos'}
                       </span>
                       <ChevronDown className={`h-4 w-4 text-zinc-400 transition-transform ${typeDropdownOpen ? 'rotate-180' : ''}`} />
@@ -700,7 +700,7 @@ const OperationsPage = () => {
                           className={`w-full flex items-center justify-between p-2 hover:bg-zinc-50 ${!selectedOperationType ? 'bg-purple-50' : ''}`}
                         >
                           <span>Todos</span>
-                          {!selectedOperationType && <Check className="h-4 w-4 text-[#120627]" />}
+                          {!selectedOperationType && <Check className="h-4 w-4 text-[#0B0B16]" />}
                         </button>
                         {filters.operation_types.map((type) => (
                           <button
@@ -712,7 +712,7 @@ const OperationsPage = () => {
                             className={`w-full flex items-center justify-between p-2 hover:bg-zinc-50 ${selectedOperationType === type ? 'bg-purple-50' : ''}`}
                           >
                             <span>{type}</span>
-                            {selectedOperationType === type && <Check className="h-4 w-4 text-[#120627]" />}
+                            {selectedOperationType === type && <Check className="h-4 w-4 text-[#0B0B16]" />}
                           </button>
                         ))}
                       </div>
@@ -730,10 +730,10 @@ const OperationsPage = () => {
                         setGerenteDropdownOpen(false);
                         setTypeDropdownOpen(false);
                       }}
-                      className="w-full flex items-center justify-between p-2 border-2 border-zinc-200 rounded-md hover:border-[#120627] transition-colors bg-white"
+                      className="w-full flex items-center justify-between p-2 border-2 border-zinc-200 rounded-md hover:border-[#0B0B16] transition-colors bg-white"
                       data-testid="card-type-dropdown"
                     >
-                      <span className={selectedCardType ? 'text-[#120627]' : 'text-zinc-400'}>
+                      <span className={selectedCardType ? 'text-[#0B0B16]' : 'text-zinc-400'}>
                         {selectedCardType || 'Todos'}
                       </span>
                       <ChevronDown className={`h-4 w-4 text-zinc-400 transition-transform ${cardTypeDropdownOpen ? 'rotate-180' : ''}`} />
@@ -749,7 +749,7 @@ const OperationsPage = () => {
                           className={`w-full flex items-center justify-between p-2 hover:bg-zinc-50 ${!selectedCardType ? 'bg-purple-50' : ''}`}
                         >
                           <span>Todos</span>
-                          {!selectedCardType && <Check className="h-4 w-4 text-[#120627]" />}
+                          {!selectedCardType && <Check className="h-4 w-4 text-[#0B0B16]" />}
                         </button>
                         {filters.card_types?.map((cardType) => (
                           <button
@@ -761,7 +761,7 @@ const OperationsPage = () => {
                             className={`w-full flex items-center justify-between p-2 hover:bg-zinc-50 ${selectedCardType === cardType ? 'bg-purple-50' : ''}`}
                           >
                             <span className="capitalize">{cardType || 'Sin tipo'}</span>
-                            {selectedCardType === cardType && <Check className="h-4 w-4 text-[#120627]" />}
+                            {selectedCardType === cardType && <Check className="h-4 w-4 text-[#0B0B16]" />}
                           </button>
                         ))}
                       </div>
@@ -818,7 +818,7 @@ const OperationsPage = () => {
             {/* Operations Table */}
             {loading ? (
               <div className="flex justify-center py-12">
-                <Loader2 className="h-8 w-8 animate-spin text-[#120627]" />
+                <Loader2 className="h-8 w-8 animate-spin text-[#0B0B16]" />
               </div>
             ) : operations.length === 0 ? (
               <div className="card-brutalist text-center py-12">
@@ -832,7 +832,7 @@ const OperationsPage = () => {
                 <div className="hidden lg:block overflow-x-auto">
                   <table className="w-full border-collapse" data-testid="operations-table">
                     <thead>
-                      <tr className="bg-[#120627] text-white">
+                      <tr className="bg-[#5B7CF7] text-white">
                         <th className="p-3 text-left text-xs font-semibold uppercase">Fecha</th>
                         <th className="p-3 text-left text-xs font-semibold uppercase">Cliente</th>
                         <th className="p-3 text-left text-xs font-semibold uppercase">Tarjeta</th>
@@ -852,7 +852,7 @@ const OperationsPage = () => {
                           className={`border-b border-zinc-100 hover:bg-zinc-50 ${index % 2 === 0 ? 'bg-white' : 'bg-zinc-50/50'}`}
                         >
                           <td className="p-3 text-sm text-zinc-600">{formatDate(op.created_at)}</td>
-                          <td className="p-3 text-sm font-medium text-[#120627]">{op.customer_name || '-'}</td>
+                          <td className="p-3 text-sm font-medium text-[#0B0B16]">{op.customer_name || '-'}</td>
                           <td className="p-3 text-sm text-zinc-600 font-mono">{op.card_id}</td>
                           <td className="p-3">
                             {op.card_type_label ? (
@@ -874,7 +874,7 @@ const OperationsPage = () => {
                           <td className="p-3">
                             <span className="inline-flex items-center gap-1">
                               <User className="h-3 w-3 text-zinc-400" />
-                              <span className="text-sm font-medium text-[#120627]">{op.gerente}</span>
+                              <span className="text-sm font-medium text-[#0B0B16]">{op.gerente}</span>
                             </span>
                           </td>
                           <td className="p-3 text-sm text-zinc-500 max-w-[150px] truncate" title={op.note}>
@@ -905,7 +905,7 @@ const OperationsPage = () => {
                       </div>
                       
                       <div className="space-y-1">
-                        <p className="font-medium text-[#120627]">{op.customer_name || 'Sin nombre'}</p>
+                        <p className="font-medium text-[#0B0B16]">{op.customer_name || 'Sin nombre'}</p>
                         <p className="text-xs text-zinc-500 font-mono">{op.card_id}</p>
                       </div>
                       
@@ -927,7 +927,7 @@ const OperationsPage = () => {
                       <div className="flex items-center justify-between mt-3 pt-3 border-t border-zinc-100">
                         <span className="inline-flex items-center gap-1 text-sm">
                           <User className="h-3 w-3 text-zinc-400" />
-                          <span className="font-medium text-[#120627]">{op.gerente}</span>
+                          <span className="font-medium text-[#0B0B16]">{op.gerente}</span>
                         </span>
                         {op.note && (
                           <span className="text-xs text-zinc-400 truncate max-w-[120px]" title={op.note}>

@@ -89,10 +89,57 @@ async def set_stamp_config(
         upsert=True
     )
     return StampConfigResponse(
-        success=True, 
+        success=True,
         stamp_mode=request.stamp_mode,
         spend_threshold=request.spend_threshold
     )
+
+# ============ GLOBAL REWARD (PUNTOS) ACCRUAL CONFIGURATION ============
+# Previously configured per-card on first scan, blocking the operator until a
+# choice was made with no way to change it later. Moved to a workspace-level
+# setting to match the Sellos pattern — configured once in Config. Tarjetas,
+# not decided ad hoc by whoever happens to scan the card first.
+
+class RewardAccrualConfigRequest(BaseModel):
+    mode: str  # 'spend', 'visit', or 'points'
+
+class RewardAccrualConfigResponse(BaseModel):
+    success: bool
+    mode: Optional[str] = None
+
+@router.get("/reward-accrual-config")
+async def get_reward_accrual_config(workspace_id: Optional[str] = None, current_user: dict = Depends(get_current_user)):
+    """Get the reward-card accrual mode for the workspace. None means it
+    hasn't been configured yet — the scanner blocks accumulation until it is."""
+    ws_id = resolve_workspace_id(current_user, workspace_id)
+    query = {"workspace_id": ws_id} if ws_id else {}
+    config = await db.reward_accrual_config.find_one(query, {"_id": 0})
+    return RewardAccrualConfigResponse(success=True, mode=config.get("mode") if config else None)
+
+@router.post("/reward-accrual-config")
+async def set_reward_accrual_config(
+    request: RewardAccrualConfigRequest,
+    workspace_id: Optional[str] = None,
+    current_user: dict = Depends(require_super_admin)
+):
+    """Set the reward-card accrual mode for a workspace. Devotio-only."""
+    valid_modes = ['spend', 'visit', 'points']
+    if request.mode not in valid_modes:
+        raise HTTPException(status_code=400, detail=f"Modo inválido. Use: {', '.join(valid_modes)}")
+
+    ws_id = resolve_workspace_id(current_user, workspace_id)
+    query = {"workspace_id": ws_id} if ws_id else {}
+    await db.reward_accrual_config.update_one(
+        query,
+        {"$set": {
+            "workspace_id": ws_id,
+            "mode": request.mode,
+            "updated_by": current_user.get("email", ""),
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }},
+        upsert=True
+    )
+    return RewardAccrualConfigResponse(success=True, mode=request.mode)
 
 # ============ STAMP PROGRESS TRACKING (for spend mode) ============
 

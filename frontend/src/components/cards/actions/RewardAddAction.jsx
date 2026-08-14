@@ -1,10 +1,10 @@
 import React from 'react';
-import { Loader2, CreditCard, User, Star } from 'lucide-react';
+import { Loader2, User } from 'lucide-react';
 import { PurchaseAmountInput, AmountCounter, BalanceDisplay, ActionButton } from '../shared';
 
 export const RewardAddAction = ({
   balance, card, detectedAccrualMode, detectingMode, needsModeSelection,
-  saveAccrualMode, purchaseAmount, setPurchaseAmount, actionAmount, setActionAmount,
+  purchaseAmount, setPurchaseAmount, actionAmount, setActionAmount,
   loading, openConfirmation, currencyInfo, actionConfig
 }) => {
   const bonusBalance = balance.bonusBalance || 0;
@@ -30,32 +30,13 @@ export const RewardAddAction = ({
       )}
       
       {needsModeSelection && !detectingMode && (
-        <div className="card-brutalist">
-          <div className="text-center mb-4">
-            <h3 className="text-base font-semibold text-[#0B0B16] mb-1">Configurar Tipo de Acumulación</h3>
-            <p className="text-xs text-zinc-500">Seleccione cómo se acumulan puntos en esta tarjeta. Solo se configura una vez.</p>
-          </div>
-          <div className="grid grid-cols-1 gap-3">
-            {[
-              { mode: 'spend', icon: CreditCard, label: 'Por Compra', desc: 'Puntos según monto de compra', color: 'green' },
-              { mode: 'visit', icon: User, label: 'Por Visita', desc: 'Puntos por cada visita registrada', color: 'blue' },
-              { mode: 'points', icon: Star, label: 'Manual', desc: 'Ingresar puntos manualmente', color: 'purple' }
-            ].map(({ mode, icon: Icon, label, desc, color }) => (
-              <button key={mode} onClick={() => saveAccrualMode(mode)}
-                className="p-4 border-2 rounded-xl hover:border-[#5B7CF7] hover:bg-[#5B7CF7]/5 transition-all text-left"
-                style={{ borderColor: '#e5e5e5' }} data-testid={`select-mode-${mode}`}>
-                <div className="flex items-center gap-3">
-                  <div className={`w-10 h-10 rounded-full bg-${color}-100 flex items-center justify-center`}>
-                    <Icon className={`h-5 w-5 text-${color}-600`} />
-                  </div>
-                  <div>
-                    <p className="font-semibold text-[#0B0B16]">{label}</p>
-                    <p className="text-xs text-zinc-500">{desc}</p>
-                  </div>
-                </div>
-              </button>
-            ))}
-          </div>
+        <div className="text-center p-6 bg-amber-50 border border-amber-200 rounded-xl" data-testid="no-accrual-mode-configured">
+          <p className="text-sm text-amber-800 font-medium">
+            Este negocio no tiene configurado el tipo de acumulación para tarjetas de puntos.
+          </p>
+          <p className="text-xs text-amber-700 mt-1">
+            Contacte a Devotio para configurarlo en el panel de administración antes de acumular.
+          </p>
         </div>
       )}
       

@@ -215,15 +215,19 @@ const ResultPage = () => {
     fetchHighAmountThreshold();
   }, []);
 
-  // Fetch accrual mode for reward cards
+  // Fetch accrual mode for reward cards — a workspace-level setting configured
+  // once by Devotio in Config. Tarjetas, not decided per-card by whoever scans
+  // it first. needsModeSelection here means "not configured" — the scanner
+  // blocks accumulation and points the operator to Devotio, it doesn't let
+  // them pick a mode themselves.
   useEffect(() => {
     const fetchAccrualMode = async () => {
-      if (!card || cardType !== 'reward' || !card.id) return;
+      if (!card || cardType !== 'reward') return;
       setDetectingMode(true);
       setNeedsModeSelection(false);
       const token = localStorage.getItem('token');
       try {
-        const response = await axios.get(`${API}/cards/${card.id}/accrual-mode`, { headers: { Authorization: `Bearer ${token}` } });
+        const response = await axios.get(`${API}/reward-accrual-config`, { headers: { Authorization: `Bearer ${token}` } });
         if (response.data.success && response.data.mode) {
           setDetectedAccrualMode(response.data.mode);
           setNeedsModeSelection(false);
@@ -239,18 +243,6 @@ const ResultPage = () => {
     fetchAccrualMode();
     // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally keyed on card.id, not the whole card object, to avoid refetching on unrelated field changes
   }, [card?.id, cardType]);
-
-  const saveAccrualMode = async (mode) => {
-    const token = localStorage.getItem('token');
-    try {
-      await axios.post(`${API}/cards/${card.id}/accrual-mode`, { mode }, { headers: { Authorization: `Bearer ${token}` } });
-      setDetectedAccrualMode(mode);
-      setNeedsModeSelection(false);
-      toast.success(`Modo "${mode === 'spend' ? 'Por Compra' : mode === 'visit' ? 'Por Visita' : 'Manual'}" configurado para esta tarjeta`);
-    } catch {
-      toast.error('Error al guardar el modo de acumulación');
-    }
-  };
 
   if (!card) {
     return (
@@ -399,11 +391,17 @@ const ResultPage = () => {
       const basePayload = { amount: actionAmount, comment: comment || '', gerente: gerente_name };
       const purchaseVal = parseFloat(confirmPurchaseAmount || purchaseAmount) || 0;
 
-      if ((actionKey === 'agregar' || actionKey === 'aplicar') && ['cashback', 'discount'].includes(normalizedType)
-        && minAmount > 0 && purchaseVal < minAmount) {
-        toast.error(`El monto mínimo es ${formatCurrency(minAmount)} — no aplica para acumular`);
-        setLoading(false);
-        return;
+      if ((actionKey === 'agregar' || actionKey === 'aplicar') && ['cashback', 'discount'].includes(normalizedType)) {
+        if (discountTiers.length === 0) {
+          toast.error('Este tipo de tarjeta no tiene niveles configurados — contacte a Devotio');
+          setLoading(false);
+          return;
+        }
+        if (minAmount > 0 && purchaseVal < minAmount) {
+          toast.error(`El monto mínimo es ${formatCurrency(minAmount)} — no aplica para acumular`);
+          setLoading(false);
+          return;
+        }
       }
       if (purchaseVal > 0) basePayload.purchaseSum = purchaseVal;
       
@@ -524,7 +522,7 @@ const ResultPage = () => {
     }
     // Reward Agregar
     if (normalizedType === 'reward' && activeTab === 'Agregar') {
-      return <RewardAddAction {...commonProps} card={card} detectedAccrualMode={detectedAccrualMode} detectingMode={detectingMode} needsModeSelection={needsModeSelection} saveAccrualMode={saveAccrualMode} actionConfig={actionConfig} />;
+      return <RewardAddAction {...commonProps} card={card} detectedAccrualMode={detectedAccrualMode} detectingMode={detectingMode} needsModeSelection={needsModeSelection} actionConfig={actionConfig} />;
     }
     // Reward Canjear
     if (normalizedType === 'reward' && activeTab === 'Canjear') {

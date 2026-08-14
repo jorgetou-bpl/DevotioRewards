@@ -7,7 +7,7 @@ import { Input } from '../components/ui/input';
 import {
   ArrowLeft, Building2, Users, MapPin, Key, Plus, Trash2, Loader2, Save,
   Eye, EyeOff, UserPlus, Activity, ChevronDown, ChevronUp, RefreshCw,
-  Settings, Stamp, Percent, Gift, MessageSquare, DollarSign, AlertTriangle
+  Settings, Stamp, Percent, Gift, MessageSquare, DollarSign, AlertTriangle, Star
 } from 'lucide-react';
 
 import { API_BASE_URL as API } from '../config/api';
@@ -54,6 +54,8 @@ const WorkspaceAdminPage = () => {
   const [savingCommentMode, setSavingCommentMode] = useState(false);
   const [stampTemplates, setStampTemplates] = useState([]);
   const [loadingStampTemplates, setLoadingStampTemplates] = useState(true);
+  const [rewardAccrualMode, setRewardAccrualMode] = useState(null);
+  const [savingRewardAccrualMode, setSavingRewardAccrualMode] = useState(false);
 
   // Montos tab — visible to workspace_admin too, not Devotio-only, since this
   // is the business's own minimum-purchase and data-entry-safety policy.
@@ -180,9 +182,10 @@ const WorkspaceAdminPage = () => {
       axios.get(`${API}/discount-tiers/cashback`, { params, headers }),
       axios.get(`${API}/discount-tiers/discount`, { params, headers }),
       axios.get(`${API}/gift-card-config`, { params, headers }),
-      axios.get(`${API}/comment-config`, { params, headers })
+      axios.get(`${API}/comment-config`, { params, headers }),
+      axios.get(`${API}/reward-accrual-config`, { params, headers })
     ])
-      .then(([stampResp, cashbackResp, discountResp, giftResp, commentResp]) => {
+      .then(([stampResp, cashbackResp, discountResp, giftResp, commentResp, rewardResp]) => {
         if (stampResp.data.stamp_mode) {
           setStampConfig({ stamp_mode: stampResp.data.stamp_mode, spend_threshold: stampResp.data.spend_threshold || 10000 });
         } else {
@@ -191,6 +194,7 @@ const WorkspaceAdminPage = () => {
         setTiersByType({ cashback: cashbackResp.data.tiers || [], discount: discountResp.data.tiers || [] });
         setGiftCardAllowAdd(!!giftResp.data.allow_add);
         setCommentMode(commentResp.data.mode || 'open');
+        setRewardAccrualMode(rewardResp.data.mode || null);
       })
       .catch((error) => console.error('Error loading card configuration:', error))
       .finally(() => setConfigLoading(false));
@@ -345,6 +349,20 @@ const WorkspaceAdminPage = () => {
       toast.success('Modo de comentario guardado');
     } catch { toast.error('Error al guardar configuración'); }
     finally { setSavingCommentMode(false); }
+  };
+
+  const handleSaveRewardAccrualMode = async (mode) => {
+    setSavingRewardAccrualMode(true);
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post(`${API}/reward-accrual-config`, { mode }, {
+        params: { workspace_id: targetWorkspaceId },
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setRewardAccrualMode(mode);
+      toast.success('Modo de acumulación de puntos guardado');
+    } catch { toast.error('Error al guardar configuración'); }
+    finally { setSavingRewardAccrualMode(false); }
   };
 
   if (loading) {
@@ -703,6 +721,36 @@ const WorkspaceAdminPage = () => {
                 <Button onClick={handleSaveStampConfig} disabled={savingStampConfig || !stampConfig.stamp_mode} className="w-full h-10 btn-primary" data-testid="save-stamp-config">
                   {savingStampConfig ? <Loader2 className="h-5 w-5 animate-spin" /> : <><Save className="h-4 w-4 mr-2" /> Guardar Configuración</>}
                 </Button>
+              </div>
+
+              {/* Puntos (Reward) accrual mode — was decided per-card on first scan,
+                  blocking the operator; now a workspace setting configured once here. */}
+              <div className="bg-white rounded-xl border border-zinc-200 p-4 space-y-3">
+                <div className="flex items-center gap-3">
+                  <Star className="h-5 w-5 text-[#0B0B16]" />
+                  <p className="text-xs sm:text-sm font-semibold uppercase tracking-widest text-zinc-500">Tarjetas de Puntos</p>
+                </div>
+                <p className="text-xs text-zinc-500">
+                  Define cómo acumulan puntos las tarjetas de este negocio. Mientras no se configure, el escáner
+                  bloquea la acumulación y pide contactar a Devotio, en vez de dejar que el operador elija.
+                </p>
+                <div className="space-y-2">
+                  {[
+                    { value: 'spend', label: 'Por Compra', desc: 'Puntos según el monto de compra' },
+                    { value: 'visit', label: 'Por Visita', desc: 'Puntos por cada visita registrada' },
+                    { value: 'points', label: 'Manual', desc: 'El operador ingresa los puntos' }
+                  ].map(mode => (
+                    <button key={mode.value} onClick={() => handleSaveRewardAccrualMode(mode.value)}
+                      disabled={savingRewardAccrualMode}
+                      className={`w-full text-left px-4 py-3 rounded-lg border-2 text-sm transition-colors ${
+                        rewardAccrualMode === mode.value ? 'border-[#0B0B16] bg-[#5B7CF7]/5 font-medium' : 'border-zinc-200'
+                      }`} data-testid={`reward-accrual-mode-${mode.value}`}>
+                      <p>{mode.label}</p>
+                      <p className="text-xs text-zinc-500 font-normal">{mode.desc}</p>
+                    </button>
+                  ))}
+                </div>
+                {savingRewardAccrualMode && <Loader2 className="h-4 w-4 animate-spin mx-auto text-zinc-400" />}
               </div>
 
               {/* Read-only: reward tier structure per stamp template, sourced live from Boomerangme */}

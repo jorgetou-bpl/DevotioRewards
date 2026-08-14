@@ -11,6 +11,10 @@ export const DiscountCashbackAction = ({
   const rateLabel = isCashback ? 'Cashback actual' : 'Descuento actual';
   const purchaseVal = parseFloat(purchaseAmount) || 0;
   const belowMinimum = minAmount > 0 && purchaseAmount !== '' && purchaseVal < minAmount;
+  // Without configured tiers there's no reliable percentage to charge — Boomerangme's
+  // own balance.discountLevel isn't guaranteed to be a percentage (it may be a tier
+  // index), so block rather than risk sending a wrong amount.
+  const noTiersConfigured = discountTiers.length === 0;
 
   const {
     percentage: displayPercentage,
@@ -67,21 +71,34 @@ export const DiscountCashbackAction = ({
         </div>
       )}
       
-      <PurchaseAmountInput
-        value={purchaseAmount}
-        onChange={setPurchaseAmount}
-        currencyInfo={currencyInfo}
-        testId="purchase-amount-input"
-        error={belowMinimum ? `El monto mínimo es ${formatCurrency(minAmount)} — montos menores no acumulan` : null}
-      />
+      {noTiersConfigured ? (
+        <div className="text-center p-6 bg-amber-50 border border-amber-200 rounded-xl" data-testid="no-tiers-configured">
+          <p className="text-sm text-amber-800 font-medium">
+            Este tipo de tarjeta no tiene niveles configurados.
+          </p>
+          <p className="text-xs text-amber-700 mt-1">
+            Contacte a Devotio para configurar los niveles de {isCashback ? 'cashback' : 'descuento'} antes de acumular.
+          </p>
+        </div>
+      ) : (
+        <>
+          <PurchaseAmountInput
+            value={purchaseAmount}
+            onChange={setPurchaseAmount}
+            currencyInfo={currencyInfo}
+            testId="purchase-amount-input"
+            error={belowMinimum ? `El monto mínimo es ${formatCurrency(minAmount)} — montos menores no acumulan` : null}
+          />
 
-      <ActionButton
-        onClick={() => openConfirmation(activeTab)}
-        disabled={loading || !purchaseAmount || belowMinimum}
-        loading={loading}
-        label={actionConfig.label}
-        testId="add-points-button"
-      />
+          <ActionButton
+            onClick={() => openConfirmation(activeTab)}
+            disabled={loading || !purchaseAmount || belowMinimum}
+            loading={loading}
+            label={actionConfig.label}
+            testId="add-points-button"
+          />
+        </>
+      )}
     </div>
   );
 };

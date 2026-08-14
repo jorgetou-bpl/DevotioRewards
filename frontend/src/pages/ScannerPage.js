@@ -7,10 +7,10 @@ import { Input } from '../components/ui/input';
 import { toast } from 'sonner';
 import axios from 'axios';
 import { Html5Qrcode } from 'html5-qrcode';
-import { 
-  Scan, 
-  Menu, 
-  X, 
+import {
+  Scan,
+  Menu,
+  X,
   Home,
   Settings,
   LogOut,
@@ -18,10 +18,26 @@ import {
   Camera,
   CameraOff,
   ClipboardList,
-  Building2
+  Building2,
+  ChevronDown
 } from 'lucide-react';
 
 import { API_BASE_URL as API } from '../config/api';
+
+const CAMERA_ID_STORAGE_KEY = 'devotio_camera_id';
+
+// Prefer the standard back lens over ultra-wide/telephoto — those have a much
+// wider field of view or a longer minimum focus distance, which is what made
+// the scanner "desenfocarse" when the browser picked one of them by default.
+const pickDefaultCamera = (cameras) => {
+  const byLabel = (re) => cameras.find((c) => re.test(c.label || ''));
+  return (
+    byLabel(/^back camera$/i) ||
+    byLabel(/back.*(?<!ultra )wide/i) ||
+    byLabel(/^back/i) ||
+    cameras[0]
+  );
+};
 
 const ScannerPage = () => {
   const [scanning, setScanning] = useState(false);
@@ -29,7 +45,10 @@ const ScannerPage = () => {
   const [loading, setLoading] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [cameraError, setCameraError] = useState(null);
-  
+  const [availableCameras, setAvailableCameras] = useState([]);
+  const [selectedCameraId, setSelectedCameraId] = useState(() => localStorage.getItem(CAMERA_ID_STORAGE_KEY) || null);
+  const [showCameraPicker, setShowCameraPicker] = useState(false);
+
   const scannerRef = useRef(null);
   const html5QrCodeRef = useRef(null);
   const navigate = useNavigate();
@@ -42,7 +61,7 @@ const ScannerPage = () => {
     };
   }, []);
 
-  const startScanner = async () => {
+  const startScanner = async (cameraIdOverride = null) => {
     try {
       setCameraError(null);
       setScanning(true);
@@ -56,6 +75,28 @@ const ScannerPage = () => {
 
       const html5QrCode = new Html5Qrcode("barcode-scanner");
       html5QrCodeRef.current = html5QrCode;
+
+      // Enumerate cameras so a specific lens can be targeted — with
+      // facingMode:"environment" alone the browser/OS picks one on its own,
+      // which on multi-lens phones is sometimes the ultra-wide or telephoto
+      // lens instead of the main camera, causing focus issues up close.
+      let cameraTarget = { facingMode: "environment" };
+      try {
+        const cameras = await Html5Qrcode.getCameras();
+        if (cameras && cameras.length > 0) {
+          setAvailableCameras(cameras);
+          const requestedId = cameraIdOverride || selectedCameraId;
+          const requested = requestedId && cameras.find((c) => c.id === requestedId);
+          const chosen = requested || pickDefaultCamera(cameras);
+          if (chosen) {
+            cameraTarget = chosen.id;
+            setSelectedCameraId(chosen.id);
+            localStorage.setItem(CAMERA_ID_STORAGE_KEY, chosen.id);
+          }
+        }
+      } catch (enumError) {
+        console.error('No se pudieron listar las cámaras:', enumError);
+      }
 
       // Get screen dimensions for responsive qrbox
       const screenWidth = window.innerWidth;
@@ -92,7 +133,7 @@ const ScannerPage = () => {
       };
 
       await html5QrCode.start(
-        { facingMode: "environment" },
+        cameraTarget,
         config,
         onScanSuccess,
         onScanFailure
@@ -116,6 +157,13 @@ const ScannerPage = () => {
       }
     }
     setScanning(false);
+  };
+
+  const switchCamera = async (cameraId) => {
+    setShowCameraPicker(false);
+    if (cameraId === selectedCameraId) return;
+    await stopScanner();
+    startScanner(cameraId);
   };
 
   const onScanSuccess = async (decodedText, decodedResult) => {
@@ -237,6 +285,34 @@ const ScannerPage = () => {
                 >
                   <X className="h-5 w-5 text-[#0B0B16]" />
                 </button>
+                {/* Camera picker — only shown when more than one lens is available */}
+                {availableCameras.length > 1 && (
+                  <div className="absolute top-3 left-3 sm:top-4 sm:left-4 z-20">
+                    <button
+                      onClick={() => setShowCameraPicker((open) => !open)}
+                      className="flex items-center gap-1 bg-white/90 backdrop-blur-sm px-2.5 py-2 rounded-lg shadow-lg hover:bg-white transition-colors"
+                      data-testid="camera-picker-button"
+                      aria-label="Seleccionar cámara"
+                    >
+                      <Camera className="h-4 w-4 text-[#0B0B16]" />
+                      <ChevronDown className="h-3 w-3 text-[#0B0B16]" />
+                    </button>
+                    {showCameraPicker && (
+                      <div className="absolute top-full left-0 mt-1 bg-white rounded-lg shadow-xl border border-zinc-200 overflow-hidden min-w-[200px]" data-testid="camera-picker-list">
+                        {availableCameras.map((cam) => (
+                          <button
+                            key={cam.id}
+                            onClick={() => switchCamera(cam.id)}
+                            className={`w-full text-left px-3 py-2 text-xs hover:bg-zinc-50 transition-colors ${cam.id === selectedCameraId ? 'font-semibold text-[#5B7CF7]' : 'text-[#0B0B16]'}`}
+                            data-testid={`camera-option-${cam.id}`}
+                          >
+                            {cam.label || 'Cámara'}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
                 {/* Scanning indicator */}
                 <div className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-white/90 backdrop-blur-sm px-4 py-2 rounded-full shadow-lg z-20">
                   <p className="text-xs font-medium text-[#0B0B16] flex items-center gap-2">

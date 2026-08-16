@@ -7,11 +7,12 @@ import { Input } from '../components/ui/input';
 import {
   ArrowLeft, Building2, Users, MapPin, Key, Plus, Trash2, Loader2, Save,
   Eye, EyeOff, UserPlus, Activity, ChevronDown, ChevronUp, RefreshCw,
-  Settings, Stamp, Percent, Gift, MessageSquare, DollarSign, AlertTriangle, Star
+  Settings, Stamp, Percent, Gift, MessageSquare, DollarSign, AlertTriangle, Star, Search
 } from 'lucide-react';
 
 import { API_BASE_URL as API } from '../config/api';
 import { formatWithThousands, stripThousandsFormatting } from '../components/cards/shared/numberFormat';
+import { CURRENCIES } from '../context/SettingsContext';
 
 const ROLE_CONFIG = {
   super_admin: { label: 'Super Admin', bg: 'bg-purple-100', text: 'text-purple-700' },
@@ -56,6 +57,12 @@ const WorkspaceAdminPage = () => {
   const [loadingStampTemplates, setLoadingStampTemplates] = useState(true);
   const [rewardAccrualMode, setRewardAccrualMode] = useState(null);
   const [savingRewardAccrualMode, setSavingRewardAccrualMode] = useState(false);
+  // Currency, mandatory comments, and manual search — moved here from the
+  // personal Settings page at the client's request: business-wide policy
+  // Devotio controls, not something each operator opts into individually.
+  const [workspacePrefs, setWorkspacePrefs] = useState({ currency: 'CRC', require_comments: false, enable_manual_search: true });
+  const [savingWorkspacePrefs, setSavingWorkspacePrefs] = useState('');
+  const [currencyOpen, setCurrencyOpen] = useState(false);
 
   // Montos tab — visible to workspace_admin too, not Devotio-only, since this
   // is the business's own minimum-purchase and data-entry-safety policy.
@@ -183,9 +190,10 @@ const WorkspaceAdminPage = () => {
       axios.get(`${API}/discount-tiers/discount`, { params, headers }),
       axios.get(`${API}/gift-card-config`, { params, headers }),
       axios.get(`${API}/comment-config`, { params, headers }),
-      axios.get(`${API}/reward-accrual-config`, { params, headers })
+      axios.get(`${API}/reward-accrual-config`, { params, headers }),
+      axios.get(`${API}/workspace-preferences`, { params, headers })
     ])
-      .then(([stampResp, cashbackResp, discountResp, giftResp, commentResp, rewardResp]) => {
+      .then(([stampResp, cashbackResp, discountResp, giftResp, commentResp, rewardResp, prefsResp]) => {
         if (stampResp.data.stamp_mode) {
           setStampConfig({ stamp_mode: stampResp.data.stamp_mode, spend_threshold: stampResp.data.spend_threshold || 10000 });
         } else {
@@ -195,6 +203,11 @@ const WorkspaceAdminPage = () => {
         setGiftCardAllowAdd(!!giftResp.data.allow_add);
         setCommentMode(commentResp.data.mode || 'open');
         setRewardAccrualMode(rewardResp.data.mode || null);
+        setWorkspacePrefs({
+          currency: prefsResp.data.currency || 'CRC',
+          require_comments: !!prefsResp.data.require_comments,
+          enable_manual_search: prefsResp.data.enable_manual_search !== false
+        });
       })
       .catch((error) => console.error('Error loading card configuration:', error))
       .finally(() => setConfigLoading(false));
@@ -363,6 +376,21 @@ const WorkspaceAdminPage = () => {
       toast.success('Modo de acumulación de puntos guardado');
     } catch { toast.error('Error al guardar configuración'); }
     finally { setSavingRewardAccrualMode(false); }
+  };
+
+  const handleSaveWorkspacePrefs = async (field, value) => {
+    setSavingWorkspacePrefs(field);
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post(`${API}/workspace-preferences`, { [field]: value }, {
+        params: { workspace_id: targetWorkspaceId },
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setWorkspacePrefs((prev) => ({ ...prev, [field]: value }));
+      toast.success('Preferencia guardada');
+      if (field === 'currency') setCurrencyOpen(false);
+    } catch { toast.error('Error al guardar preferencia'); }
+    finally { setSavingWorkspacePrefs(''); }
   };
 
   if (loading) {
@@ -690,6 +718,81 @@ const WorkspaceAdminPage = () => {
             <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-[#0B0B16]" /></div>
           ) : (
             <div className="space-y-4">
+              {/* Workspace-wide scanner preferences — moved from the personal
+                  Settings page: business policy, not an individual choice. */}
+              <div className="bg-white rounded-xl border border-zinc-200 p-4 space-y-4">
+                <div className="flex items-center gap-3">
+                  <Settings className="h-5 w-5 text-[#0B0B16]" />
+                  <p className="text-xs sm:text-sm font-semibold uppercase tracking-widest text-zinc-500">Preferencias del Escáner</p>
+                </div>
+
+                <div>
+                  <label className="text-xs text-zinc-500 block mb-2">Moneda</label>
+                  <div className="relative">
+                    <button onClick={() => setCurrencyOpen((open) => !open)}
+                      className="w-full flex items-center justify-between p-3 border-2 border-zinc-200 rounded-xl hover:border-[#0B0B16] transition-colors"
+                      data-testid="workspace-currency-selector">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 bg-gradient-to-br from-[#8CA4FE] to-[#1447E6] rounded-lg flex items-center justify-center">
+                          <span className="text-white font-bold text-sm">
+                            {(CURRENCIES.find((c) => c.code === workspacePrefs.currency) || CURRENCIES[0]).symbol}
+                          </span>
+                        </div>
+                        <span className="text-sm font-medium text-[#0B0B16]">
+                          {(CURRENCIES.find((c) => c.code === workspacePrefs.currency) || CURRENCIES[0]).name}
+                        </span>
+                      </div>
+                      <ChevronDown className={`h-4 w-4 text-zinc-400 transition-transform ${currencyOpen ? 'rotate-180' : ''}`} />
+                    </button>
+                    {currencyOpen && (
+                      <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-zinc-200 rounded-xl shadow-xl z-50 max-h-64 overflow-y-auto">
+                        {CURRENCIES.map((currency) => (
+                          <button key={currency.code} onClick={() => handleSaveWorkspacePrefs('currency', currency.code)}
+                            className={`w-full flex items-center justify-between p-3 hover:bg-zinc-50 transition-colors border-b border-zinc-100 last:border-0 ${
+                              currency.code === workspacePrefs.currency ? 'bg-[#5B7CF7]/5' : ''
+                            }`} data-testid={`workspace-currency-${currency.code}`}>
+                            <span className="text-sm text-[#0B0B16]">{currency.name} ({currency.code})</span>
+                            {currency.code === workspacePrefs.currency && <span className="text-[#5B7CF7]">✓</span>}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <MessageSquare className="h-4 w-4 text-[#0B0B16] flex-shrink-0" />
+                    <div>
+                      <p className="text-sm font-medium text-[#0B0B16]">Comentarios obligatorios</p>
+                      <p className="text-xs text-zinc-500">Requerir comentario en cada transacción</p>
+                    </div>
+                  </div>
+                  <button onClick={() => handleSaveWorkspacePrefs('require_comments', !workspacePrefs.require_comments)}
+                    disabled={savingWorkspacePrefs === 'require_comments'}
+                    className={`shrink-0 w-11 h-6 rounded-full transition-colors ${workspacePrefs.require_comments ? 'bg-[#5B7CF7]' : 'bg-zinc-300'}`}
+                    data-testid="workspace-require-comments-switch">
+                    <span className={`block w-5 h-5 bg-white rounded-full transition-transform ${workspacePrefs.require_comments ? 'translate-x-5' : 'translate-x-0.5'}`} />
+                  </button>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Search className="h-4 w-4 text-[#0B0B16] flex-shrink-0" />
+                    <div>
+                      <p className="text-sm font-medium text-[#0B0B16]">Búsqueda manual</p>
+                      <p className="text-xs text-zinc-500">Habilitar búsqueda por nombre o ID de tarjeta</p>
+                    </div>
+                  </div>
+                  <button onClick={() => handleSaveWorkspacePrefs('enable_manual_search', !workspacePrefs.enable_manual_search)}
+                    disabled={savingWorkspacePrefs === 'enable_manual_search'}
+                    className={`shrink-0 w-11 h-6 rounded-full transition-colors ${workspacePrefs.enable_manual_search ? 'bg-[#5B7CF7]' : 'bg-zinc-300'}`}
+                    data-testid="workspace-manual-search-switch">
+                    <span className={`block w-5 h-5 bg-white rounded-full transition-transform ${workspacePrefs.enable_manual_search ? 'translate-x-5' : 'translate-x-0.5'}`} />
+                  </button>
+                </div>
+              </div>
+
               {/* Stamp Card Configuration */}
               <div className="bg-white rounded-xl border border-zinc-200 p-4 space-y-3">
                 <div className="flex items-center gap-3">

@@ -43,11 +43,18 @@ export const SettingsProvider = ({ children }) => {
     }
   }, [isAuthenticated, token]);
 
+  // Personal scan preferences (vibration/beep/show_result/copy_to_clipboard)
+  // come from /settings, per-user. Currency, mandatory comments, and manual
+  // search are workspace-wide policy set by Devotio — fetched from
+  // /workspace-preferences and merged in, but never written from here.
   const fetchSettings = async () => {
     setLoading(true);
     try {
-      const response = await axios.get(`${API}/settings`);
-      setSettings(prev => ({ ...prev, ...response.data }));
+      const [personalResp, workspaceResp] = await Promise.all([
+        axios.get(`${API}/settings`),
+        axios.get(`${API}/workspace-preferences`)
+      ]);
+      setSettings(prev => ({ ...prev, ...personalResp.data, ...workspaceResp.data }));
     } catch (error) {
       console.error('Failed to fetch settings:', error);
     } finally {

@@ -81,22 +81,31 @@ class WorkspaceUserCreate(BaseModel):
     location: Optional[str] = None
 
 # ============ SETTINGS MODELS ============
+# Personal, per-user scan preferences only — currency, comment requirements,
+# and manual search moved to WorkspacePreferences (workspace-level, Devotio-only).
+# Field names below match what the frontend actually sends; the previous
+# vibration_enabled/sound_enabled names never matched the frontend's
+# vibration/beep fields, so those toggles silently failed to persist.
 
 class SettingsUpdate(BaseModel):
-    vibration_enabled: Optional[bool] = None
-    sound_enabled: Optional[bool] = None
+    vibration: Optional[bool] = None
+    beep: Optional[bool] = None
+    show_result: Optional[bool] = None
+    copy_to_clipboard: Optional[bool] = None
+
+class SettingsResponse(BaseModel):
+    vibration: bool = False
+    beep: bool = False
+    show_result: bool = True
+    copy_to_clipboard: bool = True
+
+class WorkspacePreferencesUpdate(BaseModel):
     currency: Optional[str] = None
-    decimals: Optional[int] = None
-    language: Optional[str] = None
     require_comments: Optional[bool] = None
     enable_manual_search: Optional[bool] = None
 
-class SettingsResponse(BaseModel):
-    vibration_enabled: bool = True
-    sound_enabled: bool = True
+class WorkspacePreferencesResponse(BaseModel):
     currency: str = "CRC"
-    decimals: int = 0
-    language: str = "es"
     require_comments: bool = False
     enable_manual_search: bool = True
 

@@ -3,7 +3,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from typing import Optional, List
-from models import SettingsUpdate, SettingsResponse
+from models import SettingsUpdate, SettingsResponse, WorkspacePreferencesUpdate, WorkspacePreferencesResponse
 from utils.config import db
 from utils.auth import get_current_user, require_super_admin, require_workspace_admin
 from datetime import datetime, timezone
@@ -37,6 +37,38 @@ async def update_settings(settings_data: SettingsUpdate, current_user: dict = De
         )
     settings = await db.settings.find_one({"user_id": current_user["id"]}, {"_id": 0, "user_id": 0})
     return SettingsResponse(**(settings or {}))
+
+# ============ WORKSPACE SCANNER PREFERENCES ============
+# Currency, mandatory comments, and manual search used to be personal settings
+# any user could flip for themselves — moved here at the client's request so
+# they're a business-wide policy Devotio controls, not an individual choice.
+
+@router.get("/workspace-preferences", response_model=WorkspacePreferencesResponse)
+async def get_workspace_preferences(workspace_id: Optional[str] = None, current_user: dict = Depends(get_current_user)):
+    """Get the workspace's scanner preferences (or, for super_admin, an
+    explicitly targeted workspace's)."""
+    ws_id = resolve_workspace_id(current_user, workspace_id)
+    query = {"workspace_id": ws_id} if ws_id else {}
+    config = await db.workspace_preferences.find_one(query, {"_id": 0})
+    return WorkspacePreferencesResponse(**(config or {}))
+
+@router.post("/workspace-preferences", response_model=WorkspacePreferencesResponse)
+async def set_workspace_preferences(
+    request: WorkspacePreferencesUpdate,
+    workspace_id: Optional[str] = None,
+    current_user: dict = Depends(require_super_admin)
+):
+    """Set the workspace's scanner preferences. Devotio-only."""
+    ws_id = resolve_workspace_id(current_user, workspace_id)
+    query = {"workspace_id": ws_id} if ws_id else {}
+    update_data = {k: v for k, v in request.model_dump().items() if v is not None}
+    if update_data:
+        update_data["workspace_id"] = ws_id
+        update_data["updated_by"] = current_user.get("email", "")
+        update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+        await db.workspace_preferences.update_one(query, {"$set": update_data}, upsert=True)
+    config = await db.workspace_preferences.find_one(query, {"_id": 0})
+    return WorkspacePreferencesResponse(**(config or {}))
 
 # ============ GLOBAL STAMP CONFIGURATION ============
 

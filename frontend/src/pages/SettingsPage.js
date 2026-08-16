@@ -1,8 +1,7 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useSettings, CURRENCIES } from '../context/SettingsContext';
+import { useSettings } from '../context/SettingsContext';
 import { Switch } from '../components/ui/switch';
-import { Button } from '../components/ui/button';
 import { toast } from 'sonner';
 import {
   ArrowLeft,
@@ -10,19 +9,12 @@ import {
   Volume2,
   Eye,
   Clipboard,
-  Loader2,
-  DollarSign,
-  ChevronDown,
-  Check,
-  MessageSquare,
-  Search
+  Loader2
 } from 'lucide-react';
 
 const SettingsPage = () => {
   const navigate = useNavigate();
   const { settings, updateSettings, loading } = useSettings();
-  const [currencyOpen, setCurrencyOpen] = useState(false);
-  
 
   const handleToggle = async (key, value) => {
     try {
@@ -30,16 +22,6 @@ const SettingsPage = () => {
       toast.success('Configuración actualizada');
     } catch (error) {
       toast.error('Error al actualizar configuración');
-    }
-  };
-
-  const handleCurrencyChange = async (currencyCode) => {
-    try {
-      await updateSettings({ currency: currencyCode });
-      toast.success('Moneda actualizada');
-      setCurrencyOpen(false);
-    } catch (error) {
-      toast.error('Error al actualizar moneda');
     }
   };
 
@@ -71,24 +53,8 @@ const SettingsPage = () => {
       description: 'Copiar ID de tarjeta después de escanear',
       icon: Clipboard,
       testId: 'setting-copy-clipboard'
-    },
-    {
-      key: 'require_comments',
-      label: 'Comentarios obligatorios',
-      description: 'Requerir comentario en cada transacción',
-      icon: MessageSquare,
-      testId: 'setting-require-comments'
-    },
-    {
-      key: 'enable_manual_search',
-      label: 'Búsqueda manual',
-      description: 'Habilitar búsqueda por nombre o ID de tarjeta',
-      icon: Search,
-      testId: 'setting-manual-search'
     }
   ];
-
-  const currentCurrency = CURRENCIES.find(c => c.code === settings.currency) || CURRENCIES[0];
 
   return (
     <div className="min-h-screen bg-white" data-testid="settings-page">
@@ -147,66 +113,6 @@ const SettingsPage = () => {
                 ))}
               </div>
             </div>
-
-            {/* Currency Settings */}
-            <div className="card-brutalist">
-              <p className="text-xs sm:text-sm font-semibold uppercase tracking-widest text-zinc-500 mb-4">
-                Moneda
-              </p>
-
-              <div className="relative">
-                <button
-                  onClick={() => setCurrencyOpen(!currencyOpen)}
-                  className="w-full flex items-center justify-between p-3 sm:p-4 border-2 border-zinc-200 rounded-xl hover:border-[#0B0B16] transition-colors"
-                  data-testid="currency-selector"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-gradient-to-br from-[#8CA4FE] to-[#1447E6] rounded-lg flex items-center justify-center">
-                      <span className="text-white font-bold text-lg">{currentCurrency.symbol}</span>
-                    </div>
-                    <div className="text-left">
-                      <p className="font-medium text-[#0B0B16] text-sm sm:text-base">{currentCurrency.name}</p>
-                      <p className="text-xs sm:text-sm text-zinc-500">{currentCurrency.code}</p>
-                    </div>
-                  </div>
-                  <ChevronDown className={`h-5 w-5 text-zinc-400 transition-transform ${currencyOpen ? 'rotate-180' : ''}`} />
-                </button>
-
-                {/* Currency Dropdown */}
-                {currencyOpen && (
-                  <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-zinc-200 rounded-xl shadow-xl z-50 max-h-64 overflow-y-auto">
-                    {CURRENCIES.map((currency) => (
-                      <button
-                        key={currency.code}
-                        onClick={() => handleCurrencyChange(currency.code)}
-                        className={`w-full flex items-center justify-between p-3 hover:bg-zinc-50 transition-colors border-b border-zinc-100 last:border-0 ${
-                          currency.code === settings.currency ? 'bg-purple-50' : ''
-                        }`}
-                        data-testid={`currency-${currency.code}`}
-                      >
-                        <div className="flex items-center gap-3">
-                          <span className="w-8 h-8 bg-zinc-100 rounded-lg flex items-center justify-center font-semibold text-[#0B0B16]">
-                            {currency.symbol}
-                          </span>
-                          <div className="text-left">
-                            <p className="font-medium text-[#0B0B16] text-sm">{currency.name}</p>
-                            <p className="text-xs text-zinc-500">{currency.code}</p>
-                          </div>
-                        </div>
-                        {currency.code === settings.currency && (
-                          <Check className="h-5 w-5 text-[#0B0B16]" />
-                        )}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              <p className="text-xs text-zinc-400 mt-3">
-                Esta moneda se usará para mostrar los montos de compra y transacciones
-              </p>
-            </div>
-
           </>
         )}
 

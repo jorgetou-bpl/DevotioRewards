@@ -328,15 +328,24 @@ async def get_workspace_users_admin(workspace_id: str, current_user: dict = Depe
     return {"success": True, "users": users}
 
 @router.post("/dashboard/users/{user_id}/reset-password")
-async def reset_user_password(user_id: str, data: dict, current_user: dict = Depends(require_super_admin)):
-    """Reset a user's password. Requires master code. Super admin only."""
-    if data.get("master_code") != MASTER_CODE:
+async def reset_user_password(user_id: str, data: dict, current_user: dict = Depends(require_workspace_admin)):
+    """Reset a user's password. Business admins can reset passwords for
+    their own workspace's users; Devotio (super_admin) can reset any, and
+    must additionally confirm the master code — same protection this
+    endpoint always had for that role, unchanged."""
+    if current_user.get("role") == "super_admin" and data.get("master_code") != MASTER_CODE:
         raise HTTPException(status_code=403, detail="Código maestro inválido")
-    
+
     user = await db.users.find_one({"id": user_id})
     if not user:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
-    
+
+    if current_user.get("role") == "workspace_admin":
+        if user.get("workspace_id") != current_user.get("workspace_id"):
+            raise HTTPException(status_code=403, detail="No tiene acceso a este usuario")
+        if user.get("role") == "super_admin":
+            raise HTTPException(status_code=403, detail="No puede restablecer la contraseña de un super admin")
+
     new_password = data.get("new_password")
     if not new_password:
         # Auto-generate temporary password

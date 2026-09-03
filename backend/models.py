@@ -5,12 +5,6 @@ from typing import Optional, Literal, List
 
 # ============ USER MODELS ============
 
-class UserCreate(BaseModel):
-    email: EmailStr
-    password: str
-    name: Optional[str] = None
-    role: Literal["super_admin", "workspace_admin", "operator"] = "operator"
-
 class UserLogin(BaseModel):
     email: EmailStr
     password: str

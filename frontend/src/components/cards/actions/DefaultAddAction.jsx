@@ -4,7 +4,7 @@ import { Button } from '../../ui/button';
 import { Plus, Minus, Loader2 } from 'lucide-react';
 
 export const DefaultAddAction = ({
-  cardType, balance, actionAmount, setActionAmount,
+  cardType, balance, actionAmount, setActionAmount, setPurchaseAmount,
   loading, openConfirmation, activeTab, formatCurrency, currencyInfo, actionConfig
 }) => {
   const normalizedType = cardType.replace('_card', '');
@@ -33,7 +33,12 @@ export const DefaultAddAction = ({
               value={actionAmount || ''}
               onChange={(e) => {
                 const val = e.target.value === '' ? '' : parseInt(e.target.value) || 0;
-                setActionAmount(val === '' ? '' : Math.max(0, val));
+                const next = val === '' ? '' : Math.max(0, val);
+                setActionAmount(next);
+                // This is a currency amount, not a count — feed it into
+                // purchaseAmount too so the high-amount confirmation warning
+                // (which only reads purchaseAmount) actually applies here.
+                setPurchaseAmount(next === '' ? '' : String(next));
               }}
               placeholder="0" min="0"
               className="input-brutalist pl-10 sm:pl-12 text-2xl sm:text-3xl font-mono h-14 sm:h-16 text-center"

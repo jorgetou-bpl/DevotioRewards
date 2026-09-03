@@ -4,7 +4,7 @@ import { Button } from '../../ui/button';
 import { Plus, Minus, Loader2 } from 'lucide-react';
 
 export const GenericRedeemAction = ({
-  cardType, balance, activeTab, actionAmount, setActionAmount,
+  cardType, balance, activeTab, actionAmount, setActionAmount, setPurchaseAmount,
   loading, openConfirmation, formatCurrency, currencyInfo, actionConfig
 }) => {
   const normalizedType = cardType.replace('_card', '');
@@ -61,7 +61,12 @@ export const GenericRedeemAction = ({
               value={actionAmount || ''}
               onChange={(e) => {
                 const val = e.target.value === '' ? '' : parseInt(e.target.value) || 0;
-                setActionAmount(val === '' ? '' : Math.max(0, Math.min(availableAmount || 999999, val)));
+                const next = val === '' ? '' : Math.max(0, Math.min(availableAmount || 999999, val));
+                setActionAmount(next);
+                // Currency amount, not a count — feed purchaseAmount too so the
+                // high-amount confirmation warning (reads purchaseAmount only)
+                // applies to redemptions as well as additions.
+                setPurchaseAmount(next === '' ? '' : String(next));
               }}
               placeholder="0" min="0" max={availableAmount || 999999}
               className="input-brutalist pl-10 sm:pl-12 text-2xl sm:text-3xl font-mono h-14 sm:h-16 text-center"

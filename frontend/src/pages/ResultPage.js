@@ -43,7 +43,6 @@ const ResultPage = () => {
   const [loadingPendingRewards, setLoadingPendingRewards] = useState(false);
   const [selectedRewardId, setSelectedRewardId] = useState(null);
   const [stampConfig, setStampConfig] = useState({ stamp_mode: null, spend_threshold: 10000 });
-  const [stampProgress, setStampProgress] = useState({ accumulated_amount: 0, threshold: 10000, progress_percent: 0 });
   const [loadingStampConfig, setLoadingStampConfig] = useState(false);
   const [discountTiers, setDiscountTiers] = useState([]);
   const [tierProgress, setTierProgress] = useState(null);
@@ -124,16 +123,6 @@ const ResultPage = () => {
         const configResponse = await axios.get(`${API}/stamp-config`, { headers: { Authorization: `Bearer ${token}` } });
         if (configResponse.data.stamp_mode) {
           setStampConfig({ stamp_mode: configResponse.data.stamp_mode, spend_threshold: configResponse.data.spend_threshold || 10000 });
-        }
-        if (configResponse.data.stamp_mode === 'spend') {
-          const progressResponse = await axios.get(`${API}/stamp-progress/${card.id}`, { headers: { Authorization: `Bearer ${token}` } });
-          if (progressResponse.data) {
-            setStampProgress({
-              accumulated_amount: progressResponse.data.accumulated_amount || 0,
-              threshold: progressResponse.data.threshold || 10000,
-              progress_percent: progressResponse.data.progress_percent || 0
-            });
-          }
         }
       } catch { /* ignore */ }
       finally { setLoadingStampConfig(false); }
@@ -344,26 +333,23 @@ const ResultPage = () => {
           return;
         }
         const progressResponse = await axios.post(`${API}/stamp-progress/${card.id}/add?amount=${amount}`, {}, { headers: { Authorization: `Bearer ${token}` } });
-        const { stamps_to_add, accumulated_amount, threshold, progress_percent } = progressResponse.data;
-        
+        const { stamps_to_add, threshold } = progressResponse.data;
+
         if (stamps_to_add > 0) {
           const comment_with_gerente = gerente_name ? `[Gerente: ${gerente_name}] ${comment || ''}`.trim() : (comment || '');
-          const stampPayload = { stamps: stamps_to_add, comment: comment_with_gerente, purchaseSum: threshold * stamps_to_add };
           const apiResponse = await axios.post(`${API}/cards/${card.id}/add-stamp`, {
-            amount: stamps_to_add, comment: comment || '', purchaseSum: threshold * stamps_to_add, gerente: gerente_name
+            amount: stamps_to_add, comment: comment_with_gerente, purchaseSum: amount, gerente: gerente_name
           }, { headers: { Authorization: `Bearer ${token}` } });
-          
+
           if (apiResponse.data.success) {
             setCard(apiResponse.data.card);
-            setStampProgress({ accumulated_amount, threshold, progress_percent });
             triggerVibration(); triggerBeep();
             const rewardsMsg = apiResponse.data.new_rewards_earned ? ` ¡${apiResponse.data.new_rewards_earned} recompensa(s) ganada(s)!` : '';
             setSuccessModal({ open: true, message: `${stamps_to_add} sello(s) agregado(s) exitosamente.${rewardsMsg}` });
           }
         } else {
-          setStampProgress({ accumulated_amount, threshold, progress_percent });
           triggerVibration();
-          setSuccessModal({ open: true, message: `Compra de ${formatCurrency(amount)} registrada. Progreso: ${formatCurrency(accumulated_amount)} de ${formatCurrency(threshold)} (${progress_percent}%)` });
+          setSuccessModal({ open: true, message: `Compra de ${formatCurrency(amount)} registrada. No alcanza el monto para sumar un sello (se requieren ${formatCurrency(threshold)} por sello; el resto no se acumula).` });
         }
         setConfirmModal({ open: false, action: null, details: [], purchaseAmount: '' });
         setLoading(false);
@@ -403,8 +389,15 @@ const ResultPage = () => {
           return;
         }
       }
+      // Manual-mode stamps (spend/visit modes already returned above) — the
+      // minimum-purchase block previously only applied to spend mode.
+      if (actionKey === 'agregar' && normalizedType === 'stamp' && minAmount > 0 && purchaseVal < minAmount) {
+        toast.error(`El monto mínimo es ${formatCurrency(minAmount)} — no aplica para acumular`);
+        setLoading(false);
+        return;
+      }
       if (purchaseVal > 0) basePayload.purchaseSum = purchaseVal;
-      
+
       if (normalizedType === 'stamp' && actionKey === 'agregar') {
         endpoint = `${API}/cards/${card.id}/add-stamp`;
         payload = { ...basePayload };
@@ -498,7 +491,7 @@ const ResultPage = () => {
     // Stamp Agregar
     if (normalizedType === 'stamp' && activeTab === 'Agregar') {
       const stampRewardTiers = card?.availableRewardTiers?.length > 0 ? card.availableRewardTiers : templateRewardTiers;
-      return <StampAddAction {...commonProps} stampConfig={stampConfig} stampProgress={stampProgress} stampRewardTiers={stampRewardTiers} />;
+      return <StampAddAction {...commonProps} stampConfig={stampConfig} stampRewardTiers={stampRewardTiers} />;
     }
     // Stamp Canjear
     if (normalizedType === 'stamp' && activeTab === 'Canjear') {

@@ -211,7 +211,7 @@ async def add_stamp_progress(
     amount: float,
     current_user: dict = Depends(get_current_user)
 ):
-    """Add to the accumulated progress for a stamp card. Returns stamps earned if threshold reached."""
+    """Compute stamps earned from a single purchase amount (no cross-purchase accumulation)."""
     ws_id = current_user.get("workspace_id")
     config_query = {"workspace_id": ws_id} if ws_id else {}
     config = await db.stamp_config.find_one(config_query, {"_id": 0})
@@ -219,38 +219,30 @@ async def add_stamp_progress(
         raise HTTPException(status_code=400, detail="Stamp config not set to 'spend' mode")
     
     threshold = config.get("spend_threshold", 10000)
-    
-    # Get current progress
-    progress = await db.stamp_progress.find_one({"card_id": card_id})
-    current_accumulated = progress.get("accumulated_amount", 0) if progress else 0
-    
-    # Add new amount
-    new_accumulated = current_accumulated + amount
-    
-    # Calculate how many stamps earned
-    stamps_earned = int(new_accumulated // threshold)
-    remaining = new_accumulated % threshold
-    
-    # Update progress with remaining amount
+
+    # Stamps are computed from THIS purchase's amount alone — no carryover
+    # between purchases. A purchase below the threshold earns 0 stamps and
+    # the leftover is discarded, not saved toward a future purchase.
+    stamps_earned = int(amount // threshold)
+
+    # Reset any stale accumulated amount from before this per-purchase model.
     await db.stamp_progress.update_one(
         {"card_id": card_id},
         {"$set": {
             "card_id": card_id,
             "workspace_id": ws_id,
-            "accumulated_amount": remaining,
+            "accumulated_amount": 0,
             "last_updated": datetime.now(timezone.utc).isoformat()
         }},
         upsert=True
     )
-    
-    progress_percent = min(100, (remaining / threshold) * 100) if threshold > 0 else 0
-    
+
     return StampProgressResponse(
         success=True,
         card_id=card_id,
-        accumulated_amount=remaining,
+        accumulated_amount=0,
         threshold=threshold,
-        progress_percent=round(progress_percent, 1),
+        progress_percent=0,
         stamps_to_add=stamps_earned
     )
 

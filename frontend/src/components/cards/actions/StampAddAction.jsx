@@ -5,7 +5,7 @@ import StampGrid from '../StampGrid';
 import { PurchaseAmountInput, AmountCounter, ActionButton } from '../shared';
 
 export const StampAddAction = ({
-  balance, stampConfig, stampProgress, purchaseAmount, setPurchaseAmount,
+  balance, stampConfig, purchaseAmount, setPurchaseAmount,
   actionAmount, setActionAmount, loading, openConfirmation, formatCurrency, currencyInfo,
   stampRewardTiers = [], minAmount = 0
 }) => {
@@ -31,10 +31,10 @@ export const StampAddAction = ({
   const isSpendMode = stampMode === 'spend';
   const isVisitMode = stampMode === 'visit';
   const isManualMode = stampMode === 'manual' || !stampMode;
-  // Minimum purchase amount only gates accumulation in spend mode, where the
-  // stamp is actually calculated from the purchase amount.
+  // Minimum purchase amount gates accumulation in both spend and manual mode
+  // (both take a purchase amount); visit mode has no purchase-amount concept.
   const purchaseVal = parseFloat(purchaseAmount) || 0;
-  const belowMinimum = isSpendMode && minAmount > 0 && purchaseAmount !== '' && purchaseVal < minAmount;
+  const belowMinimum = (isSpendMode || isManualMode) && minAmount > 0 && purchaseAmount !== '' && purchaseVal < minAmount;
 
   return (
     <div className="space-y-4 sm:space-y-6">
@@ -62,23 +62,6 @@ export const StampAddAction = ({
         )}
       </div>
       
-      {isSpendMode && stampProgress.accumulated_amount > 0 && (
-        <div className="card-brutalist bg-blue-50">
-          <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-2">
-            Progreso hacia próximo sello
-          </p>
-          <div className="w-full bg-zinc-200 rounded-full h-3 mb-2">
-            <div 
-              className="bg-gradient-to-r from-[#8CA4FE] to-[#1447E6] h-3 rounded-full transition-all"
-              style={{ width: `${stampProgress.progress_percent}%` }}
-            />
-          </div>
-          <p className="text-xs text-zinc-600 text-center">
-            {formatCurrency(stampProgress.accumulated_amount)} de {formatCurrency(stampProgress.threshold)} ({stampProgress.progress_percent}%)
-          </p>
-        </div>
-      )}
-      
       <PurchaseAmountInput
         value={purchaseAmount}
         onChange={setPurchaseAmount}
@@ -92,7 +75,7 @@ export const StampAddAction = ({
               ? `El monto mínimo es ${formatCurrency(minAmount)} — montos menores no acumulan`
               : null
         }
-        hint={isSpendMode ? `Se gana 1 sello cada ${formatCurrency(stampConfig.spend_threshold)}. El progreso se acumula entre compras.` : null}
+        hint={isSpendMode ? `Se gana 1 sello por cada ${formatCurrency(stampConfig.spend_threshold)} de esta compra. El resto no se acumula para la próxima.` : null}
       />
       
       {isManualMode && (

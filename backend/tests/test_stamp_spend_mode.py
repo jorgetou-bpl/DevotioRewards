@@ -1,6 +1,8 @@
 """
 Test cases for Stamp Card Spend Mode functionality
-Tests the partial spend accumulation feature where stamps are earned based on purchase thresholds
+Stamps are earned per-purchase only: stamps = floor(purchase_amount / threshold).
+There is no cross-purchase accumulation — any leftover below the threshold is
+discarded, not carried forward (client-confirmed requirement).
 """
 
 import pytest
@@ -53,22 +55,22 @@ class TestStampConfig:
 
 
 class TestStampProgress:
-    """Tests for stamp progress tracking (partial spend accumulation)"""
-    
+    """Tests for per-purchase stamp calculation (no cross-purchase carryover)"""
+
     def test_reset_progress(self, api_client):
         """DELETE /api/stamp-progress/{card_id} - reset progress for clean test"""
         response = api_client.delete(f"{BASE_URL}/api/stamp-progress/{TEST_CARD_ID}")
         assert response.status_code == 200
-        
+
         data = response.json()
         assert data["success"] == True
         print(f"✓ Progress reset for card {TEST_CARD_ID}")
-    
+
     def test_get_initial_progress(self, api_client):
         """GET /api/stamp-progress/{card_id} - should show 0 accumulated after reset"""
         response = api_client.get(f"{BASE_URL}/api/stamp-progress/{TEST_CARD_ID}")
         assert response.status_code == 200
-        
+
         data = response.json()
         assert data["success"] == True
         assert data["card_id"] == TEST_CARD_ID
@@ -76,41 +78,51 @@ class TestStampProgress:
         assert data["threshold"] == 10000
         assert data["progress_percent"] == 0
         print(f"✓ Initial progress: {data['accumulated_amount']} of {data['threshold']}")
-    
-    def test_add_partial_spend_5000(self, api_client):
-        """POST /api/stamp-progress/{card_id}/add?amount=5000 - partial spend, no stamp earned"""
+
+    def test_partial_purchase_earns_no_stamp(self, api_client):
+        """POST /api/stamp-progress/{card_id}/add?amount=5000 - below threshold, no stamp earned"""
         response = api_client.post(f"{BASE_URL}/api/stamp-progress/{TEST_CARD_ID}/add?amount=5000")
         assert response.status_code == 200
-        
+
         data = response.json()
         assert data["success"] == True
-        assert data["accumulated_amount"] == 5000
-        assert data["threshold"] == 10000
-        assert data["progress_percent"] == 50.0
-        assert data["stamps_to_add"] == 0  # No stamp earned yet
-        print(f"✓ After 5000: accumulated={data['accumulated_amount']}, stamps_to_add={data['stamps_to_add']}")
-    
-    def test_add_partial_spend_7000_earns_stamp(self, api_client):
-        """POST /api/stamp-progress/{card_id}/add?amount=7000 - should earn 1 stamp (5000+7000=12000 > 10000)"""
+        assert data["stamps_to_add"] == 0
+        assert data["accumulated_amount"] == 0  # discarded, not carried forward
+        print(f"✓ 5000 alone: stamps_to_add={data['stamps_to_add']}")
+
+    def test_next_purchase_does_not_combine_with_previous(self, api_client):
+        """POST /api/stamp-progress/{card_id}/add?amount=7000 - the prior 5000 must NOT
+        carry forward; 7000 alone is still below the 10000 threshold, so 0 stamps."""
         response = api_client.post(f"{BASE_URL}/api/stamp-progress/{TEST_CARD_ID}/add?amount=7000")
         assert response.status_code == 200
-        
+
         data = response.json()
         assert data["success"] == True
-        assert data["stamps_to_add"] == 1  # 1 stamp earned
-        assert data["accumulated_amount"] == 2000  # Remaining: 12000 - 10000 = 2000
-        assert data["progress_percent"] == 20.0
-        print(f"✓ After 7000: stamps_earned={data['stamps_to_add']}, remaining={data['accumulated_amount']}")
-    
-    def test_verify_remaining_progress(self, api_client):
-        """GET /api/stamp-progress/{card_id} - verify remaining 2000 after stamp earned"""
+        assert data["stamps_to_add"] == 0  # NOT 1 — no accumulation across purchases
+        assert data["accumulated_amount"] == 0
+        print(f"✓ 7000 alone (no carryover from prior 5000): stamps_to_add={data['stamps_to_add']}")
+
+    def test_single_purchase_above_threshold_earns_stamp(self, api_client):
+        """POST /api/stamp-progress/{card_id}/add?amount=12000 - a single purchase that
+        alone crosses the threshold earns a stamp; the 2000 leftover is discarded."""
+        response = api_client.post(f"{BASE_URL}/api/stamp-progress/{TEST_CARD_ID}/add?amount=12000")
+        assert response.status_code == 200
+
+        data = response.json()
+        assert data["success"] == True
+        assert data["stamps_to_add"] == 1
+        assert data["accumulated_amount"] == 0  # leftover 2000 discarded, not stored
+        print(f"✓ 12000 in one purchase: stamps_to_add={data['stamps_to_add']}")
+
+    def test_verify_no_progress_persisted(self, api_client):
+        """GET /api/stamp-progress/{card_id} - always 0 now; nothing carries between purchases"""
         response = api_client.get(f"{BASE_URL}/api/stamp-progress/{TEST_CARD_ID}")
         assert response.status_code == 200
-        
+
         data = response.json()
-        assert data["accumulated_amount"] == 2000
-        assert data["progress_percent"] == 20.0
-        print(f"✓ Verified remaining: {data['accumulated_amount']} ({data['progress_percent']}%)")
+        assert data["accumulated_amount"] == 0
+        assert data["progress_percent"] == 0
+        print(f"✓ Verified nothing persisted: {data['accumulated_amount']} ({data['progress_percent']}%)")
 
 
 class TestStampCardLookup:
@@ -133,54 +145,56 @@ class TestStampCardLookup:
 
 
 class TestMultipleStampsEarned:
-    """Test earning multiple stamps in a single transaction"""
-    
+    """Test earning multiple stamps from a single large purchase (client's own example)"""
+
     def test_reset_for_multi_stamp_test(self, api_client):
         """Reset progress for multi-stamp test"""
         response = api_client.delete(f"{BASE_URL}/api/stamp-progress/{TEST_CARD_ID}")
         assert response.status_code == 200
-    
-    def test_large_purchase_earns_multiple_stamps(self, api_client):
-        """POST /api/stamp-progress/{card_id}/add?amount=25000 - should earn 2 stamps with 5000 remaining"""
+
+    def test_large_single_purchase_earns_multiple_stamps_remainder_discarded(self, api_client):
+        """POST /api/stamp-progress/{card_id}/add?amount=25000 - client's exact example:
+        1 stamp per 1500 config would give 2 stamps for 3500 with 500 discarded; here
+        with the 10000 threshold, 25000 earns 2 stamps and the 5000 leftover is lost,
+        not saved toward the next purchase."""
         response = api_client.post(f"{BASE_URL}/api/stamp-progress/{TEST_CARD_ID}/add?amount=25000")
         assert response.status_code == 200
-        
+
         data = response.json()
-        assert data["stamps_to_add"] == 2  # 25000 / 10000 = 2 stamps
-        assert data["accumulated_amount"] == 5000  # 25000 % 10000 = 5000 remaining
-        assert data["progress_percent"] == 50.0
-        print(f"✓ Large purchase: stamps_earned={data['stamps_to_add']}, remaining={data['accumulated_amount']}")
+        assert data["stamps_to_add"] == 2  # 25000 // 10000 = 2 stamps
+        assert data["accumulated_amount"] == 0  # 5000 leftover discarded, not stored
+        print(f"✓ Large purchase: stamps_earned={data['stamps_to_add']}, leftover discarded")
 
 
 class TestEdgeCases:
-    """Test edge cases for stamp progress"""
-    
+    """Test edge cases for per-purchase stamp calculation"""
+
     def test_reset_for_edge_cases(self, api_client):
         """Reset progress for edge case tests"""
         response = api_client.delete(f"{BASE_URL}/api/stamp-progress/{TEST_CARD_ID}")
         assert response.status_code == 200
-    
+
     def test_exact_threshold_amount(self, api_client):
         """POST /api/stamp-progress/{card_id}/add?amount=10000 - exact threshold earns 1 stamp, 0 remaining"""
         response = api_client.post(f"{BASE_URL}/api/stamp-progress/{TEST_CARD_ID}/add?amount=10000")
         assert response.status_code == 200
-        
+
         data = response.json()
         assert data["stamps_to_add"] == 1
         assert data["accumulated_amount"] == 0
         assert data["progress_percent"] == 0
         print(f"✓ Exact threshold: stamps_earned={data['stamps_to_add']}, remaining={data['accumulated_amount']}")
-    
-    def test_small_amount_accumulates(self, api_client):
-        """POST /api/stamp-progress/{card_id}/add?amount=100 - small amount just accumulates"""
+
+    def test_small_amount_earns_nothing_and_is_discarded(self, api_client):
+        """POST /api/stamp-progress/{card_id}/add?amount=100 - small amount earns 0 stamps
+        and is discarded immediately, not accumulated for a future purchase."""
         response = api_client.post(f"{BASE_URL}/api/stamp-progress/{TEST_CARD_ID}/add?amount=100")
         assert response.status_code == 200
-        
+
         data = response.json()
         assert data["stamps_to_add"] == 0
-        assert data["accumulated_amount"] == 100
-        assert data["progress_percent"] == 1.0
-        print(f"✓ Small amount: accumulated={data['accumulated_amount']}")
+        assert data["accumulated_amount"] == 0
+        print(f"✓ Small amount discarded: accumulated={data['accumulated_amount']}")
 
 
 # Cleanup fixture

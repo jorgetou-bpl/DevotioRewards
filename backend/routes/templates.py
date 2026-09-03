@@ -10,6 +10,27 @@ router = APIRouter(tags=["templates"])
 
 STAMP_TEMPLATE_TYPE = 0
 
+@router.get("/templates/by-type")
+async def list_templates_by_type(
+    workspace_id: str,
+    template_type: int,
+    current_user: dict = Depends(require_super_admin)
+):
+    """List a workspace's Boomerangme templates of a given type (0=stamp,
+    1=cashback, 2=multipass, 3=coupon, 4=discount, 5=gift, 6=membership,
+    7=reward), with raw fields included — used to discover what a template
+    actually exposes (e.g. a coupon's discount/benefit fields) before
+    building type-specific UI around it. Devotio-only."""
+    api_key = await get_api_key_for_workspace(workspace_id)
+    response = await call_boomerang_api(
+        'GET', '/templates', {"itemsPerPage": 100}, raise_on_error=False, api_key=api_key
+    )
+    if response.get('code') != 200:
+        raise HTTPException(status_code=502, detail=get_user_friendly_error("api_error"))
+
+    matches = [t for t in (response.get('data', []) or []) if t.get('type') == template_type]
+    return {"success": True, "templates": matches}
+
 @router.get("/templates/stamp-cards")
 async def list_stamp_card_templates(workspace_id: str, current_user: dict = Depends(require_super_admin)):
     """List a workspace's stamp card templates with their configured reward tiers,

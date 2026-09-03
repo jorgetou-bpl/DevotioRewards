@@ -2,6 +2,8 @@ import React from 'react';
 import { Star } from 'lucide-react';
 import { PurchaseAmountInput, AmountCounter, ActionButton } from '../shared';
 
+const PERIOD_PARAM_KEY = { day: 'dailyParameters', week: 'weeklyParameters', month: 'monthlyParameters', year: 'yearlyParameters' };
+
 export const MembershipAction = ({
   card, balance, purchaseAmount, setPurchaseAmount, actionAmount, setActionAmount,
   loading, openConfirmation, currencyInfo
@@ -10,7 +12,14 @@ export const MembershipAction = ({
   const customerSubscription = card.customerSubscription || {};
   const subscriptionStatus = customerSubscription.status === 1 ? 'Activo' : 'Inactivo';
   const availableVisits = balance.currentNumberOfUses || 0;
-  const customerName = card.customer?.firstName 
+  // Boomerangme uses 0 as "no cap" on these limit fields — confirmed via
+  // perFilialLimit:0 meaning "no per-branch limit" on the same tier object.
+  // A limit of 0 on the customer's active billing period means unlimited
+  // visits, not zero — without this check a fresh unlimited membership
+  // reads identically to an exhausted limited one.
+  const periodParams = membershipTier[PERIOD_PARAM_KEY[customerSubscription.period]] || null;
+  const isUnlimited = periodParams ? periodParams.limit === 0 : false;
+  const customerName = card.customer?.firstName
     ? `${card.customer.firstName} ${card.customer.surname || ''}`.trim()
     : 'Cliente';
   const initials = customerName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
@@ -35,10 +44,14 @@ export const MembershipAction = ({
       
       <div className="text-center p-6 bg-white rounded-xl border-2 border-[#0B0B16]">
         <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-2">Visitas Disponibles</p>
-        <span className="text-5xl sm:text-6xl font-mono font-bold gradient-text">{availableVisits}</span>
+        {isUnlimited ? (
+          <span className="text-3xl sm:text-4xl font-bold gradient-text">Ilimitadas</span>
+        ) : (
+          <span className="text-5xl sm:text-6xl font-mono font-bold gradient-text">{availableVisits}</span>
+        )}
       </div>
-      
-      {availableVisits > 0 ? (
+
+      {isUnlimited || availableVisits > 0 ? (
         <>
           <PurchaseAmountInput
             value={purchaseAmount}
@@ -48,18 +61,18 @@ export const MembershipAction = ({
             hint="Monto de la transacción del cliente (si aplica)"
             testId="membership-redeem-purchase-amount"
           />
-          
+
           <AmountCounter
             value={actionAmount}
             onChange={setActionAmount}
             label="Visitas a canjear"
-            max={availableVisits}
+            max={isUnlimited ? undefined : availableVisits}
             testIdPrefix="membership-redeem-visits"
           />
-          
+
           <ActionButton
             onClick={() => openConfirmation('CanjearVisitas')}
-            disabled={loading || availableVisits <= 0 || actionAmount < 1 || actionAmount > availableVisits}
+            disabled={loading || actionAmount < 1 || (!isUnlimited && (availableVisits <= 0 || actionAmount > availableVisits))}
             loading={loading}
             label="Canjear Visita"
             testId="redeem-membership-visits-button"

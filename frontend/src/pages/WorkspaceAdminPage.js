@@ -51,7 +51,7 @@ const WorkspaceAdminPage = () => {
 
   // Card configuration state (Config. Tarjetas tab) — all scoped to targetWorkspaceId
   const [configLoading, setConfigLoading] = useState(true);
-  const [stampConfig, setStampConfig] = useState({ stamp_mode: null, spend_threshold: 10000, visit_stamps_per_visit: 1 });
+  const [stampConfig, setStampConfig] = useState({ stamp_mode: null, spend_threshold: 10000 });
   const [savingStampConfig, setSavingStampConfig] = useState(false);
   const [tiersByType, setTiersByType] = useState({ cashback: [], discount: [] });
   const [savingTiersType, setSavingTiersType] = useState('');
@@ -230,11 +230,10 @@ const WorkspaceAdminPage = () => {
         if (stampResp.data.stamp_mode) {
           setStampConfig({
             stamp_mode: stampResp.data.stamp_mode,
-            spend_threshold: stampResp.data.spend_threshold || 10000,
-            visit_stamps_per_visit: stampResp.data.visit_stamps_per_visit || 1
+            spend_threshold: stampResp.data.spend_threshold || 10000
           });
         } else {
-          setStampConfig({ stamp_mode: null, spend_threshold: 10000, visit_stamps_per_visit: 1 });
+          setStampConfig({ stamp_mode: null, spend_threshold: 10000 });
         }
         setStampConfigOverrides(stampAllResp.data.configs || []);
         setTiersByType({ cashback: cashbackResp.data.tiers || [], discount: discountResp.data.tiers || [] });
@@ -262,8 +261,7 @@ const WorkspaceAdminPage = () => {
     const source = specificConfig || defaultConfig;
     setStampConfig({
       stamp_mode: source?.stamp_mode || null,
-      spend_threshold: source?.spend_threshold || 10000,
-      visit_stamps_per_visit: source?.visit_stamps_per_visit || 1
+      spend_threshold: source?.spend_threshold || 10000
     });
   }, [selectedStampTemplateId, stampConfigOverrides]);
 
@@ -878,35 +876,79 @@ const WorkspaceAdminPage = () => {
                 </div>
               </div>
 
-              {/* Stamp Card Configuration */}
+              {/* Card picker — which specific Sellos card this config applies to.
+                  Comes first: a business with 2+ Sellos templates (e.g. one
+                  by-visit, one manual) needs to pick the card before adapting
+                  its config below, not the other way around. */}
               <div className="bg-white rounded-xl border border-zinc-200 p-4 space-y-3">
                 <div className="flex items-center gap-3">
                   <Stamp className="h-5 w-5 text-[#0B0B16]" />
-                  <p className="text-xs sm:text-sm font-semibold uppercase tracking-widest text-zinc-500">Tarjetas de Sellos</p>
+                  <p className="text-xs sm:text-sm font-semibold uppercase tracking-widest text-zinc-500">Estructura de Tarjetas</p>
                 </div>
-                {stampTemplates.length > 1 && (
-                  <div className="flex items-center justify-between gap-2 pb-1">
-                    <div>
-                      <p className="text-xs text-zinc-500 mb-1">Aplica a</p>
-                      <select value={selectedStampTemplateId} onChange={(e) => setSelectedStampTemplateId(e.target.value)}
-                        className="h-9 border border-zinc-200 rounded-lg px-3 text-sm bg-white" data-testid="stamp-template-selector">
-                        <option value="">Todas (configuración por defecto)</option>
-                        {stampTemplates.map((t) => (
-                          <option key={t.id} value={t.id}>{t.name}</option>
-                        ))}
-                      </select>
-                    </div>
-                    {hasStampOverride && (
-                      <Button variant="outline" size="sm" onClick={handleDeleteStampOverride} disabled={deletingStampOverride}
-                        className="text-xs text-red-700 hover:bg-red-50 border-red-200" data-testid="delete-stamp-override">
-                        {deletingStampOverride ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Usar la de por defecto'}
-                      </Button>
-                    )}
+                <p className="text-xs text-zinc-500">
+                  Las tarjetas de sellos que este negocio ya tiene configuradas. Elige una para ver su estructura de
+                  recompensas y ajustar su configuración específica más abajo — o deja "Todas" para la configuración
+                  por defecto.
+                </p>
+                {loadingStampTemplates ? (
+                  <div className="flex justify-center py-4"><Loader2 className="h-5 w-5 animate-spin text-zinc-400" /></div>
+                ) : stampTemplates.length > 0 ? (
+                  <div className="space-y-2">
+                    <button onClick={() => setSelectedStampTemplateId('')}
+                      className={`w-full text-left rounded-lg p-3 border-2 transition-colors ${
+                        !selectedStampTemplateId ? 'border-[#0B0B16] bg-[#5B7CF7]/5' : 'border-transparent bg-zinc-50'
+                      }`} data-testid="stamp-template-default">
+                      <p className="text-sm font-medium text-[#0B0B16]">Todas (configuración por defecto)</p>
+                    </button>
+                    {stampTemplates.map((tpl) => (
+                      <button key={tpl.id} onClick={() => setSelectedStampTemplateId(String(tpl.id))}
+                        className={`w-full text-left rounded-lg p-3 border-2 transition-colors ${
+                          selectedStampTemplateId === String(tpl.id) ? 'border-[#0B0B16] bg-[#5B7CF7]/5' : 'border-transparent bg-zinc-50'
+                        }`} data-testid={`stamp-template-${tpl.id}`}>
+                        <p className="text-sm font-medium text-[#0B0B16]">{tpl.name}</p>
+                        <p className="text-xs text-zinc-500 mt-1">
+                          {tpl.stampsPerVisit} sello{tpl.stampsPerVisit !== 1 ? 's' : ''} por visita
+                        </p>
+                        {tpl.rewardTiers.length > 0 ? (
+                          <p className="text-xs text-zinc-500 mt-1">
+                            Recompensas en {tpl.rewardTiers.map((t) => t.threshold).join(' y ')} sellos
+                            {tpl.rewardTiers.length > 1 ? ' — tarjeta con múltiples niveles' : ''}
+                          </p>
+                        ) : (
+                          <p className="text-xs text-zinc-400 mt-1">Sin niveles de recompensa configurados</p>
+                        )}
+                      </button>
+                    ))}
                   </div>
+                ) : (
+                  <p className="text-xs text-zinc-400 text-center py-2">
+                    No se encontraron tarjetas de sellos configuradas para este negocio.
+                  </p>
                 )}
+              </div>
+
+              {/* Stamp Card Configuration — adapts to whichever card is
+                  selected above (default, or one specific template). */}
+              <div className="bg-white rounded-xl border border-zinc-200 p-4 space-y-3">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-3">
+                    <Stamp className="h-5 w-5 text-[#0B0B16]" />
+                    <p className="text-xs sm:text-sm font-semibold uppercase tracking-widest text-zinc-500">
+                      {selectedStampTemplateId
+                        ? `Configuración — ${stampTemplates.find((t) => String(t.id) === selectedStampTemplateId)?.name || 'Tarjeta'}`
+                        : 'Tarjetas de Sellos'}
+                    </p>
+                  </div>
+                  {hasStampOverride && (
+                    <Button variant="outline" size="sm" onClick={handleDeleteStampOverride} disabled={deletingStampOverride}
+                      className="text-xs text-red-700 hover:bg-red-50 border-red-200 shrink-0" data-testid="delete-stamp-override">
+                      {deletingStampOverride ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Usar la de por defecto'}
+                    </Button>
+                  )}
+                </div>
                 {selectedStampTemplateId && !hasStampOverride && (
                   <p className="text-xs text-amber-600">
-                    Esta plantilla no tiene configuración propia — muestra los valores por defecto como punto de partida; al guardar se crea una específica solo para ella.
+                    Esta tarjeta no tiene configuración propia — muestra los valores por defecto como punto de partida; al guardar se crea una específica solo para ella.
                   </p>
                 )}
                 <div className="space-y-2">
@@ -932,11 +974,17 @@ const WorkspaceAdminPage = () => {
                   </div>
                 )}
                 {stampConfig.stamp_mode === 'visit' && (
-                  <div className="pt-2">
-                    <p className="text-xs text-zinc-500 mb-2">Sellos otorgados por visita</p>
-                    <Input type="text" inputMode="numeric" value={stampConfig.visit_stamps_per_visit || 1}
-                      onChange={(e) => setStampConfig({ ...stampConfig, visit_stamps_per_visit: Math.max(1, parseInt(e.target.value) || 1) })}
-                      className="h-10" data-testid="stamp-visit-stamps-per-visit" />
+                  <div className="pt-2 bg-zinc-50 rounded-lg p-3">
+                    <p className="text-xs text-zinc-500">Sellos por visita</p>
+                    {selectedStampTemplateId ? (
+                      <p className="text-sm font-medium text-[#0B0B16] mt-1">
+                        {stampTemplates.find((t) => String(t.id) === selectedStampTemplateId)?.stampsPerVisit || 1} — configurado en la plataforma del proveedor, no editable desde acá
+                      </p>
+                    ) : (
+                      <p className="text-sm text-zinc-500 mt-1">
+                        Cada tarjeta usa su propia cantidad, configurada en la plataforma del proveedor — selecciona una arriba para verla
+                      </p>
+                    )}
                   </div>
                 )}
                 <Button onClick={handleSaveStampConfig} disabled={savingStampConfig || !stampConfig.stamp_mode} className="w-full h-10 btn-primary" data-testid="save-stamp-config">
@@ -972,41 +1020,6 @@ const WorkspaceAdminPage = () => {
                   ))}
                 </div>
                 {savingRewardAccrualMode && <Loader2 className="h-4 w-4 animate-spin mx-auto text-zinc-400" />}
-              </div>
-
-              {/* Read-only: reward tier structure per stamp template, sourced live from Boomerangme */}
-              <div className="bg-white rounded-xl border border-zinc-200 p-4 space-y-3">
-                <div className="flex items-center gap-3">
-                  <Stamp className="h-5 w-5 text-[#0B0B16]" />
-                  <p className="text-xs sm:text-sm font-semibold uppercase tracking-widest text-zinc-500">Estructura de Tarjetas (Boomerangme)</p>
-                </div>
-                <p className="text-xs text-zinc-500">
-                  Niveles de recompensa configurados directamente en Boomerangme para cada tarjeta de sellos de este
-                  negocio. Solo lectura — para cambiarlos, se editan desde Boomerangme, no desde acá.
-                </p>
-                {loadingStampTemplates ? (
-                  <div className="flex justify-center py-4"><Loader2 className="h-5 w-5 animate-spin text-zinc-400" /></div>
-                ) : stampTemplates.length > 0 ? (
-                  <div className="space-y-2">
-                    {stampTemplates.map((tpl) => (
-                      <div key={tpl.id} className="bg-zinc-50 rounded-lg p-3" data-testid={`stamp-template-${tpl.id}`}>
-                        <p className="text-sm font-medium text-[#0B0B16]">{tpl.name}</p>
-                        {tpl.rewardTiers.length > 0 ? (
-                          <p className="text-xs text-zinc-500 mt-1">
-                            Recompensas en {tpl.rewardTiers.map((t) => t.threshold).join(' y ')} sellos
-                            {tpl.rewardTiers.length > 1 ? ' — tarjeta con múltiples niveles' : ''}
-                          </p>
-                        ) : (
-                          <p className="text-xs text-zinc-400 mt-1">Sin niveles de recompensa configurados</p>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-xs text-zinc-400 text-center py-2">
-                    No se encontraron tarjetas de sellos configuradas en Boomerangme para este negocio.
-                  </p>
-                )}
               </div>
 
               {/* Tier sections — Cashback and Descuento, independent */}

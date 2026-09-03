@@ -35,6 +35,7 @@ const ResultPage = () => {
   const [confirmModal, setConfirmModal] = useState({ open: false, action: null, details: [], purchaseAmount: '' });
   const [successModal, setSuccessModal] = useState({ open: false, message: '' });
   const [templateRewardTiers, setTemplateRewardTiers] = useState([]);
+  const [stampsPerVisit, setStampsPerVisit] = useState(1);
   const [loadingTemplate, setLoadingTemplate] = useState(false);
   const [couponBenefit, setCouponBenefit] = useState(null);
   const [detectedAccrualMode, setDetectedAccrualMode] = useState(null);
@@ -43,7 +44,7 @@ const ResultPage = () => {
   const [pendingRewards, setPendingRewards] = useState([]);
   const [loadingPendingRewards, setLoadingPendingRewards] = useState(false);
   const [selectedRewardId, setSelectedRewardId] = useState(null);
-  const [stampConfig, setStampConfig] = useState({ stamp_mode: null, spend_threshold: 10000, visit_stamps_per_visit: 1 });
+  const [stampConfig, setStampConfig] = useState({ stamp_mode: null, spend_threshold: 10000 });
   const [loadingStampConfig, setLoadingStampConfig] = useState(false);
   const [discountTiers, setDiscountTiers] = useState([]);
   const [tierProgress, setTierProgress] = useState(null);
@@ -74,22 +75,26 @@ const ResultPage = () => {
     if (config && config.tabs && config.tabs.length > 0) setActiveTab(config.tabs[0]);
   }, [cardType, config]);
 
-  // Fetch template reward tiers for stamp cards
+  // Fetch template info for stamp cards: reward tiers (only when the card
+  // itself doesn't already carry them) and stamps-per-visit, which is
+  // always read live from the template — Boomerangme is the source of
+  // truth for it, not app-side config.
   useEffect(() => {
-    const fetchTemplateRewardTiers = async () => {
+    const fetchTemplateInfo = async () => {
       const normalizedType = cardType ? cardType.replace('_card', '') : '';
-      const hasTemplateId = card?.templateId;
-      const hasNoTiersFromCard = !card?.availableRewardTiers || card.availableRewardTiers.length === 0;
-      if (normalizedType === 'stamp' && hasTemplateId && hasNoTiersFromCard) {
-        setLoadingTemplate(true);
-        try {
-          const response = await axios.get(`${API}/templates/${card.templateId}`);
-          if (response.data?.template?.rewardTiers) setTemplateRewardTiers(response.data.template.rewardTiers);
-        } catch { setTemplateRewardTiers([]); }
-        finally { setLoadingTemplate(false); }
-      }
+      if (normalizedType !== 'stamp' || !card?.templateId) { setStampsPerVisit(1); return; }
+      const hasTiersFromCard = card?.availableRewardTiers?.length > 0;
+      setLoadingTemplate(true);
+      try {
+        const response = await axios.get(`${API}/templates/${card.templateId}`);
+        if (!hasTiersFromCard && response.data?.template?.rewardTiers) {
+          setTemplateRewardTiers(response.data.template.rewardTiers);
+        }
+        setStampsPerVisit(response.data?.template?.stampsPerVisit || 1);
+      } catch { setTemplateRewardTiers([]); setStampsPerVisit(1); }
+      finally { setLoadingTemplate(false); }
     };
-    if (card) fetchTemplateRewardTiers();
+    if (card) fetchTemplateInfo();
   }, [card, cardType]);
 
   // Fetch the coupon's benefit description (e.g. "10% OFF") so the operator
@@ -140,8 +145,7 @@ const ResultPage = () => {
         if (configResponse.data.stamp_mode) {
           setStampConfig({
             stamp_mode: configResponse.data.stamp_mode,
-            spend_threshold: configResponse.data.spend_threshold || 10000,
-            visit_stamps_per_visit: configResponse.data.visit_stamps_per_visit || 1
+            spend_threshold: configResponse.data.spend_threshold || 10000
           });
         }
       } catch { /* ignore */ }
@@ -283,7 +287,7 @@ const ResultPage = () => {
       if (purchaseAmount) details.push({ label: 'Monto de Compra', value: formatCurrency(parseFloat(purchaseAmount) || 0) });
       const stampMode = stampConfig.stamp_mode;
       if (stampMode === 'spend') details.push({ label: 'Modo', value: `Por Compra (1 sello cada ${formatCurrency(stampConfig.spend_threshold)})` });
-      else if (stampMode === 'visit') details.push({ label: 'Sellos', value: `${stampConfig.visit_stamps_per_visit || 1} (por visita)` });
+      else if (stampMode === 'visit') details.push({ label: 'Sellos', value: `${stampsPerVisit} (por visita)` });
       else details.push({ label: 'Cantidad de Sellos', value: actionAmount });
     } else if (actionLower === 'agregar' && normalizedType === 'reward') {
       if (detectedAccrualMode === 'spend') {
@@ -384,7 +388,6 @@ const ResultPage = () => {
           setLoading(false);
           return;
         }
-        const stampsPerVisit = stampConfig.visit_stamps_per_visit || 1;
         const apiResponse = await axios.post(`${API}/cards/${card.id}/add-stamp`, {
           amount: stampsPerVisit, comment: comment || '', purchaseSum: visitPurchaseVal, gerente: gerente_name
         }, { headers: { Authorization: `Bearer ${token}` } });
@@ -518,7 +521,7 @@ const ResultPage = () => {
     // Stamp Agregar
     if (normalizedType === 'stamp' && activeTab === 'Agregar') {
       const stampRewardTiers = card?.availableRewardTiers?.length > 0 ? card.availableRewardTiers : templateRewardTiers;
-      return <StampAddAction {...commonProps} stampConfig={stampConfig} stampRewardTiers={stampRewardTiers} />;
+      return <StampAddAction {...commonProps} stampConfig={stampConfig} stampRewardTiers={stampRewardTiers} stampsPerVisit={stampsPerVisit} />;
     }
     // Stamp Canjear
     if (normalizedType === 'stamp' && activeTab === 'Canjear') {

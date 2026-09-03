@@ -83,7 +83,11 @@ async def list_stamp_card_templates(workspace_id: str, current_user: dict = Depe
         templates.append({
             "id": t.get("id"),
             "name": t.get("name") or f"Tarjeta de sellos #{t.get('id')}",
-            "rewardTiers": tiers
+            "rewardTiers": tiers,
+            # Stamps granted per visit — configured on the template itself
+            # (mechanics.accrual.stampsPerAccrual), read directly rather than
+            # duplicated as separate app-side config.
+            "stampsPerVisit": (t.get('mechanics') or {}).get('accrual', {}).get('stampsPerAccrual') or 1
         })
 
     return {"success": True, "templates": templates}
@@ -119,6 +123,10 @@ async def get_template(template_id: str, current_user: dict = Depends(get_curren
                     # "buy one get one free") — Boomerangme stores this under
                     # mechanics.firstVisitDiscount regardless of card type.
                     "benefitDescription": mechanics.get('firstVisitDiscount') or None,
+                    # Stamps granted per visit, read from the template's own
+                    # accrual config (mechanics.accrual.stampsPerAccrual) —
+                    # not duplicated as separate app-side config.
+                    "stampsPerVisit": mechanics.get('accrual', {}).get('stampsPerAccrual') or 1,
                     # Include raw data for debugging
                     "rawKeys": list(template_data.keys())
                 }

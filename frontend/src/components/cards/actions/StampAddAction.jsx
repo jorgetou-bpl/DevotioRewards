@@ -7,7 +7,7 @@ import { PurchaseAmountInput, AmountCounter, ActionButton } from '../shared';
 export const StampAddAction = ({
   balance, stampConfig, purchaseAmount, setPurchaseAmount,
   actionAmount, setActionAmount, loading, openConfirmation, formatCurrency, currencyInfo,
-  stampRewardTiers = [], minAmount = 0
+  stampRewardTiers = [], minAmount = 0, stampsPerVisit = 1
 }) => {
   const activeStamps = balance.currentNumberOfUses ?? 0;
   const stampsBeforeReward = balance.stampsBeforeReward ?? 0;
@@ -35,7 +35,6 @@ export const StampAddAction = ({
   // purchase amount — spend, manual, and visit all ask for one.
   const purchaseVal = parseFloat(purchaseAmount) || 0;
   const belowMinimum = minAmount > 0 && purchaseAmount !== '' && purchaseVal < minAmount;
-  const stampsPerVisit = stampConfig.visit_stamps_per_visit || 1;
 
   return (
     <div className="space-y-4 sm:space-y-6">

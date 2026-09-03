@@ -39,6 +39,11 @@ const SuperAdminDashboard = () => {
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
   const [deleting, setDeleting] = useState(false);
 
+  // Reset statistics state
+  const [resetStatsModal, setResetStatsModal] = useState({ open: false, workspace: null });
+  const [resetStatsConfirmText, setResetStatsConfirmText] = useState('');
+  const [resettingStats, setResettingStats] = useState(false);
+
   // Create workspace state
   const [workspaceName, setWorkspaceName] = useState('');
   const [apiKey, setApiKey] = useState('');
@@ -120,6 +125,25 @@ const SuperAdminDashboard = () => {
       toast.error(err.response?.data?.detail || 'Error al eliminar workspace');
     } finally {
       setDeleting(false);
+    }
+  };
+
+  const handleResetStats = async () => {
+    if (!resetStatsModal.workspace) return;
+    setResettingStats(true);
+    const token = localStorage.getItem('token');
+    try {
+      const resp = await axios.delete(`${API}/operations/reset`, {
+        params: { workspace_id: resetStatsModal.workspace.id },
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success(`${resp.data.deleted_count} operación(es) eliminada(s)`);
+      setResetStatsModal({ open: false, workspace: null });
+      setResetStatsConfirmText('');
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Error al resetear estadísticas');
+    } finally {
+      setResettingStats(false);
     }
   };
 
@@ -515,6 +539,11 @@ const SuperAdminDashboard = () => {
                           data-testid={`toggle-workspace-${ws.slug}`}>
                           {ws.active ? <><ToggleRight className="h-4 w-4" /> Desactivar</> : <><ToggleLeft className="h-4 w-4" /> Activar</>}
                         </Button>
+                        <Button variant="outline" size="sm" onClick={() => { setResetStatsModal({ open: true, workspace: ws }); setResetStatsConfirmText(''); }}
+                          className="gap-2 text-xs text-amber-700 hover:bg-amber-50 border-amber-200"
+                          data-testid={`reset-stats-${ws.slug}`}>
+                          <RefreshCw className="h-4 w-4" /> Reset Estadísticas
+                        </Button>
                         <Button variant="outline" size="sm" onClick={() => { setDeleteModal({ open: true, workspace: ws }); setDeleteConfirmText(''); }}
                           className="gap-2 text-xs text-red-700 hover:bg-red-50 border-red-200"
                           data-testid={`delete-workspace-${ws.slug}`}>
@@ -561,6 +590,36 @@ const SuperAdminDashboard = () => {
               <Button onClick={handleDeleteWorkspace} disabled={deleting || deleteConfirmText !== deleteModal.workspace?.slug}
                 className="flex-1 bg-red-600 hover:bg-red-700 text-white" data-testid="confirm-delete-workspace-btn">
                 {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Eliminar permanentemente'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Reset Statistics Modal */}
+      {resetStatsModal.open && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setResetStatsModal({ open: false, workspace: null })}>
+          <div className="bg-white rounded-2xl w-full max-w-md p-6" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center gap-3 mb-1">
+              <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
+                <AlertTriangle className="h-5 w-5 text-amber-600" />
+              </div>
+              <h3 className="text-lg font-bold text-[#0B0B16]">Resetear estadísticas</h3>
+            </div>
+            <p className="text-sm text-zinc-500 mt-3 mb-4">
+              Esto borra permanentemente todo el historial de operaciones de <strong>{resetStatsModal.workspace?.name}</strong> (dashboard,
+              exportes y reportes). Las tarjetas y usuarios no se ven afectados. No se puede deshacer.
+            </p>
+            <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500 block mb-2">
+              Escriba <span className="font-mono normal-case">{resetStatsModal.workspace?.slug}</span> para confirmar
+            </label>
+            <Input type="text" value={resetStatsConfirmText} onChange={(e) => setResetStatsConfirmText(e.target.value)}
+              placeholder={resetStatsModal.workspace?.slug} className="input-brutalist mb-4" data-testid="reset-stats-confirm-input" />
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => setResetStatsModal({ open: false, workspace: null })} className="flex-1">Cancelar</Button>
+              <Button onClick={handleResetStats} disabled={resettingStats || resetStatsConfirmText !== resetStatsModal.workspace?.slug}
+                className="flex-1 bg-amber-600 hover:bg-amber-700 text-white" data-testid="confirm-reset-stats-btn">
+                {resettingStats ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Resetear estadísticas'}
               </Button>
             </div>
           </div>

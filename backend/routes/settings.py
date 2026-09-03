@@ -75,11 +75,13 @@ async def set_workspace_preferences(
 class StampConfigRequest(BaseModel):
     stamp_mode: str  # 'spend', 'visit', or 'manual'
     spend_threshold: Optional[float] = 10000  # Amount needed per stamp (only for 'spend' mode)
+    visit_stamps_per_visit: Optional[int] = 1  # Stamps granted per visit (only for 'visit' mode)
 
 class StampConfigResponse(BaseModel):
     success: bool
     stamp_mode: Optional[str] = None
     spend_threshold: Optional[float] = None
+    visit_stamps_per_visit: Optional[int] = None
 
 @router.get("/stamp-config")
 async def get_stamp_config(workspace_id: Optional[str] = None, current_user: dict = Depends(get_current_user)):
@@ -92,9 +94,10 @@ async def get_stamp_config(workspace_id: Optional[str] = None, current_user: dic
         return StampConfigResponse(
             success=True,
             stamp_mode=config.get("stamp_mode"),
-            spend_threshold=config.get("spend_threshold")
+            spend_threshold=config.get("spend_threshold"),
+            visit_stamps_per_visit=config.get("visit_stamps_per_visit", 1)
         )
-    return StampConfigResponse(success=True, stamp_mode=None, spend_threshold=None)
+    return StampConfigResponse(success=True, stamp_mode=None, spend_threshold=None, visit_stamps_per_visit=None)
 
 @router.post("/stamp-config")
 async def set_stamp_config(
@@ -106,6 +109,8 @@ async def set_stamp_config(
     valid_modes = ['spend', 'visit', 'manual']
     if request.stamp_mode not in valid_modes:
         raise HTTPException(status_code=400, detail=f"Modo inválido. Use: {', '.join(valid_modes)}")
+    if request.visit_stamps_per_visit is not None and request.visit_stamps_per_visit < 1:
+        raise HTTPException(status_code=400, detail="Los sellos por visita deben ser al menos 1")
 
     ws_id = resolve_workspace_id(current_user, workspace_id)
     query = {"workspace_id": ws_id} if ws_id else {}
@@ -115,6 +120,7 @@ async def set_stamp_config(
             "workspace_id": ws_id,
             "stamp_mode": request.stamp_mode,
             "spend_threshold": request.spend_threshold,
+            "visit_stamps_per_visit": request.visit_stamps_per_visit or 1,
             "updated_by": current_user.get("email", ""),
             "updated_at": datetime.now(timezone.utc).isoformat()
         }},
@@ -123,7 +129,8 @@ async def set_stamp_config(
     return StampConfigResponse(
         success=True,
         stamp_mode=request.stamp_mode,
-        spend_threshold=request.spend_threshold
+        spend_threshold=request.spend_threshold,
+        visit_stamps_per_visit=request.visit_stamps_per_visit or 1
     )
 
 # ============ GLOBAL REWARD (PUNTOS) ACCRUAL CONFIGURATION ============

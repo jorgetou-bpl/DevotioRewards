@@ -7,11 +7,17 @@ from datetime import datetime, timezone
 import io
 import csv
 import logging
-from utils.auth import get_current_user
+from utils.auth import get_current_user, require_super_admin
 from utils.config import db
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/operations", tags=["operations"])
+
+def _resolve_workspace_id(current_user: dict, workspace_id: Optional[str] = None) -> Optional[str]:
+    """Only super_admin may target a workspace other than their own."""
+    if workspace_id and current_user.get("role") == "super_admin":
+        return workspace_id
+    return current_user.get("workspace_id")
 
 @router.get("")
 async def get_operations(
@@ -310,3 +316,17 @@ async def get_operations_summary(
             "card_types": card_types
         }
     }
+
+@router.delete("/reset")
+async def reset_operations(
+    workspace_id: Optional[str] = None,
+    current_user: dict = Depends(require_super_admin)
+):
+    """Permanently delete all operation history for a workspace. Devotio-only,
+    destructive and irreversible — used when a business wants a clean slate
+    for its statistics (e.g. after a testing period)."""
+    ws_id = _resolve_workspace_id(current_user, workspace_id)
+    if not ws_id:
+        raise HTTPException(status_code=400, detail="Debe especificar un workspace")
+    result = await db.operations.delete_many({"workspace_id": ws_id})
+    return {"success": True, "deleted_count": result.deleted_count}

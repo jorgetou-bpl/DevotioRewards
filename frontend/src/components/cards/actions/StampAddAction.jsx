@@ -31,10 +31,11 @@ export const StampAddAction = ({
   const isSpendMode = stampMode === 'spend';
   const isVisitMode = stampMode === 'visit';
   const isManualMode = stampMode === 'manual' || !stampMode;
-  // Minimum purchase amount gates accumulation in both spend and manual mode
-  // (both take a purchase amount); visit mode has no purchase-amount concept.
+  // Minimum purchase amount gates accumulation in every mode that takes a
+  // purchase amount — spend, manual, and visit all ask for one.
   const purchaseVal = parseFloat(purchaseAmount) || 0;
-  const belowMinimum = (isSpendMode || isManualMode) && minAmount > 0 && purchaseAmount !== '' && purchaseVal < minAmount;
+  const belowMinimum = minAmount > 0 && purchaseAmount !== '' && purchaseVal < minAmount;
+  const stampsPerVisit = stampConfig.visit_stamps_per_visit || 1;
 
   return (
     <div className="space-y-4 sm:space-y-6">
@@ -92,8 +93,8 @@ export const StampAddAction = ({
           <div className="flex items-center justify-center gap-3">
             <User className="h-6 w-6 text-green-600" />
             <div className="text-center">
-              <span className="text-3xl font-mono font-bold text-[#0B0B16]">1</span>
-              <p className="text-xs text-zinc-500">sello por visita</p>
+              <span className="text-3xl font-mono font-bold text-[#0B0B16]">{stampsPerVisit}</span>
+              <p className="text-xs text-zinc-500">sello{stampsPerVisit !== 1 ? 's' : ''} por visita</p>
             </div>
           </div>
         </div>

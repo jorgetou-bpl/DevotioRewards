@@ -51,7 +51,7 @@ const WorkspaceAdminPage = () => {
 
   // Card configuration state (Config. Tarjetas tab) — all scoped to targetWorkspaceId
   const [configLoading, setConfigLoading] = useState(true);
-  const [stampConfig, setStampConfig] = useState({ stamp_mode: null, spend_threshold: 10000 });
+  const [stampConfig, setStampConfig] = useState({ stamp_mode: null, spend_threshold: 10000, visit_stamps_per_visit: 1 });
   const [savingStampConfig, setSavingStampConfig] = useState(false);
   const [tiersByType, setTiersByType] = useState({ cashback: [], discount: [] });
   const [savingTiersType, setSavingTiersType] = useState('');
@@ -224,9 +224,13 @@ const WorkspaceAdminPage = () => {
     ])
       .then(([stampResp, cashbackResp, discountResp, giftResp, commentResp, rewardResp, prefsResp]) => {
         if (stampResp.data.stamp_mode) {
-          setStampConfig({ stamp_mode: stampResp.data.stamp_mode, spend_threshold: stampResp.data.spend_threshold || 10000 });
+          setStampConfig({
+            stamp_mode: stampResp.data.stamp_mode,
+            spend_threshold: stampResp.data.spend_threshold || 10000,
+            visit_stamps_per_visit: stampResp.data.visit_stamps_per_visit || 1
+          });
         } else {
-          setStampConfig({ stamp_mode: null, spend_threshold: 10000 });
+          setStampConfig({ stamp_mode: null, spend_threshold: 10000, visit_stamps_per_visit: 1 });
         }
         setTiersByType({ cashback: cashbackResp.data.tiers || [], discount: discountResp.data.tiers || [] });
         setGiftCardAllowAdd(!!giftResp.data.allow_add);
@@ -670,7 +674,7 @@ const WorkspaceAdminPage = () => {
                 {[
                   { type: 'cashback', label: 'Cashback' },
                   { type: 'discount', label: 'Descuento' },
-                  { type: 'stamp', label: 'Sellos (modo por monto)' }
+                  { type: 'stamp', label: 'Sellos (por monto o por visita)' }
                 ].map(({ type, label }) => (
                   <div key={type} className="flex gap-2 items-end" data-testid={`min-amount-row-${type}`}>
                     <div className="flex-1">
@@ -854,6 +858,14 @@ const WorkspaceAdminPage = () => {
                     <Input type="text" inputMode="decimal" value={formatWithThousands(stampConfig.spend_threshold)}
                       onChange={(e) => setStampConfig({ ...stampConfig, spend_threshold: parseFloat(stripThousandsFormatting(e.target.value)) || 0 })}
                       className="h-10" data-testid="stamp-spend-threshold" />
+                  </div>
+                )}
+                {stampConfig.stamp_mode === 'visit' && (
+                  <div className="pt-2">
+                    <p className="text-xs text-zinc-500 mb-2">Sellos otorgados por visita</p>
+                    <Input type="text" inputMode="numeric" value={stampConfig.visit_stamps_per_visit || 1}
+                      onChange={(e) => setStampConfig({ ...stampConfig, visit_stamps_per_visit: Math.max(1, parseInt(e.target.value) || 1) })}
+                      className="h-10" data-testid="stamp-visit-stamps-per-visit" />
                   </div>
                 )}
                 <Button onClick={handleSaveStampConfig} disabled={savingStampConfig || !stampConfig.stamp_mode} className="w-full h-10 btn-primary" data-testid="save-stamp-config">

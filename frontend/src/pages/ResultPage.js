@@ -42,7 +42,7 @@ const ResultPage = () => {
   const [pendingRewards, setPendingRewards] = useState([]);
   const [loadingPendingRewards, setLoadingPendingRewards] = useState(false);
   const [selectedRewardId, setSelectedRewardId] = useState(null);
-  const [stampConfig, setStampConfig] = useState({ stamp_mode: null, spend_threshold: 10000 });
+  const [stampConfig, setStampConfig] = useState({ stamp_mode: null, spend_threshold: 10000, visit_stamps_per_visit: 1 });
   const [loadingStampConfig, setLoadingStampConfig] = useState(false);
   const [discountTiers, setDiscountTiers] = useState([]);
   const [tierProgress, setTierProgress] = useState(null);
@@ -122,7 +122,11 @@ const ResultPage = () => {
       try {
         const configResponse = await axios.get(`${API}/stamp-config`, { headers: { Authorization: `Bearer ${token}` } });
         if (configResponse.data.stamp_mode) {
-          setStampConfig({ stamp_mode: configResponse.data.stamp_mode, spend_threshold: configResponse.data.spend_threshold || 10000 });
+          setStampConfig({
+            stamp_mode: configResponse.data.stamp_mode,
+            spend_threshold: configResponse.data.spend_threshold || 10000,
+            visit_stamps_per_visit: configResponse.data.visit_stamps_per_visit || 1
+          });
         }
       } catch { /* ignore */ }
       finally { setLoadingStampConfig(false); }
@@ -263,7 +267,7 @@ const ResultPage = () => {
       if (purchaseAmount) details.push({ label: 'Monto de Compra', value: formatCurrency(parseFloat(purchaseAmount) || 0) });
       const stampMode = stampConfig.stamp_mode;
       if (stampMode === 'spend') details.push({ label: 'Modo', value: `Por Compra (1 sello cada ${formatCurrency(stampConfig.spend_threshold)})` });
-      else if (stampMode === 'visit') details.push({ label: 'Sellos', value: '1 (por visita)' });
+      else if (stampMode === 'visit') details.push({ label: 'Sellos', value: `${stampConfig.visit_stamps_per_visit || 1} (por visita)` });
       else details.push({ label: 'Cantidad de Sellos', value: actionAmount });
     } else if (actionLower === 'agregar' && normalizedType === 'reward') {
       if (detectedAccrualMode === 'spend') {
@@ -358,8 +362,15 @@ const ResultPage = () => {
       
       // STAMP CARD VISIT MODE
       if (normalizedType === 'stamp' && actionKey === 'agregar' && stampConfig.stamp_mode === 'visit') {
+        const visitPurchaseVal = parseFloat(confirmPurchaseAmount || purchaseAmount) || 0;
+        if (minAmount > 0 && visitPurchaseVal < minAmount) {
+          toast.error(`El monto mínimo es ${formatCurrency(minAmount)} — no aplica para acumular`);
+          setLoading(false);
+          return;
+        }
+        const stampsPerVisit = stampConfig.visit_stamps_per_visit || 1;
         const apiResponse = await axios.post(`${API}/cards/${card.id}/add-stamp`, {
-          amount: 1, comment: comment || '', purchaseSum: parseFloat(confirmPurchaseAmount || purchaseAmount) || 0, gerente: gerente_name
+          amount: stampsPerVisit, comment: comment || '', purchaseSum: visitPurchaseVal, gerente: gerente_name
         }, { headers: { Authorization: `Bearer ${token}` } });
         if (apiResponse.data.success) {
           setCard(apiResponse.data.card);

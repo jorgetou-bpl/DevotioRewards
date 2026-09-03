@@ -61,6 +61,9 @@ const WorkspaceAdminPage = () => {
   const [savingCommentMode, setSavingCommentMode] = useState(false);
   const [stampTemplates, setStampTemplates] = useState([]);
   const [loadingStampTemplates, setLoadingStampTemplates] = useState(true);
+  const [stampConfigOverrides, setStampConfigOverrides] = useState([]);
+  const [selectedStampTemplateId, setSelectedStampTemplateId] = useState('');
+  const [deletingStampOverride, setDeletingStampOverride] = useState(false);
   const [rewardAccrualMode, setRewardAccrualMode] = useState(null);
   const [savingRewardAccrualMode, setSavingRewardAccrualMode] = useState(false);
   // Currency, mandatory comments, and manual search — moved here from the
@@ -215,6 +218,7 @@ const WorkspaceAdminPage = () => {
 
     Promise.all([
       axios.get(`${API}/stamp-config`, { params, headers }),
+      axios.get(`${API}/stamp-config/all`, { params, headers }),
       axios.get(`${API}/discount-tiers/cashback`, { params, headers }),
       axios.get(`${API}/discount-tiers/discount`, { params, headers }),
       axios.get(`${API}/gift-card-config`, { params, headers }),
@@ -222,7 +226,7 @@ const WorkspaceAdminPage = () => {
       axios.get(`${API}/reward-accrual-config`, { params, headers }),
       axios.get(`${API}/workspace-preferences`, { params, headers })
     ])
-      .then(([stampResp, cashbackResp, discountResp, giftResp, commentResp, rewardResp, prefsResp]) => {
+      .then(([stampResp, stampAllResp, cashbackResp, discountResp, giftResp, commentResp, rewardResp, prefsResp]) => {
         if (stampResp.data.stamp_mode) {
           setStampConfig({
             stamp_mode: stampResp.data.stamp_mode,
@@ -232,6 +236,7 @@ const WorkspaceAdminPage = () => {
         } else {
           setStampConfig({ stamp_mode: null, spend_threshold: 10000, visit_stamps_per_visit: 1 });
         }
+        setStampConfigOverrides(stampAllResp.data.configs || []);
         setTiersByType({ cashback: cashbackResp.data.tiers || [], discount: discountResp.data.tiers || [] });
         setGiftCardAllowAdd(!!giftResp.data.allow_add);
         setCommentMode(commentResp.data.mode || 'open');
@@ -245,6 +250,41 @@ const WorkspaceAdminPage = () => {
       .catch((error) => console.error('Error loading card configuration:', error))
       .finally(() => setConfigLoading(false));
   }, [targetWorkspaceId, user]);
+
+  // Switch the displayed Sellos config when the admin picks a specific
+  // template — falls back to the workspace default's values as a starting
+  // point when that template has no override of its own yet.
+  useEffect(() => {
+    const defaultConfig = stampConfigOverrides.find((c) => !c.template_id);
+    const specificConfig = selectedStampTemplateId
+      ? stampConfigOverrides.find((c) => c.template_id === selectedStampTemplateId)
+      : null;
+    const source = specificConfig || defaultConfig;
+    setStampConfig({
+      stamp_mode: source?.stamp_mode || null,
+      spend_threshold: source?.spend_threshold || 10000,
+      visit_stamps_per_visit: source?.visit_stamps_per_visit || 1
+    });
+  }, [selectedStampTemplateId, stampConfigOverrides]);
+
+  const hasStampOverride = selectedStampTemplateId
+    ? stampConfigOverrides.some((c) => c.template_id === selectedStampTemplateId)
+    : false;
+
+  const handleDeleteStampOverride = async () => {
+    if (!selectedStampTemplateId) return;
+    setDeletingStampOverride(true);
+    try {
+      const token = localStorage.getItem('token');
+      await axios.delete(`${API}/stamp-config/by-template/${selectedStampTemplateId}`, {
+        params: { workspace_id: targetWorkspaceId },
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setStampConfigOverrides((prev) => prev.filter((c) => c.template_id !== selectedStampTemplateId));
+      toast.success('Configuración específica eliminada — vuelve a usar el valor por defecto');
+    } catch { toast.error('Error al eliminar configuración específica'); }
+    finally { setDeletingStampOverride(false); }
+  };
 
   // Reward tier structure for each stamp card, read directly from Boomerangme —
   // this is the source of truth (e.g. rewards at 2 and 5 stamps), not something
@@ -321,11 +361,17 @@ const WorkspaceAdminPage = () => {
     setSavingStampConfig(true);
     try {
       const token = localStorage.getItem('token');
+      const params = { workspace_id: targetWorkspaceId };
+      if (selectedStampTemplateId) params.template_id = selectedStampTemplateId;
       await axios.post(`${API}/stamp-config`, stampConfig, {
-        params: { workspace_id: targetWorkspaceId },
+        params,
         headers: { Authorization: `Bearer ${token}` }
       });
-      toast.success('Configuración de sellos guardada');
+      setStampConfigOverrides((prev) => {
+        const withoutCurrent = prev.filter((c) => (c.template_id || null) !== (selectedStampTemplateId || null));
+        return [...withoutCurrent, { ...stampConfig, template_id: selectedStampTemplateId || null }];
+      });
+      toast.success(selectedStampTemplateId ? 'Configuración específica guardada' : 'Configuración de sellos guardada');
     } catch { toast.error('Error al guardar configuración'); }
     finally { setSavingStampConfig(false); }
   };
@@ -838,6 +884,31 @@ const WorkspaceAdminPage = () => {
                   <Stamp className="h-5 w-5 text-[#0B0B16]" />
                   <p className="text-xs sm:text-sm font-semibold uppercase tracking-widest text-zinc-500">Tarjetas de Sellos</p>
                 </div>
+                {stampTemplates.length > 1 && (
+                  <div className="flex items-center justify-between gap-2 pb-1">
+                    <div>
+                      <p className="text-xs text-zinc-500 mb-1">Aplica a</p>
+                      <select value={selectedStampTemplateId} onChange={(e) => setSelectedStampTemplateId(e.target.value)}
+                        className="h-9 border border-zinc-200 rounded-lg px-3 text-sm bg-white" data-testid="stamp-template-selector">
+                        <option value="">Todas (configuración por defecto)</option>
+                        {stampTemplates.map((t) => (
+                          <option key={t.id} value={t.id}>{t.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                    {hasStampOverride && (
+                      <Button variant="outline" size="sm" onClick={handleDeleteStampOverride} disabled={deletingStampOverride}
+                        className="text-xs text-red-700 hover:bg-red-50 border-red-200" data-testid="delete-stamp-override">
+                        {deletingStampOverride ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Usar la de por defecto'}
+                      </Button>
+                    )}
+                  </div>
+                )}
+                {selectedStampTemplateId && !hasStampOverride && (
+                  <p className="text-xs text-amber-600">
+                    Esta plantilla no tiene configuración propia — muestra los valores por defecto como punto de partida; al guardar se crea una específica solo para ella.
+                  </p>
+                )}
                 <div className="space-y-2">
                   {[
                     { value: 'spend', label: 'Por Monto de Compra' },

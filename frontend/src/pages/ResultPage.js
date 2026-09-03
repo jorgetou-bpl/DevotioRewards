@@ -135,7 +135,8 @@ const ResultPage = () => {
       setLoadingStampConfig(true);
       const token = localStorage.getItem('token');
       try {
-        const configResponse = await axios.get(`${API}/stamp-config`, { headers: { Authorization: `Bearer ${token}` } });
+        const templateParam = card?.templateId ? `?template_id=${card.templateId}` : '';
+        const configResponse = await axios.get(`${API}/stamp-config${templateParam}`, { headers: { Authorization: `Bearer ${token}` } });
         if (configResponse.data.stamp_mode) {
           setStampConfig({
             stamp_mode: configResponse.data.stamp_mode,
@@ -147,7 +148,7 @@ const ResultPage = () => {
       finally { setLoadingStampConfig(false); }
     };
     fetchStampConfig();
-  }, [card?.id, cardType]);
+  }, [card?.id, card?.templateId, cardType]);
 
   // Load discount tiers
   useEffect(() => {

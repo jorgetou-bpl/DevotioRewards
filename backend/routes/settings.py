@@ -84,12 +84,24 @@ class StampConfigResponse(BaseModel):
     visit_stamps_per_visit: Optional[int] = None
 
 @router.get("/stamp-config")
-async def get_stamp_config(workspace_id: Optional[str] = None, current_user: dict = Depends(get_current_user)):
+async def get_stamp_config(
+    workspace_id: Optional[str] = None,
+    template_id: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
     """Get the stamp configuration for the user's workspace (or, for
-    super_admin, an explicitly targeted workspace)."""
+    super_admin, an explicitly targeted workspace). If template_id is given
+    and that specific template has its own override, it wins — otherwise
+    falls back to the workspace's default (template_id: None) config. This
+    is what lets a business with two "Sellos" templates configure them
+    differently instead of one rule for the whole card type."""
     ws_id = resolve_workspace_id(current_user, workspace_id)
-    query = {"workspace_id": ws_id} if ws_id else {}
-    config = await db.stamp_config.find_one(query, {"_id": 0})
+    base_query = {"workspace_id": ws_id}
+    config = None
+    if template_id:
+        config = await db.stamp_config.find_one({**base_query, "template_id": template_id}, {"_id": 0})
+    if not config:
+        config = await db.stamp_config.find_one({**base_query, "template_id": None}, {"_id": 0})
     if config:
         return StampConfigResponse(
             success=True,
@@ -99,13 +111,37 @@ async def get_stamp_config(workspace_id: Optional[str] = None, current_user: dic
         )
     return StampConfigResponse(success=True, stamp_mode=None, spend_threshold=None, visit_stamps_per_visit=None)
 
+@router.get("/stamp-config/all")
+async def list_stamp_configs(workspace_id: Optional[str] = None, current_user: dict = Depends(require_super_admin)):
+    """List every stamp config saved for a workspace — the default
+    (template_id: null) plus any per-template overrides — so the admin UI
+    can show and manage them. Devotio-only."""
+    ws_id = resolve_workspace_id(current_user, workspace_id)
+    configs = await db.stamp_config.find({"workspace_id": ws_id}, {"_id": 0}).to_list(length=100)
+    return {"success": True, "configs": configs}
+
+@router.delete("/stamp-config/by-template/{template_id}")
+async def delete_stamp_config_override(
+    template_id: str,
+    workspace_id: Optional[str] = None,
+    current_user: dict = Depends(require_super_admin)
+):
+    """Remove a template-specific stamp config override, reverting that
+    template to the workspace default. Devotio-only."""
+    ws_id = resolve_workspace_id(current_user, workspace_id)
+    result = await db.stamp_config.delete_one({"workspace_id": ws_id, "template_id": template_id})
+    return {"success": True, "deleted": result.deleted_count > 0}
+
 @router.post("/stamp-config")
 async def set_stamp_config(
     request: StampConfigRequest,
     workspace_id: Optional[str] = None,
+    template_id: Optional[str] = None,
     current_user: dict = Depends(require_super_admin)
 ):
-    """Set the stamp configuration for a workspace. Devotio-only."""
+    """Set the stamp configuration for a workspace, or for one specific
+    template within it (template_id) when the business has multiple Sellos
+    templates with different rules. Devotio-only."""
     valid_modes = ['spend', 'visit', 'manual']
     if request.stamp_mode not in valid_modes:
         raise HTTPException(status_code=400, detail=f"Modo inválido. Use: {', '.join(valid_modes)}")
@@ -113,11 +149,12 @@ async def set_stamp_config(
         raise HTTPException(status_code=400, detail="Los sellos por visita deben ser al menos 1")
 
     ws_id = resolve_workspace_id(current_user, workspace_id)
-    query = {"workspace_id": ws_id} if ws_id else {}
+    query = {"workspace_id": ws_id, "template_id": template_id}
     await db.stamp_config.update_one(
         query,
         {"$set": {
             "workspace_id": ws_id,
+            "template_id": template_id,
             "stamp_mode": request.stamp_mode,
             "spend_threshold": request.spend_threshold,
             "visit_stamps_per_visit": request.visit_stamps_per_visit or 1,

@@ -53,17 +53,32 @@ const OperationsPage = () => {
   const [dashboardFilters, setDashboardFilters] = useState({ card_types: [] });
   const [dashboardCardType, setDashboardCardType] = useState('');
   const [dashboardCardTypeDropdownOpen, setDashboardCardTypeDropdownOpen] = useState(false);
-  
+  const [dashboardTemplateId, setDashboardTemplateId] = useState('');
+  const [dashboardTemplateDropdownOpen, setDashboardTemplateDropdownOpen] = useState(false);
+
   // Filter state
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [selectedGerente, setSelectedGerente] = useState('');
   const [selectedOperationType, setSelectedOperationType] = useState('');
   const [selectedCardType, setSelectedCardType] = useState('');
+  const [selectedTemplateId, setSelectedTemplateId] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [gerenteDropdownOpen, setGerenteDropdownOpen] = useState(false);
   const [typeDropdownOpen, setTypeDropdownOpen] = useState(false);
   const [cardTypeDropdownOpen, setCardTypeDropdownOpen] = useState(false);
+  const [templateDropdownOpen, setTemplateDropdownOpen] = useState(false);
+
+  // Real Boomerangme templates for this workspace — used to let the filter
+  // target a specific card (e.g. one of two "Sellos" templates with
+  // different rules), not just the card type.
+  const [templatesList, setTemplatesList] = useState([]);
+
+  useEffect(() => {
+    axios.get(`${API}/templates`, { headers: { Authorization: `Bearer ${token}` } })
+      .then((res) => setTemplatesList(res.data?.templates || []))
+      .catch(() => setTemplatesList([]));
+  }, [token]);
 
   const fetchOperations = useCallback(async (page = 1) => {
     try {
@@ -77,11 +92,12 @@ const OperationsPage = () => {
       if (selectedGerente) params.append('gerente', selectedGerente);
       if (selectedOperationType) params.append('operation_type', selectedOperationType);
       if (selectedCardType) params.append('card_type', selectedCardType);
-      
+      if (selectedTemplateId) params.append('template_id', selectedTemplateId);
+
       const response = await axios.get(`${API}/operations?${params.toString()}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      
+
       if (response.data.success) {
         setOperations(response.data.operations);
         setMeta(response.data.meta);
@@ -93,7 +109,7 @@ const OperationsPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [token, startDate, endDate, selectedGerente, selectedOperationType, selectedCardType]);
+  }, [token, startDate, endDate, selectedGerente, selectedOperationType, selectedCardType, selectedTemplateId]);
 
   const fetchDashboard = useCallback(async () => {
     try {
@@ -102,11 +118,12 @@ const OperationsPage = () => {
       if (startDate) params.append('start_date', startDate);
       if (endDate) params.append('end_date', endDate);
       if (dashboardCardType) params.append('card_type', dashboardCardType);
-      
+      if (dashboardTemplateId) params.append('template_id', dashboardTemplateId);
+
       const response = await axios.get(`${API}/operations/summary?${params.toString()}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      
+
       if (response.data.success) {
         setDashboardData(response.data.summary);
         if (response.data.filters) {
@@ -119,7 +136,7 @@ const OperationsPage = () => {
     } finally {
       setDashboardLoading(false);
     }
-  }, [token, startDate, endDate, dashboardCardType]);
+  }, [token, startDate, endDate, dashboardCardType, dashboardTemplateId]);
 
   useEffect(() => {
     if (activeTab === 'historial') {
@@ -140,7 +157,8 @@ const OperationsPage = () => {
       if (selectedGerente) params.append('gerente', selectedGerente);
       if (selectedOperationType) params.append('operation_type', selectedOperationType);
       if (selectedCardType) params.append('card_type', selectedCardType);
-      
+      if (selectedTemplateId) params.append('template_id', selectedTemplateId);
+
       const response = await axios.get(`${API}/operations/export?${params.toString()}`, {
         headers: { Authorization: `Bearer ${token}` },
         responseType: 'blob'
@@ -172,6 +190,7 @@ const OperationsPage = () => {
     setSelectedGerente('');
     setSelectedOperationType('');
     setSelectedCardType('');
+    setSelectedTemplateId('');
   };
 
   const formatDate = (dateString) => {
@@ -205,7 +224,7 @@ const OperationsPage = () => {
     return amount;
   };
 
-  const hasActiveFilters = startDate || endDate || selectedGerente || selectedOperationType || selectedCardType;
+  const hasActiveFilters = startDate || endDate || selectedGerente || selectedOperationType || selectedCardType || selectedTemplateId;
 
   // Calculate total sales from dashboard data
   const totalSales = dashboardData?.by_gerente?.reduce((sum, g) => sum + (g.total_purchase_sum || 0), 0) || 0;
@@ -330,6 +349,7 @@ const OperationsPage = () => {
                         key={cardType}
                         onClick={() => {
                           setDashboardCardType(cardType);
+                          setDashboardTemplateId('');
                           setDashboardCardTypeDropdownOpen(false);
                         }}
                         className={`w-full flex items-center justify-between p-2 hover:bg-zinc-50 ${dashboardCardType === cardType ? 'bg-purple-50' : ''}`}
@@ -341,6 +361,44 @@ const OperationsPage = () => {
                   </div>
                 )}
               </div>
+              {dashboardCardType && templatesList.some((t) => t.type === dashboardCardType) && (
+                <div className="flex-1 relative">
+                  <label className="block text-sm font-medium text-zinc-700 mb-1">
+                    Tarjeta específica
+                  </label>
+                  <button
+                    onClick={() => setDashboardTemplateDropdownOpen(!dashboardTemplateDropdownOpen)}
+                    className="w-full flex items-center justify-between p-2 border-2 border-zinc-200 rounded-md hover:border-[#0B0B16] transition-colors bg-white h-10"
+                    data-testid="dashboard-template-dropdown"
+                  >
+                    <span className={dashboardTemplateId ? 'text-[#0B0B16]' : 'text-zinc-400'}>
+                      {templatesList.find((t) => String(t.id) === dashboardTemplateId)?.name || 'Todas'}
+                    </span>
+                    <ChevronDown className={`h-4 w-4 text-zinc-400 transition-transform ${dashboardTemplateDropdownOpen ? 'rotate-180' : ''}`} />
+                  </button>
+                  {dashboardTemplateDropdownOpen && (
+                    <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-zinc-200 rounded-md shadow-lg z-50 max-h-48 overflow-y-auto">
+                      <button
+                        onClick={() => { setDashboardTemplateId(''); setDashboardTemplateDropdownOpen(false); }}
+                        className={`w-full flex items-center justify-between p-2 hover:bg-zinc-50 ${!dashboardTemplateId ? 'bg-purple-50' : ''}`}
+                      >
+                        <span>Todas</span>
+                        {!dashboardTemplateId && <Check className="h-4 w-4 text-[#0B0B16]" />}
+                      </button>
+                      {templatesList.filter((t) => t.type === dashboardCardType).map((t) => (
+                        <button
+                          key={t.id}
+                          onClick={() => { setDashboardTemplateId(String(t.id)); setDashboardTemplateDropdownOpen(false); }}
+                          className={`w-full flex items-center justify-between p-2 hover:bg-zinc-50 ${dashboardTemplateId === String(t.id) ? 'bg-purple-50' : ''}`}
+                        >
+                          <span>{t.name}</span>
+                          {dashboardTemplateId === String(t.id) && <Check className="h-4 w-4 text-[#0B0B16]" />}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
               <Button
                 onClick={fetchDashboard}
                 className="btn-primary"
@@ -349,10 +407,10 @@ const OperationsPage = () => {
               >
                 {dashboardLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Aplicar'}
               </Button>
-              {(startDate || endDate || dashboardCardType) && (
+              {(startDate || endDate || dashboardCardType || dashboardTemplateId) && (
                 <Button
                   variant="outline"
-                  onClick={() => { setStartDate(''); setEndDate(''); setDashboardCardType(''); }}
+                  onClick={() => { setStartDate(''); setEndDate(''); setDashboardCardType(''); setDashboardTemplateId(''); }}
                   className="border-2 border-zinc-200"
                 >
                   <X className="h-4 w-4" />
@@ -744,6 +802,7 @@ const OperationsPage = () => {
                         <button
                           onClick={() => {
                             setSelectedCardType('');
+                            setSelectedTemplateId('');
                             setCardTypeDropdownOpen(false);
                           }}
                           className={`w-full flex items-center justify-between p-2 hover:bg-zinc-50 ${!selectedCardType ? 'bg-purple-50' : ''}`}
@@ -756,6 +815,7 @@ const OperationsPage = () => {
                             key={cardType}
                             onClick={() => {
                               setSelectedCardType(cardType);
+                              setSelectedTemplateId('');
                               setCardTypeDropdownOpen(false);
                             }}
                             className={`w-full flex items-center justify-between p-2 hover:bg-zinc-50 ${selectedCardType === cardType ? 'bg-purple-50' : ''}`}
@@ -767,8 +827,54 @@ const OperationsPage = () => {
                       </div>
                     )}
                   </div>
+
+                  {/* Specific Card (Template) Dropdown — only when a type is selected and it has multiple templates */}
+                  {selectedCardType && templatesList.some((t) => t.type === selectedCardType) && (
+                    <div className="relative">
+                      <label className="block text-sm font-medium text-zinc-700 mb-1">
+                        Tarjeta específica
+                      </label>
+                      <button
+                        onClick={() => {
+                          setTemplateDropdownOpen(!templateDropdownOpen);
+                          setGerenteDropdownOpen(false);
+                          setTypeDropdownOpen(false);
+                          setCardTypeDropdownOpen(false);
+                        }}
+                        className="w-full flex items-center justify-between p-2 border-2 border-zinc-200 rounded-md hover:border-[#0B0B16] transition-colors bg-white"
+                        data-testid="template-dropdown"
+                      >
+                        <span className={selectedTemplateId ? 'text-[#0B0B16]' : 'text-zinc-400'}>
+                          {templatesList.find((t) => String(t.id) === selectedTemplateId)?.name || 'Todas'}
+                        </span>
+                        <ChevronDown className={`h-4 w-4 text-zinc-400 transition-transform ${templateDropdownOpen ? 'rotate-180' : ''}`} />
+                      </button>
+
+                      {templateDropdownOpen && (
+                        <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-zinc-200 rounded-md shadow-lg z-50 max-h-48 overflow-y-auto">
+                          <button
+                            onClick={() => { setSelectedTemplateId(''); setTemplateDropdownOpen(false); }}
+                            className={`w-full flex items-center justify-between p-2 hover:bg-zinc-50 ${!selectedTemplateId ? 'bg-purple-50' : ''}`}
+                          >
+                            <span>Todas</span>
+                            {!selectedTemplateId && <Check className="h-4 w-4 text-[#0B0B16]" />}
+                          </button>
+                          {templatesList.filter((t) => t.type === selectedCardType).map((t) => (
+                            <button
+                              key={t.id}
+                              onClick={() => { setSelectedTemplateId(String(t.id)); setTemplateDropdownOpen(false); }}
+                              className={`w-full flex items-center justify-between p-2 hover:bg-zinc-50 ${selectedTemplateId === String(t.id) ? 'bg-purple-50' : ''}`}
+                            >
+                              <span>{t.name}</span>
+                              {selectedTemplateId === String(t.id) && <Check className="h-4 w-4 text-[#0B0B16]" />}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
-                
+
                 {/* Apply Filters Button */}
                 <div className="mt-4 flex justify-end">
                   <Button

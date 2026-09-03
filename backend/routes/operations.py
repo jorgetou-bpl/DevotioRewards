@@ -26,6 +26,7 @@ async def get_operations(
     gerente: Optional[str] = None,
     operation_type: Optional[str] = None,
     card_type: Optional[str] = None,
+    template_id: Optional[str] = None,
     card_id: Optional[str] = None,
     page: int = 1,
     items_per_page: int = 50,
@@ -36,7 +37,7 @@ async def get_operations(
     ws_id = current_user.get("workspace_id")
     if ws_id:
         query_filter["workspace_id"] = ws_id
-    
+
     if start_date:
         query_filter["created_at"] = {"$gte": start_date}
     if end_date:
@@ -50,6 +51,8 @@ async def get_operations(
         query_filter["operation_type"] = operation_type
     if card_type:
         query_filter["card_type"] = card_type
+    if template_id:
+        query_filter["template_id"] = template_id
     if card_id:
         query_filter["card_id"] = card_id
     
@@ -90,6 +93,7 @@ async def export_operations(
     gerente: Optional[str] = None,
     operation_type: Optional[str] = None,
     card_type: Optional[str] = None,
+    template_id: Optional[str] = None,
     card_id: Optional[str] = None,
     current_user: dict = Depends(get_current_user)
 ):
@@ -98,7 +102,7 @@ async def export_operations(
     ws_id = current_user.get("workspace_id")
     if ws_id:
         query_filter["workspace_id"] = ws_id
-    
+
     if start_date:
         query_filter["created_at"] = {"$gte": start_date}
     if end_date:
@@ -112,6 +116,8 @@ async def export_operations(
         query_filter["operation_type"] = operation_type
     if card_type:
         query_filter["card_type"] = card_type
+    if template_id:
+        query_filter["template_id"] = template_id
     if card_id:
         query_filter["card_id"] = card_id
     
@@ -245,6 +251,7 @@ async def get_operations_summary(
     start_date: Optional[str] = None,
     end_date: Optional[str] = None,
     card_type: Optional[str] = None,
+    template_id: Optional[str] = None,
     current_user: dict = Depends(get_current_user)
 ):
     """Get summary statistics for operations."""
@@ -252,7 +259,7 @@ async def get_operations_summary(
     ws_id = current_user.get("workspace_id")
     if ws_id:
         query_filter["workspace_id"] = ws_id
-    
+
     if start_date:
         query_filter["created_at"] = {"$gte": start_date}
     if end_date:
@@ -262,6 +269,8 @@ async def get_operations_summary(
             query_filter["created_at"] = {"$lte": end_date + "T23:59:59"}
     if card_type:
         query_filter["card_type"] = card_type
+    if template_id:
+        query_filter["template_id"] = template_id
     
     total_operations = await db.operations.count_documents(query_filter)
     

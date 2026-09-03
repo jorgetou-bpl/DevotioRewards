@@ -1,6 +1,7 @@
 # Template routes
 
 from fastapi import APIRouter, HTTPException, Depends
+from typing import Optional
 import logging
 from utils.auth import get_current_user, require_super_admin
 from utils.boomerang import call_boomerang_api, get_user_friendly_error, get_api_key_for_workspace, get_workspace_api_key
@@ -9,6 +10,27 @@ logger = logging.getLogger(__name__)
 router = APIRouter(tags=["templates"])
 
 STAMP_TEMPLATE_TYPE = 'stamp'  # Boomerangme returns type as a string, not our numeric notation
+
+@router.get("/templates")
+async def list_templates(workspace_id: Optional[str] = None, current_user: dict = Depends(get_current_user)):
+    """List all Boomerangme templates (id, name, type) for the current user's
+    own workspace — or, for super_admin, an explicitly targeted workspace.
+    Any authenticated role may call this; it only exposes the same
+    id/name/type already visible on every scanned card, used to populate
+    'filter by specific card' pickers (e.g. operations history/dashboard)."""
+    ws_id = workspace_id if (workspace_id and current_user.get("role") == "super_admin") else current_user.get("workspace_id")
+    api_key = await get_api_key_for_workspace(ws_id)
+    response = await call_boomerang_api(
+        'GET', '/templates', {"itemsPerPage": 100}, raise_on_error=False, api_key=api_key
+    )
+    if response.get('code') != 200:
+        return {"success": True, "templates": []}
+
+    templates = [
+        {"id": t.get("id"), "name": t.get("name") or f"Plantilla #{t.get('id')}", "type": t.get("type")}
+        for t in (response.get('data', []) or [])
+    ]
+    return {"success": True, "templates": templates}
 
 @router.get("/templates/by-type")
 async def list_templates_by_type(

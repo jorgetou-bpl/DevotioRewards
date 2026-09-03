@@ -3,24 +3,25 @@
 from fastapi import APIRouter, HTTPException, Depends
 import logging
 from utils.auth import get_current_user, require_super_admin
-from utils.boomerang import call_boomerang_api, get_user_friendly_error, get_api_key_for_workspace
+from utils.boomerang import call_boomerang_api, get_user_friendly_error, get_api_key_for_workspace, get_workspace_api_key
 
 logger = logging.getLogger(__name__)
 router = APIRouter(tags=["templates"])
 
-STAMP_TEMPLATE_TYPE = 0
+STAMP_TEMPLATE_TYPE = 'stamp'  # Boomerangme returns type as a string, not our numeric notation
 
 @router.get("/templates/by-type")
 async def list_templates_by_type(
     workspace_id: str,
-    template_type: int,
+    template_type: str,
     current_user: dict = Depends(require_super_admin)
 ):
-    """List a workspace's Boomerangme templates of a given type (0=stamp,
-    1=cashback, 2=multipass, 3=coupon, 4=discount, 5=gift, 6=membership,
-    7=reward), with raw fields included — used to discover what a template
-    actually exposes (e.g. a coupon's discount/benefit fields) before
-    building type-specific UI around it. Devotio-only."""
+    """List a workspace's Boomerangme templates of a given type — Boomerangme's
+    own type strings (e.g. 'stamp', 'coupon', 'discount', 'cashback',
+    'certificate', 'membership', 'reward', 'subscription'), not our numeric
+    notation. Raw fields included — used to discover what a template actually
+    exposes (e.g. a coupon's benefit text) before building UI around it, and
+    as groundwork for per-template (not just per-type) card config. Devotio-only."""
     api_key = await get_api_key_for_workspace(workspace_id)
     response = await call_boomerang_api(
         'GET', '/templates', {"itemsPerPage": 100}, raise_on_error=False, api_key=api_key
@@ -28,7 +29,8 @@ async def list_templates_by_type(
     if response.get('code') != 200:
         raise HTTPException(status_code=502, detail=get_user_friendly_error("api_error"))
 
-    matches = [t for t in (response.get('data', []) or []) if t.get('type') == template_type]
+    all_templates = response.get('data', []) or []
+    matches = [t for t in all_templates if t.get('type') == template_type]
     return {"success": True, "templates": matches}
 
 @router.get("/templates/stamp-cards")
@@ -68,17 +70,19 @@ async def list_stamp_card_templates(workspace_id: str, current_user: dict = Depe
 async def get_template(template_id: str, current_user: dict = Depends(get_current_user)):
     """Get card template details including reward tier configuration and accrual program info."""
     try:
-        response = await call_boomerang_api('GET', f'/templates/{template_id}', {})
-        
+        api_key = await get_workspace_api_key(current_user)
+        response = await call_boomerang_api('GET', f'/templates/{template_id}', {}, api_key=api_key)
+
         if response.get('code') == 200:
             template_data = response.get('data', {})
             reward_tiers = template_data.get('rewardTiers', [])
-            
+            mechanics = template_data.get('mechanics', {}) or {}
+
             # Extract accrual program info for stamp/reward cards
             # Possible values: 'points' (manual), 'spend' (purchase amount), 'visit' (per visit)
-            accrual_program = template_data.get('accrualProgram') or template_data.get('program')
+            accrual_program = mechanics.get('program', {}).get('type') or template_data.get('accrualProgram')
             accrual_ratio = template_data.get('accrualRatio') or template_data.get('pointsRatio', {})
-            
+
             return {
                 "success": True,
                 "template": {
@@ -89,6 +93,10 @@ async def get_template(template_id: str, current_user: dict = Depends(get_curren
                     # Accrual program configuration
                     "accrualProgram": accrual_program,
                     "accrualRatio": accrual_ratio,
+                    # Free-text benefit description (e.g. a coupon's "10% OFF" or
+                    # "buy one get one free") — Boomerangme stores this under
+                    # mechanics.firstVisitDiscount regardless of card type.
+                    "benefitDescription": mechanics.get('firstVisitDiscount') or None,
                     # Include raw data for debugging
                     "rawKeys": list(template_data.keys())
                 }

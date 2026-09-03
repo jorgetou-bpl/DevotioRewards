@@ -1,14 +1,20 @@
 import React from 'react';
-import { Check, X } from 'lucide-react';
+import { Check, X, Ticket } from 'lucide-react';
 import { PurchaseAmountInput, ActionButton } from '../shared';
 
 export const CouponAction = ({
-  card, purchaseAmount, setPurchaseAmount, loading, openConfirmation, currencyInfo, actionConfig
+  card, benefitDescription, purchaseAmount, setPurchaseAmount, loading, openConfirmation, currencyInfo, actionConfig
 }) => {
   const isCouponRedeemed = card.couponRedeemed === true;
 
   return (
     <div className="space-y-4 sm:space-y-6">
+      {benefitDescription && (
+        <div className="flex items-start gap-3 p-4 rounded-xl border-2 border-[#0B0B16] bg-[#8CA4FE]/10" data-testid="coupon-benefit">
+          <Ticket className="h-5 w-5 text-[#0B0B16] flex-shrink-0 mt-0.5" />
+          <p className="text-sm font-medium text-[#0B0B16]">{benefitDescription}</p>
+        </div>
+      )}
       <div className="text-center p-4 sm:p-6 bg-zinc-50 rounded-xl">
         {isCouponRedeemed ? (
           <>

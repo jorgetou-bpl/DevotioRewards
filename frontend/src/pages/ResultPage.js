@@ -36,6 +36,7 @@ const ResultPage = () => {
   const [successModal, setSuccessModal] = useState({ open: false, message: '' });
   const [templateRewardTiers, setTemplateRewardTiers] = useState([]);
   const [loadingTemplate, setLoadingTemplate] = useState(false);
+  const [couponBenefit, setCouponBenefit] = useState(null);
   const [detectedAccrualMode, setDetectedAccrualMode] = useState(null);
   const [detectingMode, setDetectingMode] = useState(false);
   const [needsModeSelection, setNeedsModeSelection] = useState(false);
@@ -89,6 +90,20 @@ const ResultPage = () => {
       }
     };
     if (card) fetchTemplateRewardTiers();
+  }, [card, cardType]);
+
+  // Fetch the coupon's benefit description (e.g. "10% OFF") so the operator
+  // and the flow can see exactly what the customer is redeeming.
+  useEffect(() => {
+    const fetchCouponBenefit = async () => {
+      const normalizedType = cardType ? cardType.replace('_card', '') : '';
+      if (normalizedType !== 'coupon' || !card?.templateId) { setCouponBenefit(null); return; }
+      try {
+        const response = await axios.get(`${API}/templates/${card.templateId}`);
+        setCouponBenefit(response.data?.template?.benefitDescription || null);
+      } catch { setCouponBenefit(null); }
+    };
+    if (card) fetchCouponBenefit();
   }, [card, cardType]);
 
   // Fetch pending rewards for stamp Canjear tab
@@ -538,7 +553,7 @@ const ResultPage = () => {
     }
     // Coupon
     if (activeTab === 'Usar') {
-      return <CouponAction card={card} purchaseAmount={purchaseAmount} setPurchaseAmount={setPurchaseAmount} loading={loading} openConfirmation={openConfirmation} currencyInfo={currencyInfo} actionConfig={actionConfig} />;
+      return <CouponAction card={card} benefitDescription={couponBenefit} purchaseAmount={purchaseAmount} setPurchaseAmount={setPurchaseAmount} loading={loading} openConfirmation={openConfirmation} currencyInfo={currencyInfo} actionConfig={actionConfig} />;
     }
     // Default (gift card Agregar, etc.)
     return <DefaultAddAction cardType={cardType} balance={balance} actionAmount={actionAmount} setActionAmount={setActionAmount} loading={loading} openConfirmation={openConfirmation} activeTab={activeTab} formatCurrency={formatCurrency} currencyInfo={currencyInfo} actionConfig={actionConfig} />;

@@ -5,7 +5,7 @@ import { PurchaseAmountInput, AmountCounter, BalanceDisplay, ActionButton } from
 export const RewardAddAction = ({
   balance, card, detectedAccrualMode, detectingMode, needsModeSelection,
   purchaseAmount, setPurchaseAmount, actionAmount, setActionAmount,
-  loading, openConfirmation, currencyInfo, actionConfig
+  loading, openConfirmation, currencyInfo, formatCurrency, pointsRatio, actionConfig
 }) => {
   const bonusBalance = balance.bonusBalance || 0;
   const availableRewardTiers = card.availableRewardTiers || [];
@@ -50,7 +50,10 @@ export const RewardAddAction = ({
       
       {detectedAccrualMode === 'spend' && !detectingMode && !needsModeSelection && (
         <PurchaseAmountInput value={purchaseAmount} onChange={setPurchaseAmount} currencyInfo={currencyInfo}
-          required hint="Los puntos se calcularán automáticamente según las reglas del programa"
+          required
+          hint={pointsRatio
+            ? `${formatCurrency(pointsRatio.spentValue)} = ${pointsRatio.earnedValue} puntos`
+            : 'Los puntos se calcularán automáticamente según las reglas del programa'}
           testId="reward-purchase-amount" />
       )}
       

@@ -66,6 +66,17 @@ const WorkspaceAdminPage = () => {
   // per specific Boomerangme template (not just once per card type) — same
   // pattern piloted with Sellos above.
   const rewardAccrualTpl = useTemplatedConfig({ basePath: '/reward-accrual-config', templateType: 'reward', targetWorkspaceId, active: user?.role === 'super_admin' });
+  // "Por Compra" ratio (e.g. ₡1 = 10 puntos) — read-only, sourced live from the
+  // selected template itself (mechanics.program.spentValue/earnedValue), same
+  // treatment as Sellos' stamps-per-visit: Boomerangme is the source of truth.
+  const [rewardTemplateRatio, setRewardTemplateRatio] = useState(null);
+  useEffect(() => {
+    if (!rewardAccrualTpl.selectedTemplateId) { setRewardTemplateRatio(null); return; }
+    const token = localStorage.getItem('token');
+    axios.get(`${API}/templates/${rewardAccrualTpl.selectedTemplateId}`, { headers: { Authorization: `Bearer ${token}` } })
+      .then((res) => setRewardTemplateRatio(res.data?.template?.pointsRatio || null))
+      .catch(() => setRewardTemplateRatio(null));
+  }, [rewardAccrualTpl.selectedTemplateId]);
   const giftCardTpl = useTemplatedConfig({ basePath: '/gift-card-config', templateType: 'certificate', targetWorkspaceId, active: user?.role === 'super_admin' });
   const cashbackTiersTpl = useTemplatedConfig({ basePath: '/discount-tiers/cashback', templateType: 'cashback', targetWorkspaceId, active: user?.role === 'super_admin' });
   const discountTiersTpl = useTemplatedConfig({ basePath: '/discount-tiers/discount', templateType: 'discount', targetWorkspaceId, active: user?.role === 'super_admin' });
@@ -1003,6 +1014,24 @@ const WorkspaceAdminPage = () => {
                     </button>
                   ))}
                 </div>
+                {rewardAccrualTpl.currentConfig?.mode === 'spend' && (
+                  <div className="pt-2 bg-zinc-50 rounded-lg p-3">
+                    <p className="text-xs text-zinc-500">Tasa de puntos por compra</p>
+                    {rewardAccrualTpl.selectedTemplateId ? (
+                      rewardTemplateRatio ? (
+                        <p className="text-sm font-medium text-[#0B0B16] mt-1">
+                          {formatWithThousands(rewardTemplateRatio.spentValue)} {workspacePrefs.currency} = {rewardTemplateRatio.earnedValue} puntos — configurado en la plataforma del proveedor, no editable desde acá
+                        </p>
+                      ) : (
+                        <p className="text-sm text-zinc-400 mt-1">Sin tasa configurada en la plataforma del proveedor</p>
+                      )
+                    ) : (
+                      <p className="text-sm text-zinc-500 mt-1">
+                        Cada tarjeta usa su propia tasa, configurada en la plataforma del proveedor — selecciona una arriba para verla
+                      </p>
+                    )}
+                  </div>
+                )}
                 {rewardAccrualTpl.saving && <Loader2 className="h-4 w-4 animate-spin mx-auto text-zinc-400" />}
               </div>
 

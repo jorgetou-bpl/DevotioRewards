@@ -104,10 +104,17 @@ async def get_template(template_id: str, current_user: dict = Depends(get_curren
             reward_tiers = template_data.get('rewardTiers', [])
             mechanics = template_data.get('mechanics', {}) or {}
 
-            # Extract accrual program info for stamp/reward cards
-            # Possible values: 'points' (manual), 'spend' (purchase amount), 'visit' (per visit)
-            accrual_program = mechanics.get('program', {}).get('type') or template_data.get('accrualProgram')
-            accrual_ratio = template_data.get('accrualRatio') or template_data.get('pointsRatio', {})
+            # Extract accrual program info for reward (Puntos) cards.
+            # Possible program.type values: 'points' (manual), 'spend' (purchase
+            # amount), 'visit' (per visit). spentValue/earnedValue is the actual
+            # ratio (e.g. spentValue:1, earnedValue:10 → ₡1 = 10 puntos) —
+            # configured on the template itself and read live rather than
+            # duplicated as separate app-side config, same as stampsPerVisit.
+            program = mechanics.get('program', {}) or {}
+            accrual_program = program.get('type') or template_data.get('accrualProgram')
+            points_ratio = None
+            if program.get('spentValue') is not None and program.get('earnedValue') is not None:
+                points_ratio = {"spentValue": program.get('spentValue'), "earnedValue": program.get('earnedValue')}
 
             return {
                 "success": True,
@@ -118,7 +125,7 @@ async def get_template(template_id: str, current_user: dict = Depends(get_curren
                     "rewardTiers": reward_tiers,
                     # Accrual program configuration
                     "accrualProgram": accrual_program,
-                    "accrualRatio": accrual_ratio,
+                    "pointsRatio": points_ratio,
                     # Free-text benefit description (e.g. a coupon's "10% OFF" or
                     # "buy one get one free") — Boomerangme stores this under
                     # mechanics.firstVisitDiscount regardless of card type.

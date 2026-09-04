@@ -38,6 +38,7 @@ const ResultPage = () => {
   const [stampsPerVisit, setStampsPerVisit] = useState(1);
   const [loadingTemplate, setLoadingTemplate] = useState(false);
   const [couponBenefit, setCouponBenefit] = useState(null);
+  const [pointsRatio, setPointsRatio] = useState(null);
   const [detectedAccrualMode, setDetectedAccrualMode] = useState(null);
   const [detectingMode, setDetectingMode] = useState(false);
   const [needsModeSelection, setNeedsModeSelection] = useState(false);
@@ -109,6 +110,21 @@ const ResultPage = () => {
       } catch { setCouponBenefit(null); }
     };
     if (card) fetchCouponBenefit();
+  }, [card, cardType]);
+
+  // Fetch the "por compra" points ratio (e.g. ₡1 = 10 puntos) so the operator
+  // sees what they're accruing — read live from the template, same source of
+  // truth Boomerangme already uses to calculate points on its own end.
+  useEffect(() => {
+    const fetchPointsRatio = async () => {
+      const normalizedType = cardType ? cardType.replace('_card', '') : '';
+      if (normalizedType !== 'reward' || !card?.templateId) { setPointsRatio(null); return; }
+      try {
+        const response = await axios.get(`${API}/templates/${card.templateId}`);
+        setPointsRatio(response.data?.template?.pointsRatio || null);
+      } catch { setPointsRatio(null); }
+    };
+    if (card) fetchPointsRatio();
   }, [card, cardType]);
 
   // Fetch pending rewards for stamp Canjear tab
@@ -545,7 +561,7 @@ const ResultPage = () => {
     }
     // Reward Agregar
     if (normalizedType === 'reward' && activeTab === 'Agregar') {
-      return <RewardAddAction {...commonProps} card={card} detectedAccrualMode={detectedAccrualMode} detectingMode={detectingMode} needsModeSelection={needsModeSelection} actionConfig={actionConfig} />;
+      return <RewardAddAction {...commonProps} card={card} detectedAccrualMode={detectedAccrualMode} detectingMode={detectingMode} needsModeSelection={needsModeSelection} pointsRatio={pointsRatio} actionConfig={actionConfig} />;
     }
     // Reward Canjear
     if (normalizedType === 'reward' && activeTab === 'Canjear') {

@@ -699,7 +699,7 @@ async def set_gift_card_config(
 # own workspace_admin too, not just Devotio — the client asked for direct control
 # over their own minimum-purchase policy per card type.
 
-MIN_AMOUNT_CARD_TYPES = ['cashback', 'discount', 'stamp']
+MIN_AMOUNT_CARD_TYPES = ['cashback', 'discount', 'stamp', 'reward']
 
 class MinAmountRequest(BaseModel):
     min_amount: float

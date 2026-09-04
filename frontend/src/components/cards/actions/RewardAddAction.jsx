@@ -5,14 +5,19 @@ import { PurchaseAmountInput, AmountCounter, BalanceDisplay, ActionButton } from
 export const RewardAddAction = ({
   balance, card, detectedAccrualMode, detectingMode, needsModeSelection,
   purchaseAmount, setPurchaseAmount, actionAmount, setActionAmount,
-  loading, openConfirmation, currencyInfo, formatCurrency, pointsRatio, actionConfig
+  loading, openConfirmation, currencyInfo, formatCurrency, pointsRatio, minAmount = 0, actionConfig
 }) => {
   const bonusBalance = balance.bonusBalance || 0;
   const availableRewardTiers = card.availableRewardTiers || [];
-  const nextRewardThreshold = availableRewardTiers.length > 0 
+  const nextRewardThreshold = availableRewardTiers.length > 0
     ? availableRewardTiers.find(t => t.threshold > bonusBalance)?.threshold || 'Max'
     : null;
   const modeLabels = { spend: 'Por Compra', visit: 'Por Visita', points: 'Manual' };
+  // Applies across all three accrual modes — every mode collects a purchase
+  // amount, same treatment as Sellos.
+  const purchaseVal = parseFloat(purchaseAmount) || 0;
+  const belowMinimum = minAmount > 0 && purchaseAmount !== '' && purchaseVal < minAmount;
+  const minAmountError = belowMinimum ? `El monto mínimo es ${formatCurrency(minAmount)} — no aplica para acumular` : null;
 
   return (
     <div className="space-y-4 sm:space-y-6">
@@ -51,16 +56,17 @@ export const RewardAddAction = ({
       {detectedAccrualMode === 'spend' && !detectingMode && !needsModeSelection && (
         <PurchaseAmountInput value={purchaseAmount} onChange={setPurchaseAmount} currencyInfo={currencyInfo}
           required
-          hint={pointsRatio
+          error={minAmountError}
+          hint={!minAmountError && (pointsRatio
             ? `${formatCurrency(pointsRatio.spentValue)} = ${pointsRatio.earnedValue} puntos`
-            : 'Los puntos se calcularán automáticamente según las reglas del programa'}
+            : 'Los puntos se calcularán automáticamente según las reglas del programa')}
           testId="reward-purchase-amount" />
       )}
-      
+
       {detectedAccrualMode === 'visit' && !detectingMode && !needsModeSelection && (
         <>
           <PurchaseAmountInput value={purchaseAmount} onChange={setPurchaseAmount} currencyInfo={currencyInfo}
-            required testId="reward-visit-purchase-amount" />
+            required error={minAmountError} testId="reward-visit-purchase-amount" />
           <div className="card-brutalist bg-blue-50">
             <div className="flex items-center justify-center gap-3">
               <User className="h-6 w-6 text-blue-600" />
@@ -75,21 +81,21 @@ export const RewardAddAction = ({
           </div>
         </>
       )}
-      
+
       {detectedAccrualMode === 'points' && !detectingMode && !needsModeSelection && (
         <>
           <PurchaseAmountInput value={purchaseAmount} onChange={setPurchaseAmount} currencyInfo={currencyInfo}
-            required testId="reward-purchase-amount-manual" />
+            required error={minAmountError} testId="reward-purchase-amount-manual" />
           <AmountCounter value={actionAmount} onChange={setActionAmount}
             label={<>Puntos a agregar <span className="text-[#5B7CF7]">*</span></>}
             testIdPrefix="reward-points" />
         </>
       )}
-      
+
       {detectedAccrualMode && !needsModeSelection && (
         <ActionButton
           onClick={() => openConfirmation('Agregar')}
-          disabled={loading || detectingMode || !detectedAccrualMode || !purchaseAmount || (detectedAccrualMode !== 'spend' && actionAmount < 1)}
+          disabled={loading || detectingMode || !detectedAccrualMode || !purchaseAmount || belowMinimum || (detectedAccrualMode !== 'spend' && actionAmount < 1)}
           loading={loading}
           label={detectedAccrualMode === 'visit' ? 'Agregar Visita' : detectedAccrualMode === 'points' ? 'Agregar Puntos' : actionConfig.label}
           testId="add-reward-points-button"

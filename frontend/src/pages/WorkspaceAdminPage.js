@@ -98,11 +98,13 @@ const WorkspaceAdminPage = () => {
   const minAmountCashbackTpl = useTemplatedConfig({ basePath: '/min-amount/cashback', templateType: 'cashback', targetWorkspaceId, active: !!targetWorkspaceId });
   const minAmountDiscountTpl = useTemplatedConfig({ basePath: '/min-amount/discount', templateType: 'discount', targetWorkspaceId, active: !!targetWorkspaceId });
   const minAmountStampTpl = useTemplatedConfig({ basePath: '/min-amount/stamp', templateType: 'stamp', targetWorkspaceId, active: !!targetWorkspaceId });
-  const minAmountTpls = { cashback: minAmountCashbackTpl, discount: minAmountDiscountTpl, stamp: minAmountStampTpl };
-  const [minAmountDrafts, setMinAmountDrafts] = useState({ cashback: 0, discount: 0, stamp: 0 });
+  const minAmountRewardTpl = useTemplatedConfig({ basePath: '/min-amount/reward', templateType: 'reward', targetWorkspaceId, active: !!targetWorkspaceId });
+  const minAmountTpls = { cashback: minAmountCashbackTpl, discount: minAmountDiscountTpl, stamp: minAmountStampTpl, reward: minAmountRewardTpl };
+  const [minAmountDrafts, setMinAmountDrafts] = useState({ cashback: 0, discount: 0, stamp: 0, reward: 0 });
   useEffect(() => { setMinAmountDrafts((d) => ({ ...d, cashback: minAmountCashbackTpl.currentConfig?.min_amount || 0 })); }, [minAmountCashbackTpl.currentConfig]);
   useEffect(() => { setMinAmountDrafts((d) => ({ ...d, discount: minAmountDiscountTpl.currentConfig?.min_amount || 0 })); }, [minAmountDiscountTpl.currentConfig]);
   useEffect(() => { setMinAmountDrafts((d) => ({ ...d, stamp: minAmountStampTpl.currentConfig?.min_amount || 0 })); }, [minAmountStampTpl.currentConfig]);
+  useEffect(() => { setMinAmountDrafts((d) => ({ ...d, reward: minAmountRewardTpl.currentConfig?.min_amount || 0 })); }, [minAmountRewardTpl.currentConfig]);
   const [highAmountThreshold, setHighAmountThreshold] = useState(1000000);
   const [savingHighAmountThreshold, setSavingHighAmountThreshold] = useState(false);
 
@@ -698,7 +700,8 @@ const WorkspaceAdminPage = () => {
                 {[
                   { type: 'cashback', label: 'Cashback' },
                   { type: 'discount', label: 'Descuento' },
-                  { type: 'stamp', label: 'Sellos (por monto o por visita)' }
+                  { type: 'stamp', label: 'Sellos (por monto o por visita)' },
+                  { type: 'reward', label: 'Puntos (por monto, por visita o manual)' }
                 ].map(({ type, label }) => {
                   const tpl = minAmountTpls[type];
                   return (

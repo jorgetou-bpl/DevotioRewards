@@ -221,7 +221,7 @@ const ResultPage = () => {
   useEffect(() => {
     const fetchMinAmount = async () => {
       const normalizedType = cardType ? cardType.replace('_card', '') : '';
-      if (!['cashback', 'discount', 'stamp'].includes(normalizedType)) { setMinAmount(0); return; }
+      if (!['cashback', 'discount', 'stamp', 'reward'].includes(normalizedType)) { setMinAmount(0); return; }
       const token = localStorage.getItem('token');
       try {
         const response = await axios.get(`${API}/min-amount/${normalizedType}`, { params: { template_id: card?.templateId }, headers: { Authorization: `Bearer ${token}` } });
@@ -440,6 +440,13 @@ const ResultPage = () => {
       // Manual-mode stamps (spend/visit modes already returned above) — the
       // minimum-purchase block previously only applied to spend mode.
       if (actionKey === 'agregar' && normalizedType === 'stamp' && minAmount > 0 && purchaseVal < minAmount) {
+        toast.error(`El monto mínimo es ${formatCurrency(minAmount)} — no aplica para acumular`);
+        setLoading(false);
+        return;
+      }
+      // Puntos — applies across all three accrual modes (spend/visit/manual),
+      // same treatment as Sellos: a purchase amount is collected in every mode.
+      if (actionKey === 'agregar' && normalizedType === 'reward' && minAmount > 0 && purchaseVal < minAmount) {
         toast.error(`El monto mínimo es ${formatCurrency(minAmount)} — no aplica para acumular`);
         setLoading(false);
         return;

@@ -106,10 +106,12 @@ async def get_template(template_id: str, current_user: dict = Depends(get_curren
 
             # Extract accrual program info for reward (Puntos) cards.
             # Possible program.type values: 'points' (manual), 'spend' (purchase
-            # amount), 'visit' (per visit). spentValue/earnedValue is the actual
-            # ratio (e.g. spentValue:1, earnedValue:10 → ₡1 = 10 puntos) —
-            # configured on the template itself and read live rather than
-            # duplicated as separate app-side config, same as stampsPerVisit.
+            # amount), 'visits' (per visit) — confirmed live. spentValue/earnedValue
+            # is the actual ratio regardless of type (e.g. spend: spentValue:1,
+            # earnedValue:10 → ₡1 = 10 puntos; visits: spentValue:1, earnedValue:1
+            # → 1 visita = 1 punto) — configured on the template itself and read
+            # live rather than duplicated as separate app-side config, same as
+            # stampsPerVisit.
             program = mechanics.get('program', {}) or {}
             accrual_program = program.get('type') or template_data.get('accrualProgram')
             points_ratio = None

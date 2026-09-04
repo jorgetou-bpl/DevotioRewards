@@ -65,11 +65,13 @@ export const RewardAddAction = ({
             <div className="flex items-center justify-center gap-3">
               <User className="h-6 w-6 text-blue-600" />
               <div className="text-center">
-                <span className="text-3xl font-mono font-bold text-[#0B0B16]">1</span>
-                <p className="text-xs text-zinc-500">visita por transacción</p>
+                <span className="text-3xl font-mono font-bold text-[#0B0B16]">{pointsRatio?.earnedValue ?? 1}</span>
+                <p className="text-xs text-zinc-500">puntos por visita</p>
               </div>
             </div>
-            <p className="text-xs text-zinc-400 text-center mt-2">En modo visita, cada escaneo registra 1 visita</p>
+            <p className="text-xs text-zinc-400 text-center mt-2">
+              {pointsRatio ? `${pointsRatio.spentValue} visita${pointsRatio.spentValue !== 1 ? 's' : ''} = ${pointsRatio.earnedValue} puntos` : 'Cada escaneo registra 1 visita'}
+            </p>
           </div>
         </>
       )}

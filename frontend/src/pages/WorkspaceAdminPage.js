@@ -1014,13 +1014,18 @@ const WorkspaceAdminPage = () => {
                     </button>
                   ))}
                 </div>
-                {rewardAccrualTpl.currentConfig?.mode === 'spend' && (
+                {['spend', 'visit'].includes(rewardAccrualTpl.currentConfig?.mode) && (
                   <div className="pt-2 bg-zinc-50 rounded-lg p-3">
-                    <p className="text-xs text-zinc-500">Tasa de puntos por compra</p>
+                    <p className="text-xs text-zinc-500">
+                      {rewardAccrualTpl.currentConfig.mode === 'spend' ? 'Tasa de puntos por compra' : 'Tasa de puntos por visita'}
+                    </p>
                     {rewardAccrualTpl.selectedTemplateId ? (
                       rewardTemplateRatio ? (
                         <p className="text-sm font-medium text-[#0B0B16] mt-1">
-                          {formatWithThousands(rewardTemplateRatio.spentValue)} {workspacePrefs.currency} = {rewardTemplateRatio.earnedValue} puntos — configurado en la plataforma del proveedor, no editable desde acá
+                          {rewardAccrualTpl.currentConfig.mode === 'spend'
+                            ? `${formatWithThousands(rewardTemplateRatio.spentValue)} ${workspacePrefs.currency} = ${rewardTemplateRatio.earnedValue} puntos`
+                            : `${rewardTemplateRatio.spentValue} visita${rewardTemplateRatio.spentValue !== 1 ? 's' : ''} = ${rewardTemplateRatio.earnedValue} puntos`}
+                          {' '}— configurado en la plataforma del proveedor, no editable desde acá
                         </p>
                       ) : (
                         <p className="text-sm text-zinc-400 mt-1">Sin tasa configurada en la plataforma del proveedor</p>

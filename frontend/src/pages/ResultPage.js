@@ -430,7 +430,9 @@ const ResultPage = () => {
           return;
         }
         if (minAmount > 0 && purchaseVal < minAmount) {
-          toast.error(`El monto mínimo es ${formatCurrency(minAmount)} — no aplica para acumular`);
+          toast.error(normalizedType === 'cashback'
+            ? `El monto mínimo es ${formatCurrency(minAmount)} — no aplica para acumular`
+            : `Montos menores a ${formatCurrency(minAmount)} no aplican`);
           setLoading(false);
           return;
         }

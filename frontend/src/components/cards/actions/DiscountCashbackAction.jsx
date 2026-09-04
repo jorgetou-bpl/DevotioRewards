@@ -63,7 +63,10 @@ export const DiscountCashbackAction = ({
             </div>
           )}
           
-          {discountTiers.length > 0 && !nextTierName && currentTierName && (
+          {/* Descuento no acumula — un descuento fijo aplicado en el momento no
+              tiene un "nivel máximo" que alcanzar de la misma forma que
+              Cashback, así que este aviso solo aplica a Cashback. */}
+          {isCashback && discountTiers.length > 0 && !nextTierName && currentTierName && (
             <div className="mt-3 pt-3 border-t border-zinc-200">
               <p className="text-xs text-emerald-600 font-medium">Nivel máximo alcanzado</p>
             </div>
@@ -87,7 +90,11 @@ export const DiscountCashbackAction = ({
             onChange={setPurchaseAmount}
             currencyInfo={currencyInfo}
             testId="purchase-amount-input"
-            error={belowMinimum ? `El monto mínimo es ${formatCurrency(minAmount)} — montos menores no acumulan` : null}
+            error={belowMinimum
+              ? (isCashback
+                ? `El monto mínimo es ${formatCurrency(minAmount)} — montos menores no acumulan`
+                : `Montos menores a ${formatCurrency(minAmount)} no aplican`)
+              : null}
           />
 
           <ActionButton

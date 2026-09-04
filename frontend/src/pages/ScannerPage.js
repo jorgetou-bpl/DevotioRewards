@@ -29,8 +29,15 @@ const CAMERA_ID_STORAGE_KEY = 'devotio_camera_id';
 // Prefer the standard back lens over ultra-wide/telephoto — those have a much
 // wider field of view or a longer minimum focus distance, which is what made
 // the scanner "desenfocarse" when the browser picked one of them by default.
-const pickDefaultCamera = (cameras) => {
+// `facing` is a workspace-level preference (Config. Tarjetas) for businesses
+// that scan with the front camera by default (e.g. a fixed kiosk) — camera
+// deviceIds aren't portable across phones, so this can only bias by label,
+// not pin an exact camera for every device.
+const pickDefaultCamera = (cameras, facing = 'back') => {
   const byLabel = (re) => cameras.find((c) => re.test(c.label || ''));
+  if (facing === 'front') {
+    return byLabel(/^front camera$/i) || byLabel(/^front/i) || cameras[0];
+  }
   return (
     byLabel(/^back camera$/i) ||
     byLabel(/back.*(?<!ultra )wide/i) ||
@@ -87,7 +94,7 @@ const ScannerPage = () => {
           setAvailableCameras(cameras);
           const requestedId = cameraIdOverride || selectedCameraId;
           const requested = requestedId && cameras.find((c) => c.id === requestedId);
-          const chosen = requested || pickDefaultCamera(cameras);
+          const chosen = requested || pickDefaultCamera(cameras, settings?.preferred_camera_facing);
           if (chosen) {
             cameraTarget = chosen.id;
             setSelectedCameraId(chosen.id);

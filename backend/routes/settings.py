@@ -106,6 +106,9 @@ async def set_workspace_preferences(
     current_user: dict = Depends(require_super_admin)
 ):
     """Set the workspace's scanner preferences. Devotio-only."""
+    if request.preferred_camera_facing is not None and request.preferred_camera_facing not in ('back', 'front'):
+        raise HTTPException(status_code=400, detail="preferred_camera_facing debe ser 'back' o 'front'")
+
     ws_id = resolve_workspace_id(current_user, workspace_id)
     query = {"workspace_id": ws_id} if ws_id else {}
     update_data = {k: v for k, v in request.model_dump().items() if v is not None}

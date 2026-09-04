@@ -97,11 +97,13 @@ class WorkspacePreferencesUpdate(BaseModel):
     currency: Optional[str] = None
     require_comments: Optional[bool] = None
     enable_manual_search: Optional[bool] = None
+    preferred_camera_facing: Optional[str] = None  # 'back' or 'front'
 
 class WorkspacePreferencesResponse(BaseModel):
     currency: str = "CRC"
     require_comments: bool = False
     enable_manual_search: bool = True
+    preferred_camera_facing: str = "back"
 
 # ============ CARD MODELS ============
 

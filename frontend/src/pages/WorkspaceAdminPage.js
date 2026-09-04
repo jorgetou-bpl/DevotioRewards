@@ -7,7 +7,7 @@ import { Input } from '../components/ui/input';
 import {
   ArrowLeft, Building2, Users, MapPin, Key, Plus, Trash2, Loader2, Save,
   Eye, EyeOff, UserPlus, Activity, ChevronDown, ChevronUp, RefreshCw,
-  Settings, Stamp, Percent, Gift, MessageSquare, DollarSign, AlertTriangle, Star, Search, Copy, Check
+  Settings, Stamp, Percent, Gift, MessageSquare, DollarSign, AlertTriangle, Star, Search, Copy, Check, Camera
 } from 'lucide-react';
 
 import { API_BASE_URL as API } from '../config/api';
@@ -87,7 +87,7 @@ const WorkspaceAdminPage = () => {
   // Currency, mandatory comments, and manual search — moved here from the
   // personal Settings page at the client's request: business-wide policy
   // Devotio controls, not something each operator opts into individually.
-  const [workspacePrefs, setWorkspacePrefs] = useState({ currency: 'CRC', require_comments: false, enable_manual_search: true });
+  const [workspacePrefs, setWorkspacePrefs] = useState({ currency: 'CRC', require_comments: false, enable_manual_search: true, preferred_camera_facing: 'back' });
   const [savingWorkspacePrefs, setSavingWorkspacePrefs] = useState('');
   const [currencyOpen, setCurrencyOpen] = useState(false);
 
@@ -261,7 +261,8 @@ const WorkspaceAdminPage = () => {
         setWorkspacePrefs({
           currency: prefsResp.data.currency || 'CRC',
           require_comments: !!prefsResp.data.require_comments,
-          enable_manual_search: prefsResp.data.enable_manual_search !== false
+          enable_manual_search: prefsResp.data.enable_manual_search !== false,
+          preferred_camera_facing: prefsResp.data.preferred_camera_facing || 'back'
         });
       })
       .catch((error) => console.error('Error loading card configuration:', error))
@@ -861,6 +862,31 @@ const WorkspaceAdminPage = () => {
                     data-testid="workspace-manual-search-switch">
                     <span className={`block w-5 h-5 bg-white rounded-full transition-transform ${workspacePrefs.enable_manual_search ? 'translate-x-5' : 'translate-x-0.5'}`} />
                   </button>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Camera className="h-4 w-4 text-[#0B0B16] flex-shrink-0" />
+                    <div>
+                      <p className="text-sm font-medium text-[#0B0B16]">Cámara preferida</p>
+                      <p className="text-xs text-zinc-500">
+                        Cámara que se abre por defecto al escanear en un dispositivo nuevo. No se puede fijar una
+                        cámara exacta por negocio (cada celular tiene sus propias cámaras), pero sí preferir trasera o frontal.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="shrink-0 flex rounded-lg border border-zinc-200 overflow-hidden">
+                    {[{ value: 'back', label: 'Trasera' }, { value: 'front', label: 'Frontal' }].map((opt) => (
+                      <button key={opt.value} onClick={() => handleSaveWorkspacePrefs('preferred_camera_facing', opt.value)}
+                        disabled={savingWorkspacePrefs === 'preferred_camera_facing'}
+                        className={`px-3 py-1.5 text-xs font-medium transition-colors ${
+                          workspacePrefs.preferred_camera_facing === opt.value ? 'bg-[#5B7CF7] text-white' : 'bg-white text-zinc-600 hover:bg-zinc-50'
+                        }`}
+                        data-testid={`camera-facing-${opt.value}`}>
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
 

@@ -6,8 +6,8 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { toast } from 'sonner';
 import axios from 'axios';
-import { 
-  ArrowLeft, 
+import {
+  ArrowLeft,
   Filter,
   Loader2,
   Calendar,
@@ -19,18 +19,24 @@ import {
   X,
   RefreshCw,
   TrendingUp,
+  TrendingDown,
   Users,
   ShoppingCart,
   Award,
   BarChart3,
-  ClipboardList
+  ClipboardList,
+  ScanLine,
+  Search,
+  Settings,
+  Bell,
+  ArrowRight
 } from 'lucide-react';
 
 import { API_BASE_URL as API } from '../config/api';
 
 const OperationsPage = () => {
   const navigate = useNavigate();
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const { formatCurrency } = useSettings();
   
   // Tab state
@@ -55,6 +61,13 @@ const OperationsPage = () => {
   const [dashboardCardTypeDropdownOpen, setDashboardCardTypeDropdownOpen] = useState(false);
   const [dashboardTemplateId, setDashboardTemplateId] = useState('');
   const [dashboardTemplateDropdownOpen, setDashboardTemplateDropdownOpen] = useState(false);
+
+  // Home-style additions: a fixed rolling 7-day trend (independent of the
+  // Historial/Dashboard date filter above, so picking a custom range doesn't
+  // break the "vs last week" comparison) and a quick activity feed.
+  const [trendData, setTrendData] = useState(null);
+  const [recentOps, setRecentOps] = useState([]);
+  const [loadingRecentOps, setLoadingRecentOps] = useState(false);
 
   // Filter state
   const [startDate, setStartDate] = useState('');
@@ -138,13 +151,46 @@ const OperationsPage = () => {
     }
   }, [token, startDate, endDate, dashboardCardType, dashboardTemplateId]);
 
+  const fetchTrend = useCallback(async () => {
+    const fmt = (d) => d.toISOString().split('T')[0];
+    const today = new Date();
+    const last7Start = new Date(today); last7Start.setDate(today.getDate() - 6);
+    const prev7End = new Date(today); prev7End.setDate(today.getDate() - 7);
+    const prev7Start = new Date(today); prev7Start.setDate(today.getDate() - 13);
+    const sumSales = (summary) => (summary?.by_gerente || []).reduce((s, g) => s + (g.total_purchase_sum || 0), 0);
+    try {
+      const [currentResp, previousResp] = await Promise.all([
+        axios.get(`${API}/operations/summary`, { params: { start_date: fmt(last7Start), end_date: fmt(today) }, headers: { Authorization: `Bearer ${token}` } }),
+        axios.get(`${API}/operations/summary`, { params: { start_date: fmt(prev7Start), end_date: fmt(prev7End) }, headers: { Authorization: `Bearer ${token}` } })
+      ]);
+      setTrendData({
+        current: { ops: currentResp.data?.summary?.total_operations || 0, sales: sumSales(currentResp.data?.summary) },
+        previous: { ops: previousResp.data?.summary?.total_operations || 0, sales: sumSales(previousResp.data?.summary) }
+      });
+    } catch { setTrendData(null); }
+  }, [token]);
+
+  const fetchRecentOps = useCallback(async () => {
+    setLoadingRecentOps(true);
+    try {
+      const response = await axios.get(`${API}/operations`, {
+        params: { page: 1, items_per_page: 6 },
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setRecentOps(response.data?.operations || []);
+    } catch { setRecentOps([]); }
+    finally { setLoadingRecentOps(false); }
+  }, [token]);
+
   useEffect(() => {
     if (activeTab === 'historial') {
       fetchOperations();
     } else {
       fetchDashboard();
+      fetchTrend();
+      fetchRecentOps();
     }
-  }, [activeTab, fetchOperations, fetchDashboard]);
+  }, [activeTab, fetchOperations, fetchDashboard, fetchTrend, fetchRecentOps]);
 
   const handleExport = async (format) => {
     try {
@@ -229,6 +275,23 @@ const OperationsPage = () => {
   // Calculate total sales from dashboard data
   const totalSales = dashboardData?.by_gerente?.reduce((sum, g) => sum + (g.total_purchase_sum || 0), 0) || 0;
   const totalGerentes = dashboardData?.by_gerente?.length || 0;
+
+  // "vs. últimos 7 días" delta badge — null when there's nothing to compare
+  // against yet (e.g. a brand-new workspace with no operations last week).
+  const renderTrendBadge = (current, previous) => {
+    if (!trendData || !previous) return null;
+    const pct = Math.round(((current - previous) / previous) * 100);
+    if (pct === 0) return null;
+    const isUp = pct > 0;
+    return (
+      <span className={`inline-flex items-center gap-0.5 text-xs font-medium ${isUp ? 'text-emerald-300' : 'text-red-300'}`}>
+        {isUp ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+        {Math.abs(pct)}%
+      </span>
+    );
+  };
+
+  const configPath = (user?.role === 'super_admin' || user?.role === 'workspace_admin') ? '/admin/workspace' : '/settings';
 
   return (
     <div className="min-h-screen bg-white" data-testid="operations-page">
@@ -423,6 +486,28 @@ const OperationsPage = () => {
         {/* Dashboard View */}
         {activeTab === 'dashboard' && (
           <div className="space-y-6">
+            {/* Quick Access — the entry-point feel of a Home, not just a report */}
+            <div className="grid grid-cols-3 gap-3" data-testid="quick-access-row">
+              <button onClick={() => navigate('/')}
+                className="card-brutalist p-4 flex flex-col items-center gap-2 hover:border-[#5B7CF7] transition-colors"
+                data-testid="quick-access-scan">
+                <ScanLine className="h-6 w-6 text-[#5B7CF7]" />
+                <span className="text-xs font-medium text-[#0B0B16]">Escanear</span>
+              </button>
+              <button onClick={() => navigate('/search')}
+                className="card-brutalist p-4 flex flex-col items-center gap-2 hover:border-[#5B7CF7] transition-colors"
+                data-testid="quick-access-search">
+                <Search className="h-6 w-6 text-[#5B7CF7]" />
+                <span className="text-xs font-medium text-[#0B0B16]">Buscar cliente</span>
+              </button>
+              <button onClick={() => navigate(configPath)}
+                className="card-brutalist p-4 flex flex-col items-center gap-2 hover:border-[#5B7CF7] transition-colors"
+                data-testid="quick-access-config">
+                <Settings className="h-6 w-6 text-[#5B7CF7]" />
+                <span className="text-xs font-medium text-[#0B0B16]">Configuración</span>
+              </button>
+            </div>
+
             {dashboardLoading ? (
               <div className="flex justify-center py-12">
                 <Loader2 className="h-8 w-8 animate-spin text-[#0B0B16]" />
@@ -435,30 +520,38 @@ const OperationsPage = () => {
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-zinc-300 text-sm">Total Operaciones</p>
-                        <p className="text-3xl font-bold text-white mt-1">
-                          {dashboardData.total_operations?.toLocaleString() || 0}
-                        </p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <p className="text-3xl font-bold text-white">
+                            {dashboardData.total_operations?.toLocaleString() || 0}
+                          </p>
+                          {trendData && renderTrendBadge(trendData.current.ops, trendData.previous.ops)}
+                        </div>
+                        {trendData && <p className="text-[10px] text-zinc-400 mt-0.5">vs. últimos 7 días</p>}
                       </div>
                       <div className="p-3 bg-white/10 rounded-lg">
                         <TrendingUp className="h-6 w-6 text-white" />
                       </div>
                     </div>
                   </div>
-                  
+
                   <div className="card-brutalist p-6 bg-gradient-to-br from-[#8CA4FE] to-[#5B7CF7]">
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-pink-100 text-sm">Ventas Totales</p>
-                        <p className="text-3xl font-bold text-white mt-1">
-                          {formatCurrency(totalSales)}
-                        </p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <p className="text-3xl font-bold text-white">
+                            {formatCurrency(totalSales)}
+                          </p>
+                          {trendData && renderTrendBadge(trendData.current.sales, trendData.previous.sales)}
+                        </div>
+                        {trendData && <p className="text-[10px] text-pink-100/80 mt-0.5">vs. últimos 7 días</p>}
                       </div>
                       <div className="p-3 bg-white/10 rounded-lg">
                         <ShoppingCart className="h-6 w-6 text-white" />
                       </div>
                     </div>
                   </div>
-                  
+
                   <div className="card-brutalist p-6 bg-gradient-to-br from-[#10b981] to-[#059669]">
                     <div className="flex items-center justify-between">
                       <div>
@@ -472,6 +565,47 @@ const OperationsPage = () => {
                       </div>
                     </div>
                   </div>
+                </div>
+
+                {/* Recent Activity — a Home should answer "what just happened"
+                    without a click into Historial first. */}
+                <div className="card-brutalist">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold text-[#0B0B16] flex items-center gap-2">
+                      <ClipboardList className="h-5 w-5 text-[#8CA4FE]" />
+                      Actividad Reciente
+                    </h3>
+                    <button onClick={() => setActiveTab('historial')}
+                      className="text-xs font-medium text-[#5B7CF7] hover:underline flex items-center gap-1"
+                      data-testid="view-full-history">
+                      Ver historial completo <ArrowRight className="h-3 w-3" />
+                    </button>
+                  </div>
+                  {loadingRecentOps ? (
+                    <div className="flex justify-center py-6"><Loader2 className="h-5 w-5 animate-spin text-zinc-400" /></div>
+                  ) : recentOps.length > 0 ? (
+                    <div className="divide-y divide-zinc-100">
+                      {recentOps.map((op, index) => (
+                        <div key={op.id || index} className="flex items-center justify-between py-3" data-testid={`recent-op-${index}`}>
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium text-[#0B0B16] truncate">{op.customer_name || 'Cliente'}</p>
+                            <p className="text-xs text-zinc-500">
+                              {op.operation_label || op.operation_type} · {op.card_type_label || op.card_type}
+                            </p>
+                          </div>
+                          <div className="text-right shrink-0 pl-3">
+                            {op.purchase_sum > 0 && <p className="text-sm font-semibold text-[#0B0B16]">{formatCurrency(op.purchase_sum)}</p>}
+                            <p className="text-xs text-zinc-400">{formatDate(op.created_at)}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8">
+                      <ClipboardList className="h-12 w-12 mx-auto text-zinc-300 mb-3" />
+                      <p className="text-zinc-500">Sin actividad reciente</p>
+                    </div>
+                  )}
                 </div>
 
                 {/* Gerente Leaderboard */}
@@ -590,6 +724,19 @@ const OperationsPage = () => {
                       <p className="text-zinc-500">No hay datos por tipo de tarjeta</p>
                     </div>
                   )}
+                </div>
+
+                {/* Placeholder — reserves the layout slot for the push
+                    notifications panel (separate initiative), so that work
+                    slots in without another Home redesign. */}
+                <div className="card-brutalist border-dashed opacity-70">
+                  <div className="flex items-center gap-3">
+                    <Bell className="h-5 w-5 text-zinc-400" />
+                    <div>
+                      <p className="text-sm font-semibold text-zinc-500">Notificaciones</p>
+                      <p className="text-xs text-zinc-400">Próximamente: configura y dispara notificaciones push desde acá</p>
+                    </div>
+                  </div>
                 </div>
               </>
             ) : (

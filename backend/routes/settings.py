@@ -19,6 +19,53 @@ def resolve_workspace_id(current_user: dict, workspace_id: Optional[str] = None)
         return workspace_id
     return current_user.get("workspace_id")
 
+# ============ SHARED HELPERS: PER-TEMPLATE CONFIG OVERRIDES ============
+# Several config types (stamps, points, gift card, discount/cashback tiers,
+# min-amount) can need different rules per specific Boomerangme template,
+# not just one rule for the whole card type — e.g. two "Cashback" templates
+# with different tier structures. Every such collection stores a
+# `template_id` field (None = workspace-wide default); these helpers
+# implement the shared lookup-with-fallback / list / delete pattern so each
+# config type doesn't reimplement it from scratch.
+
+async def get_templated_config(collection, ws_id: Optional[str], template_id: Optional[str], extra_query: dict = None) -> Optional[dict]:
+    """Look up a template-specific override first, falling back to the
+    workspace's default (template_id: None) config."""
+    base_query = {"workspace_id": ws_id, **(extra_query or {})}
+    config = None
+    if template_id:
+        config = await collection.find_one({**base_query, "template_id": template_id}, {"_id": 0})
+    if not config:
+        config = await collection.find_one({**base_query, "template_id": None}, {"_id": 0})
+    return config
+
+async def list_templated_configs(collection, ws_id: Optional[str], extra_query: dict = None) -> list:
+    """List every config saved for a workspace (default + all overrides)."""
+    query = {"workspace_id": ws_id, **(extra_query or {})}
+    return await collection.find(query, {"_id": 0}).to_list(length=100)
+
+async def delete_templated_config(collection, ws_id: Optional[str], template_id: str, extra_query: dict = None) -> bool:
+    """Remove a template-specific override, reverting that template to the default."""
+    query = {"workspace_id": ws_id, "template_id": template_id, **(extra_query or {})}
+    result = await collection.delete_one(query)
+    return result.deleted_count > 0
+
+async def save_templated_config(collection, ws_id: Optional[str], template_id: Optional[str], set_fields: dict, updated_by: str, extra_query: dict = None) -> None:
+    """Create or update the default (template_id: None) or a specific override."""
+    query = {"workspace_id": ws_id, "template_id": template_id, **(extra_query or {})}
+    await collection.update_one(
+        query,
+        {"$set": {
+            "workspace_id": ws_id,
+            "template_id": template_id,
+            **(extra_query or {}),
+            **set_fields,
+            "updated_by": updated_by,
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }},
+        upsert=True
+    )
+
 @router.get("/settings", response_model=SettingsResponse)
 async def get_settings(current_user: dict = Depends(get_current_user)):
     """Get user settings."""
@@ -98,12 +145,7 @@ async def get_stamp_config(
     is what lets a business with two "Sellos" templates configure them
     differently instead of one rule for the whole card type."""
     ws_id = resolve_workspace_id(current_user, workspace_id)
-    base_query = {"workspace_id": ws_id}
-    config = None
-    if template_id:
-        config = await db.stamp_config.find_one({**base_query, "template_id": template_id}, {"_id": 0})
-    if not config:
-        config = await db.stamp_config.find_one({**base_query, "template_id": None}, {"_id": 0})
+    config = await get_templated_config(db.stamp_config, ws_id, template_id)
     if config:
         return StampConfigResponse(
             success=True,
@@ -118,7 +160,7 @@ async def list_stamp_configs(workspace_id: Optional[str] = None, current_user: d
     (template_id: null) plus any per-template overrides — so the admin UI
     can show and manage them. Devotio-only."""
     ws_id = resolve_workspace_id(current_user, workspace_id)
-    configs = await db.stamp_config.find({"workspace_id": ws_id}, {"_id": 0}).to_list(length=100)
+    configs = await list_templated_configs(db.stamp_config, ws_id)
     return {"success": True, "configs": configs}
 
 @router.delete("/stamp-config/by-template/{template_id}")
@@ -130,8 +172,8 @@ async def delete_stamp_config_override(
     """Remove a template-specific stamp config override, reverting that
     template to the workspace default. Devotio-only."""
     ws_id = resolve_workspace_id(current_user, workspace_id)
-    result = await db.stamp_config.delete_one({"workspace_id": ws_id, "template_id": template_id})
-    return {"success": True, "deleted": result.deleted_count > 0}
+    deleted = await delete_templated_config(db.stamp_config, ws_id, template_id)
+    return {"success": True, "deleted": deleted}
 
 @router.post("/stamp-config")
 async def set_stamp_config(
@@ -148,18 +190,10 @@ async def set_stamp_config(
         raise HTTPException(status_code=400, detail=f"Modo inválido. Use: {', '.join(valid_modes)}")
 
     ws_id = resolve_workspace_id(current_user, workspace_id)
-    query = {"workspace_id": ws_id, "template_id": template_id}
-    await db.stamp_config.update_one(
-        query,
-        {"$set": {
-            "workspace_id": ws_id,
-            "template_id": template_id,
-            "stamp_mode": request.stamp_mode,
-            "spend_threshold": request.spend_threshold,
-            "updated_by": current_user.get("email", ""),
-            "updated_at": datetime.now(timezone.utc).isoformat()
-        }},
-        upsert=True
+    await save_templated_config(
+        db.stamp_config, ws_id, template_id,
+        {"stamp_mode": request.stamp_mode, "spend_threshold": request.spend_threshold},
+        current_user.get("email", "")
     )
     return StampConfigResponse(
         success=True,
@@ -181,36 +215,55 @@ class RewardAccrualConfigResponse(BaseModel):
     mode: Optional[str] = None
 
 @router.get("/reward-accrual-config")
-async def get_reward_accrual_config(workspace_id: Optional[str] = None, current_user: dict = Depends(get_current_user)):
-    """Get the reward-card accrual mode for the workspace. None means it
-    hasn't been configured yet — the scanner blocks accumulation until it is."""
+async def get_reward_accrual_config(
+    workspace_id: Optional[str] = None,
+    template_id: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """Get the reward-card accrual mode for the workspace, or for one
+    specific template within it if it has its own override (e.g. a business
+    running two "Puntos" templates with different accrual rules). None means
+    it hasn't been configured yet — the scanner blocks accumulation until it is."""
     ws_id = resolve_workspace_id(current_user, workspace_id)
-    query = {"workspace_id": ws_id} if ws_id else {}
-    config = await db.reward_accrual_config.find_one(query, {"_id": 0})
+    config = await get_templated_config(db.reward_accrual_config, ws_id, template_id)
     return RewardAccrualConfigResponse(success=True, mode=config.get("mode") if config else None)
+
+@router.get("/reward-accrual-config/all")
+async def list_reward_accrual_configs(workspace_id: Optional[str] = None, current_user: dict = Depends(require_super_admin)):
+    """List every reward-accrual config saved for a workspace — the default
+    plus any per-template overrides. Devotio-only."""
+    ws_id = resolve_workspace_id(current_user, workspace_id)
+    configs = await list_templated_configs(db.reward_accrual_config, ws_id)
+    return {"success": True, "configs": configs}
+
+@router.delete("/reward-accrual-config/by-template/{template_id}")
+async def delete_reward_accrual_config_override(
+    template_id: str,
+    workspace_id: Optional[str] = None,
+    current_user: dict = Depends(require_super_admin)
+):
+    """Remove a template-specific reward-accrual override. Devotio-only."""
+    ws_id = resolve_workspace_id(current_user, workspace_id)
+    deleted = await delete_templated_config(db.reward_accrual_config, ws_id, template_id)
+    return {"success": True, "deleted": deleted}
 
 @router.post("/reward-accrual-config")
 async def set_reward_accrual_config(
     request: RewardAccrualConfigRequest,
     workspace_id: Optional[str] = None,
+    template_id: Optional[str] = None,
     current_user: dict = Depends(require_super_admin)
 ):
-    """Set the reward-card accrual mode for a workspace. Devotio-only."""
+    """Set the reward-card accrual mode for a workspace, or one specific
+    template within it. Devotio-only."""
     valid_modes = ['spend', 'visit', 'points']
     if request.mode not in valid_modes:
         raise HTTPException(status_code=400, detail=f"Modo inválido. Use: {', '.join(valid_modes)}")
 
     ws_id = resolve_workspace_id(current_user, workspace_id)
-    query = {"workspace_id": ws_id} if ws_id else {}
-    await db.reward_accrual_config.update_one(
-        query,
-        {"$set": {
-            "workspace_id": ws_id,
-            "mode": request.mode,
-            "updated_by": current_user.get("email", ""),
-            "updated_at": datetime.now(timezone.utc).isoformat()
-        }},
-        upsert=True
+    await save_templated_config(
+        db.reward_accrual_config, ws_id, template_id,
+        {"mode": request.mode}, current_user.get("email", "")
     )
     return RewardAccrualConfigResponse(success=True, mode=request.mode)
 
@@ -369,36 +422,64 @@ def _validate_tier_card_type(card_type: str) -> None:
         raise HTTPException(status_code=400, detail=f"Tipo de tarjeta inválido. Use: {', '.join(TIER_CARD_TYPES)}")
 
 @router.get("/discount-tiers/{card_type}")
-async def get_discount_tiers(card_type: str, workspace_id: Optional[str] = None, current_user: dict = Depends(get_current_user)):
+async def get_discount_tiers(
+    card_type: str,
+    workspace_id: Optional[str] = None,
+    template_id: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
     """Get the tier configuration for 'cashback' or 'discount' cards, for the
-    user's workspace (or, for super_admin, an explicitly targeted workspace)."""
+    user's workspace (or, for super_admin, an explicitly targeted workspace).
+    A template-specific override wins over the type-wide default when a
+    business runs two templates of the same type with different tiers."""
     _validate_tier_card_type(card_type)
     ws_id = resolve_workspace_id(current_user, workspace_id)
-    query = {"workspace_id": ws_id, "card_type": card_type} if ws_id else {"card_type": card_type}
-    config = await db.discount_tiers.find_one(query, {"_id": 0})
+    config = await get_templated_config(db.discount_tiers, ws_id, template_id, {"card_type": card_type})
     if config and config.get("tiers"):
         return DiscountTiersResponse(success=True, card_type=card_type, tiers=config["tiers"])
     return DiscountTiersResponse(success=True, card_type=card_type, tiers=[])
 
+@router.get("/discount-tiers/{card_type}/all")
+async def list_discount_tiers_configs(card_type: str, workspace_id: Optional[str] = None, current_user: dict = Depends(require_super_admin)):
+    """List every tier config saved for a card type — the default plus any
+    per-template overrides. Devotio-only."""
+    _validate_tier_card_type(card_type)
+    ws_id = resolve_workspace_id(current_user, workspace_id)
+    configs = await list_templated_configs(db.discount_tiers, ws_id, {"card_type": card_type})
+    return {"success": True, "configs": configs}
+
+@router.delete("/discount-tiers/{card_type}/by-template/{template_id}")
+async def delete_discount_tiers_override(
+    card_type: str,
+    template_id: str,
+    workspace_id: Optional[str] = None,
+    current_user: dict = Depends(require_super_admin)
+):
+    """Remove a template-specific tier override. Devotio-only."""
+    _validate_tier_card_type(card_type)
+    ws_id = resolve_workspace_id(current_user, workspace_id)
+    deleted = await delete_templated_config(db.discount_tiers, ws_id, template_id, {"card_type": card_type})
+    return {"success": True, "deleted": deleted}
+
 @router.post("/discount-tiers/{card_type}")
-async def save_discount_tiers(card_type: str, request: DiscountTiersRequest, workspace_id: Optional[str] = None, current_user: dict = Depends(require_super_admin)):
-    """Save the tier configuration for 'cashback' or 'discount' cards. Devotio-only."""
+async def save_discount_tiers(
+    card_type: str,
+    request: DiscountTiersRequest,
+    workspace_id: Optional[str] = None,
+    template_id: Optional[str] = None,
+    current_user: dict = Depends(require_super_admin)
+):
+    """Save the tier configuration for 'cashback' or 'discount' cards, or one
+    specific template within that type. Devotio-only."""
     _validate_tier_card_type(card_type)
     tiers_data = [t.model_dump() for t in request.tiers]
     tiers_data.sort(key=lambda x: x["threshold"])
 
     ws_id = resolve_workspace_id(current_user, workspace_id)
-    query = {"workspace_id": ws_id, "card_type": card_type} if ws_id else {"card_type": card_type}
-    await db.discount_tiers.update_one(
-        query,
-        {"$set": {
-            "card_type": card_type,
-            "workspace_id": ws_id,
-            "tiers": tiers_data,
-            "updated_by": current_user.get("email", ""),
-            "updated_at": datetime.now(timezone.utc).isoformat()
-        }},
-        upsert=True
+    await save_templated_config(
+        db.discount_tiers, ws_id, template_id,
+        {"tiers": tiers_data}, current_user.get("email", ""),
+        {"card_type": card_type}
     )
     return DiscountTiersResponse(success=True, card_type=card_type, tiers=tiers_data)
 
@@ -439,16 +520,21 @@ def _compute_tier_position(tiers: list, accumulated: float):
     return current_tier, next_tier, next_threshold, amount_to_next
 
 @router.get("/tier-progress/{card_id}")
-async def get_tier_progress(card_id: str, card_type: str, current_user: dict = Depends(get_current_user)):
+async def get_tier_progress(
+    card_id: str,
+    card_type: str,
+    template_id: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
     """Get accumulated purchase amount for a card, positioned against its
-    card type's own tier list (cashback and discount tiers are separate)."""
+    card type's own tier list (cashback and discount tiers are separate),
+    honoring a template-specific tier override when the card's template has one."""
     _validate_tier_card_type(card_type)
     progress = await db.tier_progress.find_one({"card_id": str(card_id)}, {"_id": 0})
     accumulated = progress.get("accumulated_amount", 0) if progress else 0
 
     ws_id = current_user.get("workspace_id")
-    tier_query = {"workspace_id": ws_id, "card_type": card_type} if ws_id else {"card_type": card_type}
-    config = await db.discount_tiers.find_one(tier_query, {"_id": 0})
+    config = await get_templated_config(db.discount_tiers, ws_id, template_id, {"card_type": card_type})
     tiers = sorted(config.get("tiers", []), key=lambda x: x["threshold"]) if config else []
 
     current_tier, next_tier, next_threshold, amount_to_next = _compute_tier_position(tiers, accumulated)
@@ -464,9 +550,15 @@ async def get_tier_progress(card_id: str, card_type: str, current_user: dict = D
     )
 
 @router.post("/tier-progress/{card_id}/add")
-async def add_tier_progress(card_id: str, amount: float, card_type: str, current_user: dict = Depends(get_current_user)):
+async def add_tier_progress(
+    card_id: str,
+    amount: float,
+    card_type: str,
+    template_id: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
     """Add a purchase amount to the tier progress tracker, positioned against
-    the given card type's own tier list."""
+    the given card type's own tier list (or a template-specific override)."""
     _validate_tier_card_type(card_type)
     progress = await db.tier_progress.find_one({"card_id": str(card_id)})
     current_amount = progress.get("accumulated_amount", 0) if progress else 0
@@ -485,8 +577,7 @@ async def add_tier_progress(card_id: str, amount: float, card_type: str, current
         upsert=True
     )
 
-    tier_query = {"workspace_id": ws_id, "card_type": card_type} if ws_id else {"card_type": card_type}
-    config = await db.discount_tiers.find_one(tier_query, {"_id": 0})
+    config = await get_templated_config(db.discount_tiers, ws_id, template_id, {"card_type": card_type})
     tiers = sorted(config.get("tiers", []), key=lambda x: x["threshold"]) if config else []
 
     current_tier, next_tier, next_threshold, amount_to_next = _compute_tier_position(tiers, new_amount)
@@ -552,29 +643,51 @@ class GiftCardConfigResponse(BaseModel):
     allow_add: bool = False
 
 @router.get("/gift-card-config")
-async def get_gift_card_config(workspace_id: Optional[str] = None, current_user: dict = Depends(get_current_user)):
-    """Get whether operators can add balance to gift cards. Defaults to False
-    (redeem-only) — matches the client's request that adding funds is the
-    exception, not the default."""
+async def get_gift_card_config(
+    workspace_id: Optional[str] = None,
+    template_id: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """Get whether operators can add balance to gift cards, or for one
+    specific gift card template within the workspace if it has its own
+    override. Defaults to False (redeem-only) — matches the client's request
+    that adding funds is the exception, not the default."""
     ws_id = resolve_workspace_id(current_user, workspace_id)
-    query = {"workspace_id": ws_id} if ws_id else {}
-    config = await db.gift_card_config.find_one(query, {"_id": 0})
+    config = await get_templated_config(db.gift_card_config, ws_id, template_id)
     return GiftCardConfigResponse(success=True, allow_add=config.get("allow_add", False) if config else False)
 
-@router.post("/gift-card-config")
-async def set_gift_card_config(request: GiftCardConfigRequest, workspace_id: Optional[str] = None, current_user: dict = Depends(require_super_admin)):
-    """Set whether operators can add balance to gift cards for a workspace. Devotio-only."""
+@router.get("/gift-card-config/all")
+async def list_gift_card_configs(workspace_id: Optional[str] = None, current_user: dict = Depends(require_super_admin)):
+    """List every gift card config saved for a workspace — the default plus
+    any per-template overrides. Devotio-only."""
     ws_id = resolve_workspace_id(current_user, workspace_id)
-    query = {"workspace_id": ws_id} if ws_id else {}
-    await db.gift_card_config.update_one(
-        query,
-        {"$set": {
-            "workspace_id": ws_id,
-            "allow_add": request.allow_add,
-            "updated_by": current_user.get("email", ""),
-            "updated_at": datetime.now(timezone.utc).isoformat()
-        }},
-        upsert=True
+    configs = await list_templated_configs(db.gift_card_config, ws_id)
+    return {"success": True, "configs": configs}
+
+@router.delete("/gift-card-config/by-template/{template_id}")
+async def delete_gift_card_config_override(
+    template_id: str,
+    workspace_id: Optional[str] = None,
+    current_user: dict = Depends(require_super_admin)
+):
+    """Remove a template-specific gift card config override. Devotio-only."""
+    ws_id = resolve_workspace_id(current_user, workspace_id)
+    deleted = await delete_templated_config(db.gift_card_config, ws_id, template_id)
+    return {"success": True, "deleted": deleted}
+
+@router.post("/gift-card-config")
+async def set_gift_card_config(
+    request: GiftCardConfigRequest,
+    workspace_id: Optional[str] = None,
+    template_id: Optional[str] = None,
+    current_user: dict = Depends(require_super_admin)
+):
+    """Set whether operators can add balance to gift cards for a workspace,
+    or one specific gift card template within it. Devotio-only."""
+    ws_id = resolve_workspace_id(current_user, workspace_id)
+    await save_templated_config(
+        db.gift_card_config, ws_id, template_id,
+        {"allow_add": request.allow_add}, current_user.get("email", "")
     )
     return GiftCardConfigResponse(success=True, allow_add=request.allow_add)
 
@@ -598,40 +711,62 @@ def _validate_min_amount_card_type(card_type: str):
         raise HTTPException(status_code=400, detail=f"Tipo de tarjeta inválido. Use: {', '.join(MIN_AMOUNT_CARD_TYPES)}")
 
 @router.get("/min-amount/{card_type}")
-async def get_min_amount(card_type: str, workspace_id: Optional[str] = None, current_user: dict = Depends(get_current_user)):
-    """Get the minimum purchase amount required to accumulate for a card type.
+async def get_min_amount(
+    card_type: str,
+    workspace_id: Optional[str] = None,
+    template_id: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """Get the minimum purchase amount required to accumulate for a card
+    type, or for one specific template within it if it has its own override.
     0 means no minimum is enforced."""
     _validate_min_amount_card_type(card_type)
     ws_id = resolve_workspace_id(current_user, workspace_id)
-    query = {"workspace_id": ws_id, "card_type": card_type} if ws_id else {"card_type": card_type}
-    config = await db.min_amount_config.find_one(query, {"_id": 0})
+    config = await get_templated_config(db.min_amount_config, ws_id, template_id, {"card_type": card_type})
     return MinAmountResponse(success=True, card_type=card_type, min_amount=config.get("min_amount", 0) if config else 0)
+
+@router.get("/min-amount/{card_type}/all")
+async def list_min_amount_configs(card_type: str, workspace_id: Optional[str] = None, current_user: dict = Depends(require_workspace_admin)):
+    """List every min-amount config saved for a card type — the default plus
+    any per-template overrides."""
+    _validate_min_amount_card_type(card_type)
+    ws_id = resolve_workspace_id(current_user, workspace_id)
+    configs = await list_templated_configs(db.min_amount_config, ws_id, {"card_type": card_type})
+    return {"success": True, "configs": configs}
+
+@router.delete("/min-amount/{card_type}/by-template/{template_id}")
+async def delete_min_amount_override(
+    card_type: str,
+    template_id: str,
+    workspace_id: Optional[str] = None,
+    current_user: dict = Depends(require_workspace_admin)
+):
+    """Remove a template-specific min-amount override."""
+    _validate_min_amount_card_type(card_type)
+    ws_id = resolve_workspace_id(current_user, workspace_id)
+    deleted = await delete_templated_config(db.min_amount_config, ws_id, template_id, {"card_type": card_type})
+    return {"success": True, "deleted": deleted}
 
 @router.post("/min-amount/{card_type}")
 async def set_min_amount(
     card_type: str,
     request: MinAmountRequest,
     workspace_id: Optional[str] = None,
+    template_id: Optional[str] = None,
     current_user: dict = Depends(require_workspace_admin)
 ):
-    """Set the minimum purchase amount for a card type. Business admins and
-    Devotio can both configure this — it's the business's own policy call."""
+    """Set the minimum purchase amount for a card type, or one specific
+    template within it. Business admins and Devotio can both configure
+    this — it's the business's own policy call."""
     _validate_min_amount_card_type(card_type)
     if request.min_amount < 0:
         raise HTTPException(status_code=400, detail="El monto mínimo no puede ser negativo")
 
     ws_id = resolve_workspace_id(current_user, workspace_id)
-    query = {"workspace_id": ws_id, "card_type": card_type} if ws_id else {"card_type": card_type}
-    await db.min_amount_config.update_one(
-        query,
-        {"$set": {
-            "workspace_id": ws_id,
-            "card_type": card_type,
-            "min_amount": request.min_amount,
-            "updated_by": current_user.get("email", ""),
-            "updated_at": datetime.now(timezone.utc).isoformat()
-        }},
-        upsert=True
+    await save_templated_config(
+        db.min_amount_config, ws_id, template_id,
+        {"min_amount": request.min_amount}, current_user.get("email", ""),
+        {"card_type": card_type}
     )
     return MinAmountResponse(success=True, card_type=card_type, min_amount=request.min_amount)
 

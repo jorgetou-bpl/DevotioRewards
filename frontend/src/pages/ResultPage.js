@@ -163,15 +163,15 @@ const ResultPage = () => {
       const token = localStorage.getItem('token');
       try {
         const [tiersResp, progressResp] = await Promise.all([
-          axios.get(`${API}/discount-tiers/${normalizedType}`, { headers: { Authorization: `Bearer ${token}` } }),
-          axios.get(`${API}/tier-progress/${card.id}`, { params: { card_type: normalizedType }, headers: { Authorization: `Bearer ${token}` } })
+          axios.get(`${API}/discount-tiers/${normalizedType}`, { params: { template_id: card.templateId }, headers: { Authorization: `Bearer ${token}` } }),
+          axios.get(`${API}/tier-progress/${card.id}`, { params: { card_type: normalizedType, template_id: card.templateId }, headers: { Authorization: `Bearer ${token}` } })
         ]);
         if (tiersResp.data.tiers) setDiscountTiers(tiersResp.data.tiers);
         if (progressResp.data) setTierProgress(progressResp.data);
       } catch { /* ignore */ }
     };
     fetchDiscountTiers();
-  }, [card?.id, cardType]);
+  }, [card?.id, card?.templateId, cardType]);
 
   // Load comment mode (open text vs invoice number) — a single workspace-wide
   // setting, applies the same regardless of card type.
@@ -193,12 +193,12 @@ const ResultPage = () => {
       if (normalizedType !== 'gift') return;
       const token = localStorage.getItem('token');
       try {
-        const response = await axios.get(`${API}/gift-card-config`, { headers: { Authorization: `Bearer ${token}` } });
+        const response = await axios.get(`${API}/gift-card-config`, { params: { template_id: card?.templateId }, headers: { Authorization: `Bearer ${token}` } });
         setGiftCardConfig({ allow_add: response.data?.allow_add || false });
       } catch { setGiftCardConfig({ allow_add: false }); }
     };
     fetchGiftCardConfig();
-  }, [cardType]);
+  }, [cardType, card?.templateId]);
 
   // Load minimum purchase amount for card types where it applies — below this,
   // the scanner blocks accumulation and tells the operator the minimum required.
@@ -208,12 +208,12 @@ const ResultPage = () => {
       if (!['cashback', 'discount', 'stamp'].includes(normalizedType)) { setMinAmount(0); return; }
       const token = localStorage.getItem('token');
       try {
-        const response = await axios.get(`${API}/min-amount/${normalizedType}`, { headers: { Authorization: `Bearer ${token}` } });
+        const response = await axios.get(`${API}/min-amount/${normalizedType}`, { params: { template_id: card?.templateId }, headers: { Authorization: `Bearer ${token}` } });
         setMinAmount(response.data?.min_amount || 0);
       } catch { setMinAmount(0); }
     };
     fetchMinAmount();
-  }, [cardType]);
+  }, [cardType, card?.templateId]);
 
   // Load the amount that triggers a "this looks high, please confirm" warning —
   // a data-entry safety net, not a card-type-specific setting.
@@ -240,7 +240,7 @@ const ResultPage = () => {
       setNeedsModeSelection(false);
       const token = localStorage.getItem('token');
       try {
-        const response = await axios.get(`${API}/reward-accrual-config`, { headers: { Authorization: `Bearer ${token}` } });
+        const response = await axios.get(`${API}/reward-accrual-config`, { params: { template_id: card?.templateId }, headers: { Authorization: `Bearer ${token}` } });
         if (response.data.success && response.data.mode) {
           setDetectedAccrualMode(response.data.mode);
           setNeedsModeSelection(false);
@@ -489,7 +489,7 @@ const ResultPage = () => {
         // Update tier progress for discount/cashback
         if (['discount', 'cashback'].includes(normalizedType) && purchaseVal > 0) {
           try {
-            const tpResp = await axios.post(`${API}/tier-progress/${card.id}/add`, {}, { params: { amount: purchaseVal, card_type: normalizedType }, headers: { Authorization: `Bearer ${token}` } });
+            const tpResp = await axios.post(`${API}/tier-progress/${card.id}/add`, {}, { params: { amount: purchaseVal, card_type: normalizedType, template_id: card.templateId }, headers: { Authorization: `Bearer ${token}` } });
             if (tpResp.data) setTierProgress(tpResp.data);
           } catch { /* ignore */ }
         }

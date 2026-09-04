@@ -13,6 +13,8 @@ import {
 import { API_BASE_URL as API } from '../config/api';
 import { formatWithThousands, stripThousandsFormatting } from '../components/cards/shared/numberFormat';
 import { CURRENCIES } from '../context/SettingsContext';
+import { useTemplatedConfig } from '../hooks/useTemplatedConfig';
+import { TemplatePicker, TemplateConfigHeader } from '../components/admin/TemplatePicker';
 
 const ROLE_CONFIG = {
   super_admin: { label: 'Super Admin', bg: 'bg-purple-100', text: 'text-purple-700' },
@@ -53,10 +55,6 @@ const WorkspaceAdminPage = () => {
   const [configLoading, setConfigLoading] = useState(true);
   const [stampConfig, setStampConfig] = useState({ stamp_mode: null, spend_threshold: 10000 });
   const [savingStampConfig, setSavingStampConfig] = useState(false);
-  const [tiersByType, setTiersByType] = useState({ cashback: [], discount: [] });
-  const [savingTiersType, setSavingTiersType] = useState('');
-  const [giftCardAllowAdd, setGiftCardAllowAdd] = useState(false);
-  const [savingGiftCardConfig, setSavingGiftCardConfig] = useState(false);
   const [commentMode, setCommentMode] = useState('open');
   const [savingCommentMode, setSavingCommentMode] = useState(false);
   const [stampTemplates, setStampTemplates] = useState([]);
@@ -64,8 +62,17 @@ const WorkspaceAdminPage = () => {
   const [stampConfigOverrides, setStampConfigOverrides] = useState([]);
   const [selectedStampTemplateId, setSelectedStampTemplateId] = useState('');
   const [deletingStampOverride, setDeletingStampOverride] = useState(false);
-  const [rewardAccrualMode, setRewardAccrualMode] = useState(null);
-  const [savingRewardAccrualMode, setSavingRewardAccrualMode] = useState(false);
+  // Puntos, Gift Card, and Cashback/Descuento tiers can each be overridden
+  // per specific Boomerangme template (not just once per card type) — same
+  // pattern piloted with Sellos above.
+  const rewardAccrualTpl = useTemplatedConfig({ basePath: '/reward-accrual-config', templateType: 'reward', targetWorkspaceId, active: user?.role === 'super_admin' });
+  const giftCardTpl = useTemplatedConfig({ basePath: '/gift-card-config', templateType: 'certificate', targetWorkspaceId, active: user?.role === 'super_admin' });
+  const cashbackTiersTpl = useTemplatedConfig({ basePath: '/discount-tiers/cashback', templateType: 'cashback', targetWorkspaceId, active: user?.role === 'super_admin' });
+  const discountTiersTpl = useTemplatedConfig({ basePath: '/discount-tiers/discount', templateType: 'discount', targetWorkspaceId, active: user?.role === 'super_admin' });
+  const [cashbackDraftTiers, setCashbackDraftTiers] = useState([]);
+  const [discountDraftTiers, setDiscountDraftTiers] = useState([]);
+  useEffect(() => { setCashbackDraftTiers(cashbackTiersTpl.currentConfig?.tiers || []); }, [cashbackTiersTpl.currentConfig]);
+  useEffect(() => { setDiscountDraftTiers(discountTiersTpl.currentConfig?.tiers || []); }, [discountTiersTpl.currentConfig]);
   // Currency, mandatory comments, and manual search — moved here from the
   // personal Settings page at the client's request: business-wide policy
   // Devotio controls, not something each operator opts into individually.
@@ -75,9 +82,16 @@ const WorkspaceAdminPage = () => {
 
   // Montos tab — visible to workspace_admin too, not Devotio-only, since this
   // is the business's own minimum-purchase and data-entry-safety policy.
+  // Each card type can also be overridden per specific template.
   const [amountsLoading, setAmountsLoading] = useState(true);
-  const [minAmounts, setMinAmounts] = useState({ cashback: 0, discount: 0, stamp: 0 });
-  const [savingMinAmountType, setSavingMinAmountType] = useState('');
+  const minAmountCashbackTpl = useTemplatedConfig({ basePath: '/min-amount/cashback', templateType: 'cashback', targetWorkspaceId, active: !!targetWorkspaceId });
+  const minAmountDiscountTpl = useTemplatedConfig({ basePath: '/min-amount/discount', templateType: 'discount', targetWorkspaceId, active: !!targetWorkspaceId });
+  const minAmountStampTpl = useTemplatedConfig({ basePath: '/min-amount/stamp', templateType: 'stamp', targetWorkspaceId, active: !!targetWorkspaceId });
+  const minAmountTpls = { cashback: minAmountCashbackTpl, discount: minAmountDiscountTpl, stamp: minAmountStampTpl };
+  const [minAmountDrafts, setMinAmountDrafts] = useState({ cashback: 0, discount: 0, stamp: 0 });
+  useEffect(() => { setMinAmountDrafts((d) => ({ ...d, cashback: minAmountCashbackTpl.currentConfig?.min_amount || 0 })); }, [minAmountCashbackTpl.currentConfig]);
+  useEffect(() => { setMinAmountDrafts((d) => ({ ...d, discount: minAmountDiscountTpl.currentConfig?.min_amount || 0 })); }, [minAmountDiscountTpl.currentConfig]);
+  useEffect(() => { setMinAmountDrafts((d) => ({ ...d, stamp: minAmountStampTpl.currentConfig?.min_amount || 0 })); }, [minAmountStampTpl.currentConfig]);
   const [highAmountThreshold, setHighAmountThreshold] = useState(1000000);
   const [savingHighAmountThreshold, setSavingHighAmountThreshold] = useState(false);
 
@@ -219,14 +233,10 @@ const WorkspaceAdminPage = () => {
     Promise.all([
       axios.get(`${API}/stamp-config`, { params, headers }),
       axios.get(`${API}/stamp-config/all`, { params, headers }),
-      axios.get(`${API}/discount-tiers/cashback`, { params, headers }),
-      axios.get(`${API}/discount-tiers/discount`, { params, headers }),
-      axios.get(`${API}/gift-card-config`, { params, headers }),
       axios.get(`${API}/comment-config`, { params, headers }),
-      axios.get(`${API}/reward-accrual-config`, { params, headers }),
       axios.get(`${API}/workspace-preferences`, { params, headers })
     ])
-      .then(([stampResp, stampAllResp, cashbackResp, discountResp, giftResp, commentResp, rewardResp, prefsResp]) => {
+      .then(([stampResp, stampAllResp, commentResp, prefsResp]) => {
         if (stampResp.data.stamp_mode) {
           setStampConfig({
             stamp_mode: stampResp.data.stamp_mode,
@@ -236,10 +246,7 @@ const WorkspaceAdminPage = () => {
           setStampConfig({ stamp_mode: null, spend_threshold: 10000 });
         }
         setStampConfigOverrides(stampAllResp.data.configs || []);
-        setTiersByType({ cashback: cashbackResp.data.tiers || [], discount: discountResp.data.tiers || [] });
-        setGiftCardAllowAdd(!!giftResp.data.allow_add);
         setCommentMode(commentResp.data.mode || 'open');
-        setRewardAccrualMode(rewardResp.data.mode || null);
         setWorkspacePrefs({
           currency: prefsResp.data.currency || 'CRC',
           require_comments: !!prefsResp.data.require_comments,
@@ -302,7 +309,9 @@ const WorkspaceAdminPage = () => {
   }, [targetWorkspaceId, user]);
 
   // Montos tab data — available to workspace_admin AND super_admin (unlike the
-  // rest of Config. Tarjetas, this isn't Devotio-only).
+  // rest of Config. Tarjetas, this isn't Devotio-only). Min-amounts load via
+  // their own useTemplatedConfig hooks above; only the (global,
+  // non-per-template) high-amount alert threshold is fetched here.
   useEffect(() => {
     if (!targetWorkspaceId) return;
     const token = localStorage.getItem('token');
@@ -310,35 +319,16 @@ const WorkspaceAdminPage = () => {
     const headers = { Authorization: `Bearer ${token}` };
     setAmountsLoading(true);
 
-    Promise.all([
-      axios.get(`${API}/min-amount/cashback`, { params, headers }),
-      axios.get(`${API}/min-amount/discount`, { params, headers }),
-      axios.get(`${API}/min-amount/stamp`, { params, headers }),
-      axios.get(`${API}/high-amount-alert-config`, { params, headers })
-    ])
-      .then(([cashbackResp, discountResp, stampResp, highResp]) => {
-        setMinAmounts({
-          cashback: cashbackResp.data.min_amount || 0,
-          discount: discountResp.data.min_amount || 0,
-          stamp: stampResp.data.min_amount || 0
-        });
-        setHighAmountThreshold(highResp.data.threshold || 1000000);
-      })
+    axios.get(`${API}/high-amount-alert-config`, { params, headers })
+      .then((res) => setHighAmountThreshold(res.data.threshold || 1000000))
       .catch((error) => console.error('Error loading amount settings:', error))
       .finally(() => setAmountsLoading(false));
   }, [targetWorkspaceId, user]);
 
   const handleSaveMinAmount = async (cardType) => {
-    setSavingMinAmountType(cardType);
-    try {
-      const token = localStorage.getItem('token');
-      await axios.post(`${API}/min-amount/${cardType}`, { min_amount: minAmounts[cardType] || 0 }, {
-        params: { workspace_id: targetWorkspaceId },
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      toast.success('Monto mínimo guardado');
-    } catch { toast.error('Error al guardar monto mínimo'); }
-    finally { setSavingMinAmountType(''); }
+    const tpl = minAmountTpls[cardType];
+    const ok = await tpl.save({ min_amount: minAmountDrafts[cardType] || 0 });
+    if (ok) toast.success(tpl.selectedTemplateId ? 'Monto mínimo específico guardado' : 'Monto mínimo guardado');
   };
 
   const handleSaveHighAmountThreshold = async () => {
@@ -374,57 +364,44 @@ const WorkspaceAdminPage = () => {
     finally { setSavingStampConfig(false); }
   };
 
+  const getTierState = (cardType) => cardType === 'cashback'
+    ? { tiers: cashbackDraftTiers, setTiers: setCashbackDraftTiers, tpl: cashbackTiersTpl }
+    : { tiers: discountDraftTiers, setTiers: setDiscountDraftTiers, tpl: discountTiersTpl };
+
   const handleAddTier = (cardType) => {
-    const tiers = tiersByType[cardType];
+    const { tiers, setTiers } = getTierState(cardType);
     const lastTier = tiers[tiers.length - 1];
-    setTiersByType({
-      ...tiersByType,
-      [cardType]: [...tiers, {
-        name: '',
-        threshold: lastTier ? lastTier.threshold + 5000 : 0,
-        percentage: lastTier ? lastTier.percentage + 2 : 1
-      }]
-    });
+    setTiers([...tiers, {
+      name: '',
+      threshold: lastTier ? lastTier.threshold + 5000 : 0,
+      percentage: lastTier ? lastTier.percentage + 2 : 1
+    }]);
   };
 
   const handleUpdateTier = (cardType, index, field, value) => {
-    const updated = [...tiersByType[cardType]];
+    const { tiers, setTiers } = getTierState(cardType);
+    const updated = [...tiers];
     updated[index] = { ...updated[index], [field]: field === 'name' ? value : (parseFloat(value) || 0) };
-    setTiersByType({ ...tiersByType, [cardType]: updated });
+    setTiers(updated);
   };
 
   const handleRemoveTier = (cardType, index) => {
-    setTiersByType({ ...tiersByType, [cardType]: tiersByType[cardType].filter((_, i) => i !== index) });
+    const { tiers, setTiers } = getTierState(cardType);
+    setTiers(tiers.filter((_, i) => i !== index));
   };
 
   const handleSaveTiers = async (cardType) => {
-    const tiers = tiersByType[cardType];
+    const { tiers, tpl } = getTierState(cardType);
     if (tiers.length === 0) { toast.error('Agregue al menos un nivel'); return; }
     if (tiers.some(t => !t.name.trim())) { toast.error('Todos los niveles necesitan un nombre'); return; }
-    setSavingTiersType(cardType);
-    try {
-      const token = localStorage.getItem('token');
-      await axios.post(`${API}/discount-tiers/${cardType}`, { tiers }, {
-        params: { workspace_id: targetWorkspaceId },
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      toast.success('Niveles guardados');
-    } catch { toast.error('Error al guardar niveles'); }
-    finally { setSavingTiersType(''); }
+    const sorted = [...tiers].sort((a, b) => a.threshold - b.threshold);
+    const ok = await tpl.save({ tiers: sorted });
+    if (ok) toast.success(tpl.selectedTemplateId ? 'Niveles específicos guardados' : 'Niveles guardados');
   };
 
   const handleSaveGiftCardConfig = async (nextValue) => {
-    setSavingGiftCardConfig(true);
-    try {
-      const token = localStorage.getItem('token');
-      await axios.post(`${API}/gift-card-config`, { allow_add: nextValue }, {
-        params: { workspace_id: targetWorkspaceId },
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setGiftCardAllowAdd(nextValue);
-      toast.success('Configuración de tarjeta de regalo guardada');
-    } catch { toast.error('Error al guardar configuración'); }
-    finally { setSavingGiftCardConfig(false); }
+    const ok = await giftCardTpl.save({ allow_add: nextValue });
+    if (ok) toast.success(giftCardTpl.selectedTemplateId ? 'Configuración específica guardada' : 'Configuración de tarjeta de regalo guardada');
   };
 
   const handleSaveCommentMode = async (mode) => {
@@ -442,17 +419,8 @@ const WorkspaceAdminPage = () => {
   };
 
   const handleSaveRewardAccrualMode = async (mode) => {
-    setSavingRewardAccrualMode(true);
-    try {
-      const token = localStorage.getItem('token');
-      await axios.post(`${API}/reward-accrual-config`, { mode }, {
-        params: { workspace_id: targetWorkspaceId },
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setRewardAccrualMode(mode);
-      toast.success('Modo de acumulación de puntos guardado');
-    } catch { toast.error('Error al guardar configuración'); }
-    finally { setSavingRewardAccrualMode(false); }
+    const ok = await rewardAccrualTpl.save({ mode });
+    if (ok) toast.success(rewardAccrualTpl.selectedTemplateId ? 'Modo específico guardado' : 'Modo de acumulación de puntos guardado');
   };
 
   const handleSaveWorkspacePrefs = async (field, value) => {
@@ -719,20 +687,29 @@ const WorkspaceAdminPage = () => {
                   { type: 'cashback', label: 'Cashback' },
                   { type: 'discount', label: 'Descuento' },
                   { type: 'stamp', label: 'Sellos (por monto o por visita)' }
-                ].map(({ type, label }) => (
-                  <div key={type} className="flex gap-2 items-end" data-testid={`min-amount-row-${type}`}>
-                    <div className="flex-1">
-                      <label className="text-xs text-zinc-500 block mb-1">{label}</label>
-                      <Input type="text" inputMode="decimal" value={formatWithThousands(minAmounts[type])}
-                        onChange={(e) => setMinAmounts({ ...minAmounts, [type]: parseFloat(stripThousandsFormatting(e.target.value)) || 0 })}
-                        className="h-10" data-testid={`min-amount-input-${type}`} />
+                ].map(({ type, label }) => {
+                  const tpl = minAmountTpls[type];
+                  return (
+                    <div key={type} className="space-y-1.5" data-testid={`min-amount-row-${type}`}>
+                      <label className="text-xs text-zinc-500 block">{label}</label>
+                      <TemplatePicker templates={tpl.templates} loading={tpl.loadingTemplates}
+                        selectedId={tpl.selectedTemplateId} onSelect={tpl.setSelectedTemplateId}
+                        testIdPrefix={`min-amount-${type}-template`} />
+                      <TemplateConfigHeader
+                        selectedName={tpl.templates.find((t) => String(t.id) === tpl.selectedTemplateId)?.name}
+                        hasOverride={tpl.hasOverride} onDeleteOverride={tpl.remove} deleting={tpl.deleting} />
+                      <div className="flex gap-2 items-end">
+                        <Input type="text" inputMode="decimal" value={formatWithThousands(minAmountDrafts[type])}
+                          onChange={(e) => setMinAmountDrafts({ ...minAmountDrafts, [type]: parseFloat(stripThousandsFormatting(e.target.value)) || 0 })}
+                          className="h-10 flex-1" data-testid={`min-amount-input-${type}`} />
+                        <Button onClick={() => handleSaveMinAmount(type)} disabled={tpl.saving}
+                          className="h-10 btn-primary shrink-0" data-testid={`save-min-amount-${type}`}>
+                          {tpl.saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                        </Button>
+                      </div>
                     </div>
-                    <Button onClick={() => handleSaveMinAmount(type)} disabled={savingMinAmountType === type}
-                      className="h-10 btn-primary shrink-0" data-testid={`save-min-amount-${type}`}>
-                      {savingMinAmountType === type ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                    </Button>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
 
               <div className="bg-white rounded-xl border border-zinc-200 p-4 space-y-3">
@@ -993,7 +970,8 @@ const WorkspaceAdminPage = () => {
               </div>
 
               {/* Puntos (Reward) accrual mode — was decided per-card on first scan,
-                  blocking the operator; now a workspace setting configured once here. */}
+                  blocking the operator; now a workspace setting configured once here.
+                  Can be overridden per specific Puntos template. */}
               <div className="bg-white rounded-xl border border-zinc-200 p-4 space-y-3">
                 <div className="flex items-center gap-3">
                   <Star className="h-5 w-5 text-[#0B0B16]" />
@@ -1003,6 +981,12 @@ const WorkspaceAdminPage = () => {
                   Define cómo acumulan puntos las tarjetas de este negocio. Mientras no se configure, el escáner
                   bloquea la acumulación y pide contactar a Devotio, en vez de dejar que el operador elija.
                 </p>
+                <TemplatePicker templates={rewardAccrualTpl.templates} loading={rewardAccrualTpl.loadingTemplates}
+                  selectedId={rewardAccrualTpl.selectedTemplateId} onSelect={rewardAccrualTpl.setSelectedTemplateId}
+                  testIdPrefix="reward-template" />
+                <TemplateConfigHeader
+                  selectedName={rewardAccrualTpl.templates.find((t) => String(t.id) === rewardAccrualTpl.selectedTemplateId)?.name}
+                  hasOverride={rewardAccrualTpl.hasOverride} onDeleteOverride={rewardAccrualTpl.remove} deleting={rewardAccrualTpl.deleting} />
                 <div className="space-y-2">
                   {[
                     { value: 'spend', label: 'Por Compra', desc: 'Puntos según el monto de compra' },
@@ -1010,26 +994,33 @@ const WorkspaceAdminPage = () => {
                     { value: 'points', label: 'Manual', desc: 'El operador ingresa los puntos' }
                   ].map(mode => (
                     <button key={mode.value} onClick={() => handleSaveRewardAccrualMode(mode.value)}
-                      disabled={savingRewardAccrualMode}
+                      disabled={rewardAccrualTpl.saving}
                       className={`w-full text-left px-4 py-3 rounded-lg border-2 text-sm transition-colors ${
-                        rewardAccrualMode === mode.value ? 'border-[#0B0B16] bg-[#5B7CF7]/5 font-medium' : 'border-zinc-200'
+                        rewardAccrualTpl.currentConfig?.mode === mode.value ? 'border-[#0B0B16] bg-[#5B7CF7]/5 font-medium' : 'border-zinc-200'
                       }`} data-testid={`reward-accrual-mode-${mode.value}`}>
                       <p>{mode.label}</p>
                       <p className="text-xs text-zinc-500 font-normal">{mode.desc}</p>
                     </button>
                   ))}
                 </div>
-                {savingRewardAccrualMode && <Loader2 className="h-4 w-4 animate-spin mx-auto text-zinc-400" />}
+                {rewardAccrualTpl.saving && <Loader2 className="h-4 w-4 animate-spin mx-auto text-zinc-400" />}
               </div>
 
-              {/* Tier sections — Cashback and Descuento, independent */}
-              {[{ type: 'cashback', label: 'Niveles — Cashback' }, { type: 'discount', label: 'Niveles — Descuento' }].map(({ type, label }) => (
+              {/* Tier sections — Cashback and Descuento, independent, each with
+                  its own optional per-template override. */}
+              {[{ type: 'cashback', label: 'Niveles — Cashback', tpl: cashbackTiersTpl, draft: cashbackDraftTiers }, { type: 'discount', label: 'Niveles — Descuento', tpl: discountTiersTpl, draft: discountDraftTiers }].map(({ type, label, tpl, draft }) => (
                 <div key={type} className="bg-white rounded-xl border border-zinc-200 p-4 space-y-3">
                   <div className="flex items-center gap-3">
                     <Percent className="h-5 w-5 text-[#0B0B16]" />
                     <p className="text-xs sm:text-sm font-semibold uppercase tracking-widest text-zinc-500">{label}</p>
                   </div>
-                  {tiersByType[type].map((tier, index) => (
+                  <TemplatePicker templates={tpl.templates} loading={tpl.loadingTemplates}
+                    selectedId={tpl.selectedTemplateId} onSelect={tpl.setSelectedTemplateId}
+                    testIdPrefix={`${type}-template`} />
+                  <TemplateConfigHeader
+                    selectedName={tpl.templates.find((t) => String(t.id) === tpl.selectedTemplateId)?.name}
+                    hasOverride={tpl.hasOverride} onDeleteOverride={tpl.remove} deleting={tpl.deleting} />
+                  {draft.map((tier, index) => (
                     <div key={index} className="flex gap-2 items-start" data-testid={`${type}-tier-${index}`}>
                       <Input value={tier.name} onChange={(e) => handleUpdateTier(type, index, 'name', e.target.value)}
                         placeholder="Nombre" className="h-10 text-sm flex-1" data-testid={`${type}-tier-name-${index}`} />
@@ -1050,29 +1041,36 @@ const WorkspaceAdminPage = () => {
                     className="w-full h-10 border-2 border-dashed border-zinc-300" data-testid={`add-${type}-tier`}>
                     <Plus className="h-4 w-4 mr-2" /> Agregar nivel
                   </Button>
-                  {tiersByType[type].length > 0 && (
-                    <Button onClick={() => handleSaveTiers(type)} disabled={savingTiersType === type} className="w-full h-10 btn-primary" data-testid={`save-${type}-tiers`}>
-                      {savingTiersType === type ? <Loader2 className="h-5 w-5 animate-spin" /> : <><Save className="h-4 w-4 mr-2" /> Guardar Niveles</>}
+                  {draft.length > 0 && (
+                    <Button onClick={() => handleSaveTiers(type)} disabled={tpl.saving} className="w-full h-10 btn-primary" data-testid={`save-${type}-tiers`}>
+                      {tpl.saving ? <Loader2 className="h-5 w-5 animate-spin" /> : <><Save className="h-4 w-4 mr-2" /> Guardar Niveles</>}
                     </Button>
                   )}
                 </div>
               ))}
 
-              {/* Gift Card "Agregar" Toggle */}
-              <div className="bg-white rounded-xl border border-zinc-200 p-4">
-                <div className="flex items-center gap-3 mb-3">
+              {/* Gift Card "Agregar" Toggle — can be overridden per specific
+                  gift card template. */}
+              <div className="bg-white rounded-xl border border-zinc-200 p-4 space-y-3">
+                <div className="flex items-center gap-3">
                   <Gift className="h-5 w-5 text-[#0B0B16]" />
                   <p className="text-xs sm:text-sm font-semibold uppercase tracking-widest text-zinc-500">Tarjetas de Regalo</p>
                 </div>
+                <TemplatePicker templates={giftCardTpl.templates} loading={giftCardTpl.loadingTemplates}
+                  selectedId={giftCardTpl.selectedTemplateId} onSelect={giftCardTpl.setSelectedTemplateId}
+                  testIdPrefix="gift-template" />
+                <TemplateConfigHeader
+                  selectedName={giftCardTpl.templates.find((t) => String(t.id) === giftCardTpl.selectedTemplateId)?.name}
+                  hasOverride={giftCardTpl.hasOverride} onDeleteOverride={giftCardTpl.remove} deleting={giftCardTpl.deleting} />
                 <div className="flex items-center justify-between">
                   <div className="flex-1 pr-3">
                     <p className="font-medium text-[#0B0B16] text-sm">Permitir "Agregar" saldo</p>
                     <p className="text-xs text-zinc-500">Por defecto los operadores solo canjean. Actívelo si este negocio necesita cargar saldo desde el escáner.</p>
                   </div>
-                  <button onClick={() => handleSaveGiftCardConfig(!giftCardAllowAdd)} disabled={savingGiftCardConfig}
-                    className={`shrink-0 w-11 h-6 rounded-full transition-colors ${giftCardAllowAdd ? 'bg-[#5B7CF7]' : 'bg-zinc-300'}`}
+                  <button onClick={() => handleSaveGiftCardConfig(!giftCardTpl.currentConfig?.allow_add)} disabled={giftCardTpl.saving}
+                    className={`shrink-0 w-11 h-6 rounded-full transition-colors ${giftCardTpl.currentConfig?.allow_add ? 'bg-[#5B7CF7]' : 'bg-zinc-300'}`}
                     data-testid="gift-card-allow-add-switch">
-                    <span className={`block w-5 h-5 bg-white rounded-full transition-transform ${giftCardAllowAdd ? 'translate-x-5' : 'translate-x-0.5'}`} />
+                    <span className={`block w-5 h-5 bg-white rounded-full transition-transform ${giftCardTpl.currentConfig?.allow_add ? 'translate-x-5' : 'translate-x-0.5'}`} />
                   </button>
                 </div>
               </div>

@@ -36,6 +36,18 @@ export const StampAddAction = ({
   const purchaseVal = parseFloat(purchaseAmount) || 0;
   const belowMinimum = minAmount > 0 && purchaseAmount !== '' && purchaseVal < minAmount;
 
+  // The generic rate ("1 sello por cada X") reads as ambiguous about whether
+  // the leftover carries over — showing the actual stamps/loss for the
+  // amount just typed removes that ambiguity entirely.
+  const spendThreshold = stampConfig.spend_threshold || 0;
+  const stampsToAward = spendThreshold > 0 ? Math.floor(purchaseVal / spendThreshold) : 0;
+  const remainderLost = purchaseVal - (stampsToAward * spendThreshold);
+  const spendHint = purchaseVal > 0
+    ? (stampsToAward > 0
+        ? `Con ${formatCurrency(purchaseVal)} se otorgan ${stampsToAward} sello${stampsToAward !== 1 ? 's' : ''}${remainderLost > 0 ? ` — los ${formatCurrency(remainderLost)} restantes no se guardan para la próxima compra` : ''}.`
+        : `Se necesitan al menos ${formatCurrency(spendThreshold)} para ganar 1 sello. Este monto no se guarda para la próxima compra.`)
+    : `Se gana 1 sello por cada ${formatCurrency(spendThreshold)} de esta compra. El resto no se guarda para la próxima.`;
+
   return (
     <div className="space-y-4 sm:space-y-6">
       <StampGrid 
@@ -75,7 +87,7 @@ export const StampAddAction = ({
               ? `El monto mínimo es ${formatCurrency(minAmount)} — montos menores no acumulan`
               : null
         }
-        hint={isSpendMode ? `Se gana 1 sello por cada ${formatCurrency(stampConfig.spend_threshold)} de esta compra. El resto no se acumula para la próxima.` : null}
+        hint={isSpendMode ? spendHint : null}
       />
       
       {isManualMode && (

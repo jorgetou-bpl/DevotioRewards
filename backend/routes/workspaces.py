@@ -163,13 +163,25 @@ async def update_workspace(workspace_id: str, data: WorkspaceUpdate, current_use
 
 @router.get("/workspaces/{workspace_id}/users")
 async def list_workspace_users(workspace_id: str, current_user: dict = Depends(require_workspace_admin)):
-    """List users in a workspace."""
+    """List users in a workspace.
+
+    Visibility rule: a business's own workspace_admin only manages their
+    operators, not other admins or Devotio's internal accounts. Super_admin
+    browsing a client's workspace sees that client's admin(s) too, but never
+    a super_admin entry — those only ever belong to Devotio's own internal
+    workspace, which is the one exception where they should show up."""
     if current_user.get("role") == "workspace_admin" and current_user.get("workspace_id") != workspace_id:
         raise HTTPException(status_code=403, detail="No tiene acceso a este workspace")
-    
+
+    query = {"workspace_id": workspace_id}
+    if current_user.get("role") == "workspace_admin":
+        query["role"] = "operator"
+    elif current_user.get("workspace_id") != workspace_id:
+        query["role"] = {"$ne": "super_admin"}
+
     users = []
     async for user in db.users.find(
-        {"workspace_id": workspace_id},
+        query,
         {"_id": 0, "password": 0, "hashed_password": 0}
     ):
         users.append({
@@ -312,10 +324,18 @@ async def get_dashboard(current_user: dict = Depends(require_super_admin)):
 
 @router.get("/dashboard/workspaces/{workspace_id}/users")
 async def get_workspace_users_admin(workspace_id: str, current_user: dict = Depends(require_super_admin)):
-    """Get all users of a workspace. Super admin only."""
+    """Get all users of a workspace. Super admin only.
+
+    Excludes super_admin accounts when browsing a client workspace — those
+    only ever belong to Devotio's own internal workspace, which is the one
+    exception where they're expected to appear in this list."""
+    query = {"workspace_id": workspace_id}
+    if current_user.get("workspace_id") != workspace_id:
+        query["role"] = {"$ne": "super_admin"}
+
     users = []
     async for user in db.users.find(
-        {"workspace_id": workspace_id},
+        query,
         {"_id": 0, "password": 0, "hashed_password": 0}
     ):
         users.append({

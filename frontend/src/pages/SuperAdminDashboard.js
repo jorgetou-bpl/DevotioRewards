@@ -47,7 +47,7 @@ const SuperAdminDashboard = () => {
   // Create workspace state
   const [workspaceName, setWorkspaceName] = useState('');
   const [apiKey, setApiKey] = useState('');
-  const [locations, setLocations] = useState([{ name: '', address: '' }]);
+  const [locations, setLocations] = useState([{ name: '' }]);
   const [adminEmail, setAdminEmail] = useState('');
   const [adminPassword, setAdminPassword] = useState('');
   const [adminName, setAdminName] = useState('');
@@ -293,23 +293,18 @@ const SuperAdminDashboard = () => {
                   <h2 className="font-semibold text-sm uppercase tracking-wider text-zinc-700">Sucursales</h2>
                 </div>
                 {locations.map((loc, i) => (
-                  <div key={i} className="flex gap-2">
-                    <div className="flex-1 space-y-2">
-                      <Input value={loc.name}
-                        onChange={e => { const u = [...locations]; u[i] = { ...u[i], name: e.target.value }; setLocations(u); }}
-                        placeholder="Nombre sucursal" className="h-10" data-testid={`location-name-${i}`} />
-                      <Input value={loc.address}
-                        onChange={e => { const u = [...locations]; u[i] = { ...u[i], address: e.target.value }; setLocations(u); }}
-                        placeholder="Dirección" className="h-10" data-testid={`location-address-${i}`} />
-                    </div>
+                  <div key={i} className="flex gap-2 items-center">
+                    <Input value={loc.name}
+                      onChange={e => { const u = [...locations]; u[i] = { ...u[i], name: e.target.value }; setLocations(u); }}
+                      placeholder="Nombre sucursal" className="h-10 flex-1" data-testid={`location-name-${i}`} />
                     {locations.length > 1 && (
-                      <button onClick={() => setLocations(locations.filter((_, idx) => idx !== i))} className="p-2 mt-1 text-zinc-400 hover:text-red-500">
+                      <button onClick={() => setLocations(locations.filter((_, idx) => idx !== i))} className="p-2 text-zinc-400 hover:text-red-500">
                         <X className="h-4 w-4" />
                       </button>
                     )}
                   </div>
                 ))}
-                <Button onClick={() => setLocations([...locations, { name: '', address: '' }])} variant="outline" className="w-full h-9 border-dashed border-zinc-300 text-sm">
+                <Button onClick={() => setLocations([...locations, { name: '' }])} variant="outline" className="w-full h-9 border-dashed border-zinc-300 text-sm">
                   <Plus className="h-4 w-4 mr-1" /> Agregar sucursal
                 </Button>
               </div>

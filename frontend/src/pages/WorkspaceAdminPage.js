@@ -660,19 +660,15 @@ const WorkspaceAdminPage = () => {
               Los puntos físicos de este negocio (locales, sedes). Se usan para asignar operadores a una sucursal específica y para filtrar reportes por ubicación.
             </p>
             {locations.map((loc, i) => (
-              <div key={i} className="flex gap-2 items-start" data-testid={`location-${i}`}>
-                <div className="flex-1 space-y-2">
-                  <Input value={loc.name} onChange={e => { const u = [...locations]; u[i] = { ...u[i], name: e.target.value }; setLocations(u); }}
-                    placeholder="Nombre de sucursal" className="h-10" data-testid={`location-name-${i}`} />
-                  <Input value={loc.address || ''} onChange={e => { const u = [...locations]; u[i] = { ...u[i], address: e.target.value }; setLocations(u); }}
-                    placeholder="Dirección (opcional)" className="h-10" data-testid={`location-address-${i}`} />
-                </div>
-                <button onClick={() => setLocations(locations.filter((_, idx) => idx !== i))} className="p-2 mt-1 text-zinc-400 hover:text-red-500">
+              <div key={i} className="flex gap-2 items-center" data-testid={`location-${i}`}>
+                <Input value={loc.name} onChange={e => { const u = [...locations]; u[i] = { ...u[i], name: e.target.value }; setLocations(u); }}
+                  placeholder="Nombre de sucursal" className="h-10 flex-1" data-testid={`location-name-${i}`} />
+                <button onClick={() => setLocations(locations.filter((_, idx) => idx !== i))} className="p-2 text-zinc-400 hover:text-red-500">
                   <Trash2 className="h-4 w-4" />
                 </button>
               </div>
             ))}
-            <Button onClick={() => setLocations([...locations, { name: '', address: '' }])} variant="outline"
+            <Button onClick={() => setLocations([...locations, { name: '' }])} variant="outline"
               className="w-full h-10 border-2 border-dashed border-zinc-300" data-testid="add-location-btn">
               <Plus className="h-4 w-4 mr-2" /> Agregar sucursal
             </Button>

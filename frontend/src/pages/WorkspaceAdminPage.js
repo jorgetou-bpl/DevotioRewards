@@ -630,11 +630,13 @@ const WorkspaceAdminPage = () => {
                           </div>
                         </div>
                         {canEdit && (
-                          <div className="flex items-center gap-1">
-                            <button onClick={() => { setResetModal({ open: true, user: u }); setResetResult(null); setManualPassword(''); setResetMode('auto'); }}
-                              className="p-2 text-zinc-300 hover:text-[#5B7CF7]" title="Restablecer contraseña" data-testid={`reset-password-${u.id}`}>
-                              <RefreshCw className="h-4 w-4" />
-                            </button>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <Button variant="outline" size="sm"
+                              onClick={() => { setResetModal({ open: true, user: u }); setResetResult(null); setManualPassword(''); setResetMode('auto'); }}
+                              className="text-xs gap-1 text-[#5B7CF7] border-[#5B7CF7]/30 hover:bg-[#5B7CF7]/10"
+                              data-testid={`reset-password-${u.id}`}>
+                              <Key className="h-3.5 w-3.5" /> Restablecer contraseña
+                            </Button>
                             <button onClick={() => handleDeleteUser(u.id, u.name)} className="p-2 text-zinc-300 hover:text-red-500" data-testid={`delete-user-${u.id}`}>
                               <Trash2 className="h-4 w-4" />
                             </button>

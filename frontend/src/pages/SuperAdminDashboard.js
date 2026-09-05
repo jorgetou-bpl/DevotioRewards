@@ -515,9 +515,9 @@ const SuperAdminDashboard = () => {
                                     {u.location && <span className="text-xs text-zinc-400">{u.location}</span>}
                                   </div>
                                 </div>
-                                <Button variant="ghost" size="sm" onClick={() => { setResetModal({ open: true, user: u }); setResetResult(null); setManualPassword(''); setResetMode('auto'); }}
-                                  className="text-xs gap-1 text-[#5B7CF7] hover:bg-[#5B7CF7]/10" data-testid={`reset-password-${u.email}`}>
-                                  <RefreshCw className="h-3 w-3" /> Restablecer
+                                <Button variant="outline" size="sm" onClick={() => { setResetModal({ open: true, user: u }); setResetResult(null); setManualPassword(''); setResetMode('auto'); }}
+                                  className="text-xs gap-1 shrink-0 text-[#5B7CF7] border-[#5B7CF7]/30 hover:bg-[#5B7CF7]/10" data-testid={`reset-password-${u.email}`}>
+                                  <Key className="h-3.5 w-3.5" /> Restablecer contraseña
                                 </Button>
                               </div>
                               );

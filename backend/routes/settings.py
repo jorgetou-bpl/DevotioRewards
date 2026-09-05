@@ -281,11 +281,10 @@ class StampProgressResponse(BaseModel):
     stamps_to_add: int
 
 @router.get("/stamp-progress/{card_id}")
-async def get_stamp_progress(card_id: str, current_user: dict = Depends(get_current_user)):
+async def get_stamp_progress(card_id: str, template_id: Optional[str] = None, current_user: dict = Depends(get_current_user)):
     """Get the accumulated progress towards the next stamp for a card."""
     ws_id = current_user.get("workspace_id")
-    config_query = {"workspace_id": ws_id} if ws_id else {}
-    config = await db.stamp_config.find_one(config_query, {"_id": 0})
+    config = await get_templated_config(db.stamp_config, ws_id, template_id)
     threshold = config.get("spend_threshold", 10000) if config else 10000
     
     progress = await db.stamp_progress.find_one({"card_id": card_id}, {"_id": 0})
@@ -306,12 +305,12 @@ async def get_stamp_progress(card_id: str, current_user: dict = Depends(get_curr
 async def add_stamp_progress(
     card_id: str,
     amount: float,
+    template_id: Optional[str] = None,
     current_user: dict = Depends(get_current_user)
 ):
     """Compute stamps earned from a single purchase amount (no cross-purchase accumulation)."""
     ws_id = current_user.get("workspace_id")
-    config_query = {"workspace_id": ws_id} if ws_id else {}
-    config = await db.stamp_config.find_one(config_query, {"_id": 0})
+    config = await get_templated_config(db.stamp_config, ws_id, template_id)
     if not config or config.get("stamp_mode") != "spend":
         raise HTTPException(status_code=400, detail="Stamp config not set to 'spend' mode")
     

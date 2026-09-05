@@ -372,7 +372,7 @@ const ResultPage = () => {
           setLoading(false);
           return;
         }
-        const progressResponse = await axios.post(`${API}/stamp-progress/${card.id}/add?amount=${amount}`, {}, { headers: { Authorization: `Bearer ${token}` } });
+        const progressResponse = await axios.post(`${API}/stamp-progress/${card.id}/add`, {}, { params: { amount, template_id: card.templateId }, headers: { Authorization: `Bearer ${token}` } });
         const { stamps_to_add, threshold } = progressResponse.data;
 
         if (stamps_to_add > 0) {

@@ -42,11 +42,14 @@ export const StampAddAction = ({
   const spendThreshold = stampConfig.spend_threshold || 0;
   const stampsToAward = spendThreshold > 0 ? Math.floor(purchaseVal / spendThreshold) : 0;
   const remainderLost = purchaseVal - (stampsToAward * spendThreshold);
-  const spendHint = purchaseVal > 0
-    ? (stampsToAward > 0
-        ? `Con ${formatCurrency(purchaseVal)} se otorgan ${stampsToAward} sello${stampsToAward !== 1 ? 's' : ''}${remainderLost > 0 ? ` — los ${formatCurrency(remainderLost)} restantes no se guardan para la próxima compra` : ''}.`
-        : `Se necesitan al menos ${formatCurrency(spendThreshold)} para ganar 1 sello. Este monto no se guarda para la próxima compra.`)
-    : `Se gana 1 sello por cada ${formatCurrency(spendThreshold)} de esta compra. El resto no se guarda para la próxima.`;
+  // Below the per-stamp threshold, the amount earns 0 stamps outright — block
+  // the button instead of letting the operator submit and find out after.
+  const belowSpendThreshold = isSpendMode && spendThreshold > 0 && purchaseAmount !== '' && purchaseVal > 0 && stampsToAward === 0;
+  const spendHint = purchaseVal > 0 && stampsToAward > 0
+    ? `Con ${formatCurrency(purchaseVal)} se otorgan ${stampsToAward} sello${stampsToAward !== 1 ? 's' : ''}${remainderLost > 0 ? ` — los ${formatCurrency(remainderLost)} restantes no se guardan para la próxima compra` : ''}.`
+    : purchaseVal === 0
+      ? `Se gana 1 sello por cada ${formatCurrency(spendThreshold)} de esta compra. El resto no se guarda para la próxima.`
+      : null;
 
   return (
     <div className="space-y-4 sm:space-y-6">
@@ -85,7 +88,9 @@ export const StampAddAction = ({
             ? 'El monto de compra debe ser mayor a 0'
             : belowMinimum
               ? `El monto mínimo es ${formatCurrency(minAmount)} — montos menores no acumulan`
-              : null
+              : belowSpendThreshold
+                ? `Se necesitan al menos ${formatCurrency(spendThreshold)} para ganar 1 sello — este monto no aplica`
+                : null
         }
         hint={isSpendMode ? spendHint : null}
       />
@@ -113,7 +118,7 @@ export const StampAddAction = ({
       
       <ActionButton
         onClick={() => openConfirmation('Agregar')}
-        disabled={loading || (isManualMode && actionAmount < 1) || !isPurchaseValid || belowMinimum}
+        disabled={loading || (isManualMode && actionAmount < 1) || !isPurchaseValid || belowMinimum || belowSpendThreshold}
         loading={loading}
         label="Agregar Sellos"
         testId="add-stamp-button"

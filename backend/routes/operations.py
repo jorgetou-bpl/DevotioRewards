@@ -9,6 +9,7 @@ import csv
 import logging
 from utils.auth import get_current_user, require_super_admin
 from utils.config import db
+from utils.boomerang import OPERATION_TYPES
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/operations", tags=["operations"])
@@ -66,9 +67,9 @@ async def get_operations(
     
     operations = await operations_cursor.to_list(length=items_per_page)
     gerentes = await db.operations.distinct("gerente")
-    operation_types = await db.operations.distinct("operation_type")
+    operation_type_values = await db.operations.distinct("operation_type")
     card_types = await db.operations.distinct("card_type")
-    
+
     return {
         "success": True,
         "operations": operations,
@@ -80,7 +81,12 @@ async def get_operations(
         },
         "filters": {
             "gerentes": gerentes,
-            "operation_types": operation_types,
+            # {value, label} so the filter dropdown can show the Spanish label
+            # while still filtering by the raw operation_type stored on each
+            # record — same OPERATION_TYPES dict already used to label rows.
+            "operation_types": [
+                {"value": t, "label": OPERATION_TYPES.get(t, t)} for t in operation_type_values
+            ],
             "card_types": card_types
         }
     }

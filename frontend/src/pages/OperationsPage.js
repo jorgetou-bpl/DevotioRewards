@@ -890,11 +890,11 @@ const OperationsPage = () => {
                       data-testid="operation-type-dropdown"
                     >
                       <span className={selectedOperationType ? 'text-[#0B0B16]' : 'text-zinc-400'}>
-                        {selectedOperationType || 'Todos'}
+                        {filters.operation_types.find((t) => t.value === selectedOperationType)?.label || 'Todos'}
                       </span>
                       <ChevronDown className={`h-4 w-4 text-zinc-400 transition-transform ${typeDropdownOpen ? 'rotate-180' : ''}`} />
                     </button>
-                    
+
                     {typeDropdownOpen && (
                       <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-zinc-200 rounded-md shadow-lg z-50 max-h-48 overflow-y-auto">
                         <button
@@ -907,17 +907,17 @@ const OperationsPage = () => {
                           <span>Todos</span>
                           {!selectedOperationType && <Check className="h-4 w-4 text-[#0B0B16]" />}
                         </button>
-                        {filters.operation_types.map((type) => (
+                        {filters.operation_types.map(({ value, label }) => (
                           <button
-                            key={type}
+                            key={value}
                             onClick={() => {
-                              setSelectedOperationType(type);
+                              setSelectedOperationType(value);
                               setTypeDropdownOpen(false);
                             }}
-                            className={`w-full flex items-center justify-between p-2 hover:bg-zinc-50 ${selectedOperationType === type ? 'bg-purple-50' : ''}`}
+                            className={`w-full flex items-center justify-between p-2 hover:bg-zinc-50 ${selectedOperationType === value ? 'bg-purple-50' : ''}`}
                           >
-                            <span>{type}</span>
-                            {selectedOperationType === type && <Check className="h-4 w-4 text-[#0B0B16]" />}
+                            <span>{label}</span>
+                            {selectedOperationType === value && <Check className="h-4 w-4 text-[#0B0B16]" />}
                           </button>
                         ))}
                       </div>

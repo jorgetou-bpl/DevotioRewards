@@ -117,6 +117,11 @@ class CardActionRequest(BaseModel):
     reward_value: Optional[float] = None  # Optional monetary value of reward
     # For reward card accrual type
     accrualProgram: Optional[str] = None  # 'points', 'spend', or 'visit'
+    # Optional override for what gets recorded in our own operations history,
+    # when it differs from `amount` (e.g. discount/cashback cards send the raw
+    # purchase as `amount` so Boomerangme computes the tier discount itself,
+    # but the history table should still show the discount actually granted).
+    logAmount: Optional[float] = None
 
 class ScanRequest(BaseModel):
     qr_data: str

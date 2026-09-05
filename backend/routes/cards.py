@@ -451,13 +451,13 @@ async def add_points(card_id: str, action_data: CardActionRequest, current_user:
         operation_type="add-point",
         current_user=current_user,
         card_data=card_data,
-        amount=amount,
+        amount=action_data.logAmount if action_data.logAmount is not None else amount,
         balance=card_data.get('balance', {}).get('bonusBalance') or card_data.get('balance', {}).get('balance'),
         purchase_sum=action_data.purchaseSum or amount,
         note=action_data.comment,
         gerente_override=gerente_name
     )
-    
+
     return {"success": True, "card": mask_pii(card_data), "message": message}
 
 @router.post("/cards/{card_id}/subtract-point")

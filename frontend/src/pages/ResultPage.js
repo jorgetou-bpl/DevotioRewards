@@ -492,12 +492,17 @@ const ResultPage = () => {
         endpoint = `${API}/cards/${card.id}/use-coupon`;
         payload = { ...basePayload, amount: 1 };
       } else if ((actionKey === 'agregar' || actionKey === 'aplicar') && (normalizedType === 'cashback' || normalizedType === 'discount')) {
-        // Cashback/discount points are a percentage of the purchase, not a flat count —
-        // compute from the same tier info shown on screen so what's displayed is what's charged.
+        // Send the raw purchase amount, not a pre-computed discount — Boomerangme
+        // applies its own configured tier percentage server-side (this mirrors what
+        // its native app does). Sending our own pre-computed discount here made
+        // Boomerangme apply the percentage a second time on top of it, and also
+        // under-counted the card's real cumulative purchase volume (the figure its
+        // own tier thresholds are based on). pointsToAdd is kept only to show the
+        // operator what's being applied and to log it in our own history.
         const tierInfo = getCurrentTierInfo(discountTiers, tierProgress, balance);
         const pointsToAdd = purchaseVal * ((tierInfo.percentage || 0) / 100);
         endpoint = `${API}/cards/${card.id}/add-point`;
-        payload = { ...basePayload, amount: pointsToAdd, purchaseSum: purchaseVal };
+        payload = { ...basePayload, amount: purchaseVal, purchaseSum: purchaseVal, logAmount: pointsToAdd };
       } else {
         const tabConfig = config.actions[activeTab.toLowerCase()];
         if (!tabConfig) throw new Error('No action config found');

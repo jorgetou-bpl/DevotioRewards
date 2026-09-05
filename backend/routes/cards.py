@@ -20,6 +20,7 @@ from utils.boomerang import (
     parse_api_error,
     get_workspace_api_key
 )
+from routes.settings import get_templated_config
 
 logger = logging.getLogger(__name__)
 router = APIRouter(tags=["cards"])
@@ -423,7 +424,19 @@ async def add_points(card_id: str, action_data: CardActionRequest, current_user:
     gerente_name = action_data.gerente or current_user.get('name', '')
     await validate_comment(action_data.comment, current_user.get('workspace_id'))
     comment_with_gerente = build_comment_with_gerente(action_data.comment, gerente_name)
-    
+
+    # Gift/certificate cards can be configured as redeem-only. This has to be
+    # enforced here, server-side and for every role including admins — hiding
+    # the "Agregar" button in the UI only stopped operators who never opened
+    # dev tools; a direct call to this endpoint bypassed it completely.
+    existing = await call_boomerang_api('GET', f'/cards/{card_id}', {}, api_key=api_key)
+    existing_type = str(existing.get('data', {}).get('type', '')).lower()
+    if 'gift' in existing_type or 'certificate' in existing_type:
+        template_id = str(existing.get('data', {}).get('templateId') or '') or None
+        gift_config = await get_templated_config(db.gift_card_config, current_user.get('workspace_id'), template_id)
+        if not (gift_config and gift_config.get('allow_add')):
+            raise HTTPException(status_code=403, detail="Agregar saldo está deshabilitado para este tipo de tarjeta")
+
     amount = float(action_data.amount or 1)
     payload = {"points": amount}
     if comment_with_gerente:

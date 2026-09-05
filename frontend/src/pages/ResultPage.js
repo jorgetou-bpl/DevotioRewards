@@ -58,12 +58,11 @@ const ResultPage = () => {
   const cardType = card ? normalizeCardType(card.type) : null;
   const rawConfig = cardType ? (CARD_TYPE_CONFIG[cardType] || CARD_TYPE_CONFIG.stamp) : null;
 
-  // Gift cards default to redeem-only — "Agregar" is an exception only
-  // Admin/Devotio can grant, either globally (allow_add) or by being the one
-  // operating the scanner themselves.
+  // Gift cards default to redeem-only — "Agregar" only appears when
+  // allow_add is on for that card, with no role exception. The backend
+  // enforces this too, so a direct API call can't bypass it either.
   const isGiftCard = cardType === 'gift' || cardType === 'gift_card';
-  const canBypassGiftCardRestriction = user?.role === 'workspace_admin' || user?.role === 'super_admin';
-  const restrictGiftCardAdd = isGiftCard && !giftCardConfig.allow_add && !canBypassGiftCardRestriction;
+  const restrictGiftCardAdd = isGiftCard && !giftCardConfig.allow_add;
   const config = useMemo(() => {
     if (restrictGiftCardAdd && rawConfig) {
       return { ...rawConfig, tabs: rawConfig.tabs.filter((t) => t !== 'Agregar') };

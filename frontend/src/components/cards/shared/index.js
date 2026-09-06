@@ -4,3 +4,4 @@ export { BalanceDisplay } from './BalanceDisplay';
 export { ActionButton } from './ActionButton';
 export { CustomerInfoPanel, CardInfoPanel } from './CardInfoPanel';
 export { getCurrentTierInfo } from './tierUtils';
+export { isUnlimitedMembership } from './membershipUtils';

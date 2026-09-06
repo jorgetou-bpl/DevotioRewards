@@ -14,7 +14,7 @@ import {
   MultipassVisitsAction, MultipassPointsAction, DiscountCashbackAction,
   RewardAddAction, RewardRedeemAction, CouponAction,
   GenericRedeemAction, DefaultAddAction,
-  CustomerInfoPanel, CardInfoPanel, getCurrentTierInfo
+  CustomerInfoPanel, CardInfoPanel, getCurrentTierInfo, isUnlimitedMembership
 } from '../components/cards';
 
 import { API_BASE_URL as API } from '../config/api';
@@ -479,7 +479,13 @@ const ResultPage = () => {
         endpoint = `${API}/cards/${card.id}/add-visit`;
         payload = { ...basePayload };
       } else if (actionKey === 'canjearvisitas') {
-        endpoint = `${API}/cards/${card.id}/subtract-visit`;
+        // Membership cards with an unlimited period plan have nothing to
+        // decrement — Boomerangme rejects subtract-visit for them with a
+        // generic 422 (confirmed live). currentNumberOfUses only tracks a
+        // real remaining balance for limited plans; for unlimited ones the
+        // visit is simply logged via add-visit instead.
+        const useAddVisit = normalizedType === 'membership' && isUnlimitedMembership(card);
+        endpoint = `${API}/cards/${card.id}/${useAddVisit ? 'add-visit' : 'subtract-visit'}`;
         payload = { ...basePayload };
       } else if (actionKey === 'agregarpuntos') {
         endpoint = `${API}/cards/${card.id}/add-scores`;

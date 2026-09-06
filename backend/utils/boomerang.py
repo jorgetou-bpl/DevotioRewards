@@ -282,9 +282,10 @@ async def call_boomerang_api(method: str, endpoint: str, data: dict = None, rais
             
             if response.status_code >= 400:
                 result["code"] = response.status_code
+                logger.error(f"Boomerangme API error {response.status_code} on {method} {endpoint}: {result}")
             elif "code" not in result:
                 result["code"] = response.status_code
-            
+
             if raise_on_error and result.get("code", 200) >= 400:
                 from fastapi import HTTPException
                 error_msg = parse_api_error(result.get("message", ""))

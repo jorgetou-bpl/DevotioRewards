@@ -1,8 +1,7 @@
 import React from 'react';
 import { Star } from 'lucide-react';
 import { PurchaseAmountInput, AmountCounter, ActionButton } from '../shared';
-
-const PERIOD_PARAM_KEY = { day: 'dailyParameters', week: 'weeklyParameters', month: 'monthlyParameters', year: 'yearlyParameters' };
+import { isUnlimitedMembership } from '../shared/membershipUtils';
 
 export const MembershipAction = ({
   card, balance, purchaseAmount, setPurchaseAmount, actionAmount, setActionAmount,
@@ -12,13 +11,7 @@ export const MembershipAction = ({
   const customerSubscription = card.customerSubscription || {};
   const subscriptionStatus = customerSubscription.status === 1 ? 'Activo' : 'Inactivo';
   const availableVisits = balance.currentNumberOfUses || 0;
-  // Boomerangme uses 0 as "no cap" on these limit fields — confirmed via
-  // perFilialLimit:0 meaning "no per-branch limit" on the same tier object.
-  // A limit of 0 on the customer's active billing period means unlimited
-  // visits, not zero — without this check a fresh unlimited membership
-  // reads identically to an exhausted limited one.
-  const periodParams = membershipTier[PERIOD_PARAM_KEY[customerSubscription.period]] || null;
-  const isUnlimited = periodParams ? periodParams.limit === 0 : false;
+  const isUnlimited = isUnlimitedMembership(card);
   const customerName = card.customer?.firstName
     ? `${card.customer.firstName} ${card.customer.surname || ''}`.trim()
     : 'Cliente';

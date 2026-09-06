@@ -38,6 +38,7 @@ const ResultPage = () => {
   const [stampsPerVisit, setStampsPerVisit] = useState(1);
   const [loadingTemplate, setLoadingTemplate] = useState(false);
   const [couponBenefit, setCouponBenefit] = useState(null);
+  const [membershipUnitName, setMembershipUnitName] = useState(null);
   const [pointsRatio, setPointsRatio] = useState(null);
   const [detectedAccrualMode, setDetectedAccrualMode] = useState(null);
   const [detectingMode, setDetectingMode] = useState(false);
@@ -109,6 +110,21 @@ const ResultPage = () => {
       } catch { setCouponBenefit(null); }
     };
     if (card) fetchCouponBenefit();
+  }, [card, cardType]);
+
+  // Fetch the membership's customizable unit label (e.g. "Visitas", "Clases",
+  // "Lavados") instead of hardcoding "Visitas" regardless of what the
+  // business actually named it in Boomerangme.
+  useEffect(() => {
+    const fetchMembershipUnitName = async () => {
+      const normalizedType = cardType ? cardType.replace('_card', '') : '';
+      if (normalizedType !== 'membership' || !card?.templateId) { setMembershipUnitName(null); return; }
+      try {
+        const response = await axios.get(`${API}/templates/${card.templateId}`);
+        setMembershipUnitName(response.data?.template?.balanceUnitName || null);
+      } catch { setMembershipUnitName(null); }
+    };
+    if (card) fetchMembershipUnitName();
   }, [card, cardType]);
 
   // Fetch the "por compra" points ratio (e.g. ₡1 = 10 puntos) so the operator
@@ -576,7 +592,7 @@ const ResultPage = () => {
     }
     // Membership
     if (normalizedType === 'membership') {
-      return <MembershipAction {...commonProps} card={card} />;
+      return <MembershipAction {...commonProps} card={card} unitName={membershipUnitName} />;
     }
     // Multipass Visitas
     if ((normalizedType === 'multipass' || normalizedType === 'subscription') && activeTab === 'Visitas') {

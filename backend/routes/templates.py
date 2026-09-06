@@ -136,6 +136,10 @@ async def get_template(template_id: str, current_user: dict = Depends(get_curren
                     # accrual config (mechanics.accrual.stampsPerAccrual) —
                     # not duplicated as separate app-side config.
                     "stampsPerVisit": mechanics.get('accrual', {}).get('stampsPerAccrual') or 1,
+                    # Membership's customizable unit label (e.g. "Visitas",
+                    # "Clases", "Lavados") — read live instead of hardcoding
+                    # "Visitas" in the UI regardless of what the business named it.
+                    "balanceUnitName": mechanics.get('balanceUnitName') or None,
                     # Include raw data for debugging
                     "rawKeys": list(template_data.keys())
                 }

@@ -5,13 +5,20 @@ import { isUnlimitedMembership } from '../shared/membershipUtils';
 
 export const MembershipAction = ({
   card, balance, purchaseAmount, setPurchaseAmount, actionAmount, setActionAmount,
-  loading, openConfirmation, currencyInfo
+  loading, openConfirmation, currencyInfo, unitName
 }) => {
   const membershipTier = card.membershipTier || {};
   const customerSubscription = card.customerSubscription || {};
-  const subscriptionStatus = customerSubscription.status === 1 ? 'Activo' : 'Inactivo';
+  // Boomerangme's `status` may or may not flip on its own once expiredAt
+  // passes — checking the date ourselves means an expired membership never
+  // reads as redeemable here regardless of that behavior.
+  const expiresAtMs = customerSubscription.expiredAt ? customerSubscription.expiredAt * 1000 : null;
+  const isDateExpired = expiresAtMs ? expiresAtMs < Date.now() : false;
+  const isActive = customerSubscription.status === 1 && !isDateExpired;
+  const subscriptionStatus = isActive ? 'Activo' : 'Inactivo';
   const availableVisits = balance.currentNumberOfUses || 0;
   const isUnlimited = isUnlimitedMembership(card);
+  const unitLabel = unitName || 'Visitas';
   const customerName = card.customer?.firstName
     ? `${card.customer.firstName} ${card.customer.surname || ''}`.trim()
     : 'Cliente';
@@ -30,13 +37,19 @@ export const MembershipAction = ({
         </div>
         <div className="flex justify-center">
           <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold text-white ${subscriptionStatus === 'Activo' ? 'bg-green-500' : 'bg-gray-500'}`}>
-            {subscriptionStatus}
+            {isDateExpired ? 'Vencida' : subscriptionStatus}
           </span>
         </div>
+        {expiresAtMs && (
+          <p className="text-xs text-zinc-500 mt-2">
+            {isDateExpired ? 'Venció el ' : 'Vence el '}
+            {new Date(expiresAtMs).toLocaleDateString('es-CR', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+          </p>
+        )}
       </div>
-      
+
       <div className="text-center p-6 bg-white rounded-xl border-2 border-[#0B0B16]">
-        <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-2">Visitas Disponibles</p>
+        <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-2">{unitLabel} Disponibles</p>
         {isUnlimited ? (
           <span className="text-3xl sm:text-4xl font-bold gradient-text">Ilimitadas</span>
         ) : (
@@ -44,7 +57,11 @@ export const MembershipAction = ({
         )}
       </div>
 
-      {isUnlimited || availableVisits > 0 ? (
+      {!isActive ? (
+        <div className="text-center p-6 bg-zinc-50 rounded-xl">
+          <p className="text-zinc-500">Esta membresía está {isDateExpired ? 'vencida' : 'inactiva'} y no se puede canjear</p>
+        </div>
+      ) : isUnlimited || availableVisits > 0 ? (
         <>
           <PurchaseAmountInput
             value={purchaseAmount}
@@ -58,7 +75,7 @@ export const MembershipAction = ({
           <AmountCounter
             value={actionAmount}
             onChange={setActionAmount}
-            label="Visitas a canjear"
+            label={`${unitLabel} a canjear`}
             max={isUnlimited ? undefined : availableVisits}
             testIdPrefix="membership-redeem-visits"
           />
@@ -67,13 +84,13 @@ export const MembershipAction = ({
             onClick={() => openConfirmation('CanjearVisitas')}
             disabled={loading || actionAmount < 1 || (!isUnlimited && (availableVisits <= 0 || actionAmount > availableVisits))}
             loading={loading}
-            label="Canjear Visita"
+            label={`Canjear ${unitLabel}`}
             testId="redeem-membership-visits-button"
           />
         </>
       ) : (
         <div className="text-center p-6 bg-zinc-50 rounded-xl">
-          <p className="text-zinc-500">No hay visitas disponibles para canjear</p>
+          <p className="text-zinc-500">No hay {unitLabel.toLowerCase()} disponibles para canjear</p>
         </div>
       )}
     </div>

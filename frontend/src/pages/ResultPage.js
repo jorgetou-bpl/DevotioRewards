@@ -589,7 +589,7 @@ const ResultPage = () => {
       return <CouponAction card={card} benefitDescription={couponBenefit} purchaseAmount={purchaseAmount} setPurchaseAmount={setPurchaseAmount} loading={loading} openConfirmation={openConfirmation} currencyInfo={currencyInfo} actionConfig={actionConfig} />;
     }
     // Default (gift card Agregar, etc.)
-    return <DefaultAddAction cardType={cardType} balance={balance} actionAmount={actionAmount} setActionAmount={setActionAmount} loading={loading} openConfirmation={openConfirmation} activeTab={activeTab} formatCurrency={formatCurrency} currencyInfo={currencyInfo} actionConfig={actionConfig} />;
+    return <DefaultAddAction {...commonProps} cardType={cardType} activeTab={activeTab} actionConfig={actionConfig} />;
   };
 
   // ============ MAIN RENDER ============

@@ -61,7 +61,7 @@ const ResultPage = () => {
   // Gift cards default to redeem-only — "Agregar" only appears when
   // allow_add is on for that card, with no role exception. The backend
   // enforces this too, so a direct API call can't bypass it either.
-  const isGiftCard = cardType === 'gift' || cardType === 'gift_card';
+  const isGiftCard = cardType === 'gift' || cardType === 'gift_card' || cardType === 'certificate';
   const restrictGiftCardAdd = isGiftCard && !giftCardConfig.allow_add;
   const config = useMemo(() => {
     if (restrictGiftCardAdd && rawConfig) {
@@ -205,7 +205,7 @@ const ResultPage = () => {
   useEffect(() => {
     const fetchGiftCardConfig = async () => {
       const normalizedType = cardType ? cardType.replace('_card', '') : '';
-      if (normalizedType !== 'gift') return;
+      if (!['gift', 'certificate'].includes(normalizedType)) return;
       const token = localStorage.getItem('token');
       try {
         const response = await axios.get(`${API}/gift-card-config`, { params: { template_id: card?.templateId }, headers: { Authorization: `Bearer ${token}` } });

@@ -777,6 +777,44 @@ async def add_purchase(card_id: str, action_data: CardActionRequest, current_use
     
     return {"success": True, "card": mask_pii(card_data), "message": "Compra registrada exitosamente"}
 
+@router.post("/cards/{card_id}/add-transaction-amount")
+async def add_transaction_amount(card_id: str, action_data: CardActionRequest, current_user: dict = Depends(get_current_user), api_key: str = Depends(get_api_key)):
+    """Report a raw purchase amount for cashback cards. Unlike add-point
+    (which adds whatever "points" value it receives to the balance
+    literally, with no math applied), this endpoint lets Boomerangme both
+    (a) credit the balance with the purchase times the card's own current
+    cashback percentage, and (b) advance the tier-threshold volume counter
+    by the real purchase amount — confirmed live: a 1000 purchase on a 1%
+    tier credited exactly 10 to balance and 1000 to the volume counter,
+    matching what Boomerangme's own native app produces for the same
+    transaction. add-point cannot do this: sending the raw purchase there
+    credits the full amount as if it were already-earned cashback."""
+    gerente_name = action_data.gerente or current_user.get('name', '')
+    await validate_comment(action_data.comment, current_user.get('workspace_id'))
+    comment_with_gerente = build_comment_with_gerente(action_data.comment, gerente_name)
+
+    amount = float(action_data.amount or 0)
+    payload = {"amount": amount}
+    if comment_with_gerente:
+        payload["comment"] = comment_with_gerente
+
+    response = await call_boomerang_api('POST', f'/cards/{card_id}/add-transaction-amount', payload, api_key=api_key)
+    card_data = response.get('data', {})
+
+    await log_operation(
+        card_id=card_id,
+        operation_type="add-transaction-amount",
+        current_user=current_user,
+        card_data=card_data,
+        amount=action_data.logAmount if action_data.logAmount is not None else amount,
+        balance=card_data.get('balance', {}).get('balance'),
+        purchase_sum=amount,
+        note=action_data.comment,
+        gerente_override=gerente_name
+    )
+
+    return {"success": True, "card": mask_pii(card_data), "message": "Cashback agregado exitosamente"}
+
 @router.post("/cards/{card_id}/add-visit-reward")
 async def add_visit_reward(card_id: str, action_data: CardActionRequest, current_user: dict = Depends(get_current_user), api_key: str = Depends(get_api_key)):
     """Add visit to reward cards (visit mode - points calculated per visit)."""

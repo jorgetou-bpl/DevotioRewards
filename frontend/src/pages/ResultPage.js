@@ -490,7 +490,7 @@ const ResultPage = () => {
       } else if (actionKey === 'usar') {
         endpoint = `${API}/cards/${card.id}/use-coupon`;
         payload = { ...basePayload, amount: 1 };
-      } else if ((actionKey === 'agregar' || actionKey === 'aplicar') && (normalizedType === 'cashback' || normalizedType === 'discount')) {
+      } else if ((actionKey === 'agregar' || actionKey === 'aplicar') && normalizedType === 'discount') {
         // Send the raw purchase amount, not a pre-computed discount — Boomerangme
         // applies its own configured tier percentage server-side (this mirrors what
         // its native app does). Sending our own pre-computed discount here made
@@ -502,6 +502,18 @@ const ResultPage = () => {
         const pointsToAdd = purchaseVal * ((tierInfo.percentage || 0) / 100);
         endpoint = `${API}/cards/${card.id}/add-point`;
         payload = { ...basePayload, amount: purchaseVal, purchaseSum: purchaseVal, logAmount: pointsToAdd };
+      } else if ((actionKey === 'agregar' || actionKey === 'aplicar') && normalizedType === 'cashback') {
+        // Cashback's stored balance is real, spendable money (unlike discount's
+        // discountAmount, which is just a tier-threshold volume counter) — Boomerangme
+        // will not derive it from a raw purchase via add-point, it adds whatever
+        // "points" it receives literally. add-transaction-amount is the endpoint that
+        // actually applies the card's current cashback % automatically (confirmed
+        // live: a 1000 purchase at 1% credited exactly 10 to balance, matching the
+        // native app), while also advancing the same volume counter discount uses.
+        const tierInfo = getCurrentTierInfo(discountTiers, tierProgress, balance);
+        const pointsToAdd = purchaseVal * ((tierInfo.percentage || 0) / 100);
+        endpoint = `${API}/cards/${card.id}/add-transaction-amount`;
+        payload = { ...basePayload, amount: purchaseVal, logAmount: pointsToAdd };
       } else {
         const tabConfig = config.actions[activeTab.toLowerCase()];
         if (!tabConfig) throw new Error('No action config found');

@@ -295,7 +295,7 @@ const ResultPage = () => {
           <AlertCircle className="h-12 w-12 sm:h-16 sm:w-16 mx-auto mb-4 text-zinc-300" />
           <h2 className="text-heading text-xl sm:text-2xl mb-2">Sin Datos de Tarjeta</h2>
           <p className="text-zinc-500 text-sm mb-6">Por favor escanea una tarjeta primero</p>
-          <Button onClick={() => navigate('/')} className="h-10 sm:h-12 btn-primary px-6 sm:px-8" data-testid="back-to-scanner">
+          <Button onClick={() => navigate('/scanner')} className="h-10 sm:h-12 btn-primary px-6 sm:px-8" data-testid="back-to-scanner">
             Volver al Escáner
           </Button>
         </div>
@@ -630,7 +630,7 @@ const ResultPage = () => {
   return (
     <div className="min-h-screen bg-white" data-testid="result-page">
       <header className="nav-header">
-        <button onClick={() => navigate('/')} className="flex items-center gap-1 sm:gap-2 p-2 hover:bg-[#5B7CF7] hover:text-white rounded-lg transition-colors" data-testid="back-button">
+        <button onClick={() => navigate('/scanner')} className="flex items-center gap-1 sm:gap-2 p-2 hover:bg-[#5B7CF7] hover:text-white rounded-lg transition-colors" data-testid="back-button">
           <ArrowLeft className="h-5 w-5" />
           <span className="font-medium hidden sm:inline">Volver</span>
         </button>
@@ -672,7 +672,7 @@ const ResultPage = () => {
         <CustomerInfoPanel card={card} show={showCustomerInfo} onToggle={() => setShowCustomerInfo(!showCustomerInfo)} />
         <CardInfoPanel card={card} cardType={cardType} balance={balance} show={showCardInfo} onToggle={() => setShowCardInfo(!showCardInfo)} formatCurrency={formatCurrency} discountTiers={discountTiers} tierProgress={tierProgress} />
 
-        <Button onClick={() => navigate('/')} variant="outline" className="w-full h-10 sm:h-12 btn-secondary text-sm sm:text-base" data-testid="scan-another-button">
+        <Button onClick={() => navigate('/scanner')} variant="outline" className="w-full h-10 sm:h-12 btn-secondary text-sm sm:text-base" data-testid="scan-another-button">
           Escanear Otra Tarjeta
         </Button>
       </main>
@@ -696,7 +696,7 @@ const ResultPage = () => {
 
       <SuccessModal
         isOpen={successModal.open}
-        onClose={() => { setSuccessModal({ open: false, message: '' }); navigate('/'); }}
+        onClose={() => { setSuccessModal({ open: false, message: '' }); navigate('/scanner'); }}
         message={successModal.message}
       />
     </div>

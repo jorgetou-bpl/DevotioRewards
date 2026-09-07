@@ -7,7 +7,6 @@ import { Input } from '../components/ui/input';
 import { toast } from 'sonner';
 import axios from 'axios';
 import {
-  ArrowLeft,
   Filter,
   Loader2,
   Calendar,
@@ -29,18 +28,25 @@ import {
   Search,
   Settings,
   Bell,
-  ArrowRight
+  ArrowRight,
+  Menu,
+  Home,
+  LogOut,
+  Building2
 } from 'lucide-react';
 
+import { AppMenu } from '../components/AppMenu';
 import { API_BASE_URL as API } from '../config/api';
 
 const OperationsPage = () => {
   const navigate = useNavigate();
-  const { token, user } = useAuth();
+  const { token, user, logout } = useAuth();
   const { formatCurrency } = useSettings();
-  
-  // Tab state
-  const [activeTab, setActiveTab] = useState('historial'); // 'historial' or 'dashboard'
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  // Tab state — this page is Home now, so it opens on the dashboard view;
+  // "Historial" is still one tap away via the tab toggle below.
+  const [activeTab, setActiveTab] = useState('dashboard'); // 'historial' or 'dashboard'
   
   // Operations state
   const [operations, setOperations] = useState([]);
@@ -293,24 +299,43 @@ const OperationsPage = () => {
 
   const configPath = (user?.role === 'super_admin' || user?.role === 'workspace_admin') ? '/admin/workspace' : '/settings';
 
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
+
+  // Same menu everywhere (Home, Scanner) — "Inicio" stays in the list even
+  // though we're already here, for consistency with the other pages.
+  const menuItems = [
+    { icon: Home, label: 'Inicio', action: () => navigate('/'), testId: 'menu-home' },
+    { icon: Settings, label: 'Configuración', action: () => navigate('/settings'), testId: 'menu-settings' },
+    ...(user?.role === 'workspace_admin' ? [
+      { icon: Building2, label: 'Admin Workspace', action: () => navigate('/admin/workspace'), testId: 'menu-admin' }
+    ] : []),
+    ...(user?.role === 'super_admin' ? [
+      { icon: Building2, label: 'Panel Super Admin', action: () => navigate('/admin/dashboard'), testId: 'menu-admin' }
+    ] : []),
+    { icon: LogOut, label: 'Cerrar Sesión', action: handleLogout, testId: 'menu-logout' }
+  ];
+
   return (
     <div className="min-h-screen bg-white" data-testid="operations-page">
       {/* Header */}
       <header className="nav-header">
-        <button
-          onClick={() => navigate('/')}
-          className="flex items-center gap-2 p-2 hover:bg-zinc-100 rounded-lg transition-colors"
-          data-testid="back-button"
-        >
-          <ArrowLeft className="h-5 w-5 text-[#0B0B16]" />
-          <span className="font-medium text-[#0B0B16] hidden sm:inline">Volver</span>
-        </button>
-        <img 
-          src="/fonts/logo.png" 
-          alt="Devotio Rewards" 
+        <div className="w-10" />
+        <img
+          src="/fonts/logo.png"
+          alt="Devotio Rewards"
           className="h-8 sm:h-10"
         />
-        <div className="w-16 sm:w-20" />
+        <button
+          onClick={() => setMenuOpen(true)}
+          className="p-2 hover:bg-[#5B7CF7] hover:text-white rounded-lg transition-colors"
+          data-testid="menu-button"
+          aria-label="Abrir menú"
+        >
+          <Menu className="h-6 w-6 text-[#0B0B16]" strokeWidth={2} />
+        </button>
       </header>
 
       <main className="max-w-6xl mx-auto p-4 sm:p-6">
@@ -486,14 +511,19 @@ const OperationsPage = () => {
         {/* Dashboard View */}
         {activeTab === 'dashboard' && (
           <div className="space-y-6">
-            {/* Quick Access — the entry-point feel of a Home, not just a report */}
-            <div className="grid grid-cols-3 gap-3" data-testid="quick-access-row">
-              <button onClick={() => navigate('/')}
-                className="card-brutalist p-4 flex flex-col items-center gap-2 hover:border-[#5B7CF7] transition-colors"
-                data-testid="quick-access-scan">
-                <ScanLine className="h-6 w-6 text-[#5B7CF7]" />
-                <span className="text-xs font-medium text-[#0B0B16]">Escanear</span>
-              </button>
+            {/* Escanear is the single most-used action on this screen — it used
+                to be the whole app's landing page, so losing one-tap access to
+                it would be a real regression for operators. It gets its own
+                full-width primary button instead of sharing equal billing with
+                Buscar/Configuración below. */}
+            <button onClick={() => navigate('/scanner')}
+              className="w-full flex items-center justify-center gap-3 p-5 rounded-xl bg-[#5B7CF7] text-white font-semibold text-base shadow-sm hover:bg-[#4A6AE0] transition-colors"
+              data-testid="quick-access-scan">
+              <ScanLine className="h-6 w-6" />
+              Escanear
+            </button>
+
+            <div className="grid grid-cols-2 gap-3" data-testid="quick-access-row">
               <button onClick={() => navigate('/search')}
                 className="card-brutalist p-4 flex flex-col items-center gap-2 hover:border-[#5B7CF7] transition-colors"
                 data-testid="quick-access-search">
@@ -1228,6 +1258,8 @@ const OperationsPage = () => {
           <p>Devotio Rewards Scanner v1.1.0</p>
         </div>
       </main>
+
+      <AppMenu open={menuOpen} onClose={() => setMenuOpen(false)} items={menuItems} />
     </div>
   );
 };

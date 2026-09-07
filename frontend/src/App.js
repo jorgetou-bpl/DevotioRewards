@@ -69,6 +69,14 @@ function AppRoutes() {
         path="/"
         element={
           <ProtectedRoute>
+            <OperationsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/scanner"
+        element={
+          <ProtectedRoute>
             <ScannerPage />
           </ProtectedRoute>
         }
@@ -97,14 +105,8 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
-      <Route
-        path="/operations"
-        element={
-          <ProtectedRoute>
-            <OperationsPage />
-          </ProtectedRoute>
-        }
-      />
+      {/* Operations now lives at "/" (Home) — redirect the old bookmark/PWA-shortcut path */}
+      <Route path="/operations" element={<Navigate to="/" replace />} />
       {/* Admin Setup - Hidden route, no authentication required */}
       {/* Admin Setup - Redirects to unified dashboard */}
       <Route path="/admin/setup" element={<Navigate to="/admin/dashboard" replace />} />

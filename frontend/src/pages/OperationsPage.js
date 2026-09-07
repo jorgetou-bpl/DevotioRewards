@@ -67,6 +67,7 @@ const OperationsPage = () => {
   const [dashboardCardTypeDropdownOpen, setDashboardCardTypeDropdownOpen] = useState(false);
   const [dashboardTemplateId, setDashboardTemplateId] = useState('');
   const [dashboardTemplateDropdownOpen, setDashboardTemplateDropdownOpen] = useState(false);
+  const [showDashboardFilters, setShowDashboardFilters] = useState(false);
 
   // Home-style additions: a fixed rolling 7-day trend (independent of the
   // Historial/Dashboard date filter above, so picking a custom range doesn't
@@ -298,6 +299,7 @@ const OperationsPage = () => {
   };
 
   const configPath = (user?.role === 'super_admin' || user?.role === 'workspace_admin') ? '/admin/workspace' : '/settings';
+  const dashboardActiveFilterCount = [startDate, endDate, dashboardCardType, dashboardTemplateId].filter(Boolean).length;
 
   const handleLogout = () => {
     logout();
@@ -342,27 +344,15 @@ const OperationsPage = () => {
         {/* Title */}
         <div className="mb-6">
           <h2 className="text-heading text-2xl sm:text-3xl" data-testid="operations-title">
-            Operaciones
+            Dashboard
           </h2>
           <p className="text-zinc-500 text-sm mt-1">
             Historial y rendimiento de transacciones
           </p>
         </div>
 
-        {/* Sub-tabs */}
+        {/* Sub-tabs — Dashboard first since this page is Home now */}
         <div className="flex items-center gap-1 mb-6 bg-zinc-100 p-1 rounded-lg w-fit">
-          <button
-            onClick={() => setActiveTab('historial')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
-              activeTab === 'historial'
-                ? 'bg-white text-[#0B0B16] shadow-sm'
-                : 'text-zinc-500 hover:text-[#0B0B16]'
-            }`}
-            data-testid="tab-historial"
-          >
-            <ClipboardList className="h-4 w-4" />
-            Historial
-          </button>
           <button
             onClick={() => setActiveTab('dashboard')}
             className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
@@ -375,10 +365,42 @@ const OperationsPage = () => {
             <BarChart3 className="h-4 w-4" />
             Dashboard
           </button>
+          <button
+            onClick={() => setActiveTab('historial')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
+              activeTab === 'historial'
+                ? 'bg-white text-[#0B0B16] shadow-sm'
+                : 'text-zinc-500 hover:text-[#0B0B16]'
+            }`}
+            data-testid="tab-historial"
+          >
+            <ClipboardList className="h-4 w-4" />
+            Historial
+          </button>
         </div>
 
-        {/* Date Filter for Dashboard */}
+        {/* Date Filter for Dashboard — collapsed by default so Home opens
+            straight into the numbers, not a form; the toggle shows how many
+            filters are active so it's clear something's applied even collapsed. */}
         {activeTab === 'dashboard' && (
+          <div className="mb-6">
+            <button
+              onClick={() => setShowDashboardFilters(!showDashboardFilters)}
+              className="flex items-center gap-2 text-sm font-medium text-zinc-600 hover:text-[#0B0B16] transition-colors"
+              data-testid="toggle-dashboard-filters"
+            >
+              <Filter className="h-4 w-4" />
+              Filtros
+              {dashboardActiveFilterCount > 0 && (
+                <span className="inline-flex items-center justify-center h-5 min-w-5 px-1 rounded-full bg-[#5B7CF7] text-white text-xs font-semibold">
+                  {dashboardActiveFilterCount}
+                </span>
+              )}
+              <ChevronDown className={`h-4 w-4 transition-transform ${showDashboardFilters ? 'rotate-180' : ''}`} />
+            </button>
+          </div>
+        )}
+        {activeTab === 'dashboard' && showDashboardFilters && (
           <div className="card-brutalist mb-6">
             <div className="flex flex-col sm:flex-row sm:items-end gap-4">
               <div className="flex-1">

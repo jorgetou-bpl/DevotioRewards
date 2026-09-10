@@ -1,6 +1,7 @@
 # Devotio Rewards Scanner API - Refactored Main Server
 
 import os
+import uuid
 
 from fastapi import FastAPI, APIRouter
 from starlette.middleware.cors import CORSMiddleware
@@ -150,6 +151,63 @@ async def run_migrations():
         )
         if result.modified_count > 0:
             logger.info(f"Migration: Fixed {result.modified_count} null workspace_id in {coll_name}")
+
+    # 5. Ensure indexes exist and customer_stats is backfilled from existing
+    # operations history — both idempotent, safe to run on every boot.
+    await ensure_indexes()
+    await backfill_customer_stats()
+
+
+async def ensure_indexes():
+    """create_index() is a no-op if an equivalent index already exists.
+    `operations` had zero indexes before this — every existing query already
+    filters by workspace_id, so this alone is a meaningful fix, not just prep
+    for the new customer_stats-backed features."""
+    await db.operations.create_index([("workspace_id", 1), ("created_at", -1)])
+    await db.operations.create_index([("workspace_id", 1), ("customer_phone", 1)])
+    await db.customer_stats.create_index([("workspace_id", 1), ("customer_phone", 1)], unique=True)
+    await db.customer_stats.create_index([("workspace_id", 1), ("total_visits", -1)])
+    await db.customer_stats.create_index([("workspace_id", 1), ("total_purchase_sum", -1)])
+    await db.customer_stats.create_index([("workspace_id", 1), ("last_seen_at", -1)])
+    await db.customer_stats.create_index([("workspace_id", 1), ("first_seen_at", 1)])
+    logger.info("Migration: Ensured operations/customer_stats indexes")
+
+
+async def backfill_customer_stats():
+    """Recompute total_visits/first_seen_at/last_seen_at/total_purchase_sum
+    for every customer from the existing `operations` history. Uses $set
+    (absolute values from source of truth), not $inc, so it's safe to rerun
+    on every startup regardless of how much live traffic has landed since the
+    last run. Deliberately does NOT touch date_of_birth — that field is only
+    ever populated going forward (see upsert_customer_stats in
+    utils/boomerang.py); old operations rows never captured it, so there's
+    nothing to backfill there."""
+    pipeline = [
+        {"$match": {"customer_phone": {"$nin": [None, ""]}}},
+        {"$group": {
+            "_id": {"workspace_id": "$workspace_id", "customer_phone": "$customer_phone"},
+            "customer_name": {"$last": "$customer_name"},
+            "card_id": {"$last": "$card_id"},
+            "first_seen_at": {"$min": "$created_at"},
+            "last_seen_at": {"$max": "$created_at"},
+            "total_visits": {"$sum": 1},
+            "total_purchase_sum": {"$sum": {"$ifNull": ["$purchase_sum", 0]}}
+        }}
+    ]
+    backfilled = 0
+    async for row in db.operations.aggregate(pipeline):
+        key = row.pop("_id")
+        await db.customer_stats.update_one(
+            {"workspace_id": key["workspace_id"], "customer_phone": key["customer_phone"]},
+            {
+                "$setOnInsert": {"id": str(uuid.uuid4())},
+                "$set": row
+            },
+            upsert=True
+        )
+        backfilled += 1
+    if backfilled:
+        logger.info(f"Migration: Backfilled customer_stats for {backfilled} customers")
 
 # Shutdown handler
 @app.on_event("shutdown")

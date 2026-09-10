@@ -147,6 +147,37 @@ CARD_TYPE_LABELS = {
     "subscription_card": "Suscripción",
 }
 
+async def upsert_customer_stats(
+    workspace_id: str,
+    customer_phone: str,
+    customer_name: str,
+    card_id: str,
+    purchase_sum: float = None,
+    date_of_birth: str = None,
+    now_iso: str = None
+):
+    """Incrementally maintain a per-customer stats cache, updated as a side
+    effect of every scan. This is what powers "nuevos miembros"/"clientes
+    habituales"/Top 10/Customer Base without re-scanning the full operations
+    history on every dashboard load, and it's also where date_of_birth gets
+    captured — Boomerangme has no bulk endpoint for it, but we already fetch
+    it on every single-card action, so caching it here costs zero extra API
+    calls instead of requiring a separate sync job."""
+    if not customer_phone:
+        return  # anonymous/no-customer flows — nothing to key the cache on
+    set_fields = {"customer_name": customer_name, "last_seen_at": now_iso, "card_id": card_id}
+    if date_of_birth:
+        set_fields["date_of_birth"] = date_of_birth
+    await db.customer_stats.update_one(
+        {"workspace_id": workspace_id, "customer_phone": customer_phone},
+        {
+            "$setOnInsert": {"id": str(uuid.uuid4()), "first_seen_at": now_iso},
+            "$set": set_fields,
+            "$inc": {"total_visits": 1, "total_purchase_sum": purchase_sum or 0}
+        },
+        upsert=True
+    )
+
 async def log_operation(
     card_id: str,
     operation_type: str,
@@ -209,6 +240,20 @@ async def log_operation(
         }
         
         await db.operations.insert_one(operation_record)
+
+        try:
+            await upsert_customer_stats(
+                workspace_id=operation_record["workspace_id"],
+                customer_phone=customer_phone,
+                customer_name=customer_name,
+                card_id=card_id,
+                purchase_sum=purchase_sum,
+                date_of_birth=customer.get('dateOfBirth'),
+                now_iso=operation_record["created_at"]
+            )
+        except Exception as e:
+            logger.error(f"Failed to upsert customer_stats for card {card_id}: {e}")
+
         logger.info(f"Logged operation: {operation_type} for card {card_id} ({card_type_label}) by {operation_record['gerente']}")
         return operation_record
     except Exception as e:

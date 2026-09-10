@@ -29,6 +29,7 @@ async def get_operations(
     card_type: Optional[str] = None,
     template_id: Optional[str] = None,
     card_id: Optional[str] = None,
+    customer_phone: Optional[str] = None,
     page: int = 1,
     items_per_page: int = 50,
     current_user: dict = Depends(get_current_user)
@@ -56,7 +57,9 @@ async def get_operations(
         query_filter["template_id"] = template_id
     if card_id:
         query_filter["card_id"] = card_id
-    
+    if customer_phone:
+        query_filter["customer_phone"] = customer_phone
+
     skip = (page - 1) * items_per_page
     total_count = await db.operations.count_documents(query_filter)
     

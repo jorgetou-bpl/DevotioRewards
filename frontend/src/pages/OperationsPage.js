@@ -331,6 +331,9 @@ const OperationsPage = () => {
   // though we're already here, for consistency with the other pages.
   const menuItems = [
     { icon: Home, label: 'Inicio', action: () => navigate('/'), testId: 'menu-home' },
+    ...(['workspace_admin', 'super_admin'].includes(user?.role) ? [
+      { icon: Users, label: 'Clientes', action: () => navigate('/clientes'), testId: 'menu-clientes' }
+    ] : []),
     { icon: Settings, label: 'Configuración', action: () => navigate('/settings'), testId: 'menu-settings' },
     ...(user?.role === 'workspace_admin' ? [
       { icon: Building2, label: 'Admin Workspace', action: () => navigate('/admin/workspace'), testId: 'menu-admin' }

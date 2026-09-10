@@ -15,6 +15,7 @@ import OperationsPage from "./pages/OperationsPage";
 import AdminSetupPage from "./pages/AdminSetupPage";
 import WorkspaceAdminPage from "./pages/WorkspaceAdminPage";
 import SuperAdminDashboard from "./pages/SuperAdminDashboard";
+import CustomersPage from "./pages/CustomersPage";
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -30,6 +31,31 @@ const ProtectedRoute = ({ children }) => {
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
+  }
+
+  return children;
+};
+
+// Admin Route Component — like ProtectedRoute, but also requires
+// workspace_admin/super_admin (e.g. Customer Base/Profile, per the client
+// meeting's explicit permission requirement).
+const AdminRoute = ({ children }) => {
+  const { isAuthenticated, loading, user } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="spinner" />
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (!['workspace_admin', 'super_admin'].includes(user?.role)) {
+    return <Navigate to="/" replace />;
   }
 
   return children;
@@ -107,6 +133,14 @@ function AppRoutes() {
       />
       {/* Operations now lives at "/" (Home) — redirect the old bookmark/PWA-shortcut path */}
       <Route path="/operations" element={<Navigate to="/" replace />} />
+      <Route
+        path="/clientes"
+        element={
+          <AdminRoute>
+            <CustomersPage />
+          </AdminRoute>
+        }
+      />
       {/* Admin Setup - Hidden route, no authentication required */}
       {/* Admin Setup - Redirects to unified dashboard */}
       <Route path="/admin/setup" element={<Navigate to="/admin/dashboard" replace />} />

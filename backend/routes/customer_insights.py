@@ -59,3 +59,50 @@ async def age_distribution(current_user: dict = Depends(require_workspace_admin)
         "customers_with_data": with_data,
         "total_customers": total_customers
     }
+
+
+ALLOWED_SORTS = {"last_seen_at", "total_visits", "first_seen_at", "customer_name", "total_purchase_sum"}
+
+
+@router.get("/customers")
+async def list_customers(
+    page: int = 1,
+    items_per_page: int = 25,
+    sort_by: str = "last_seen_at",
+    sort_dir: int = -1,
+    current_user: dict = Depends(require_workspace_admin)
+):
+    """Customer Base — the local customer_stats cache, not a live Boomerangme
+    fetch, so this stays fast/cheap regardless of workspace size."""
+    ws_id = current_user.get("workspace_id")
+    if sort_by not in ALLOWED_SORTS:
+        sort_by = "last_seen_at"
+    skip = (page - 1) * items_per_page
+    query = {"workspace_id": ws_id}
+
+    total = await db.customer_stats.count_documents(query)
+    cursor = db.customer_stats.find(query, {"_id": 0}) \
+        .sort(sort_by, sort_dir).skip(skip).limit(items_per_page)
+    customers = await cursor.to_list(length=items_per_page)
+
+    return {
+        "success": True,
+        "customers": customers,
+        "meta": {
+            "total": total,
+            "page": page,
+            "items_per_page": items_per_page,
+            "total_pages": (total + items_per_page - 1) // items_per_page
+        }
+    }
+
+
+@router.get("/customers/{phone}")
+async def get_customer_stats(phone: str, current_user: dict = Depends(require_workspace_admin)):
+    ws_id = current_user.get("workspace_id")
+    record = await db.customer_stats.find_one(
+        {"workspace_id": ws_id, "customer_phone": phone}, {"_id": 0}
+    )
+    if not record:
+        raise HTTPException(status_code=404, detail="Cliente no encontrado")
+    return {"success": True, "customer": record}

@@ -40,6 +40,7 @@ import { AppMenu } from '../components/AppMenu';
 import { ClientMetricsCards } from '../components/dashboard/ClientMetricsCards';
 import { TopCustomersList } from '../components/dashboard/TopCustomersList';
 import { AgeDistributionChart } from '../components/dashboard/AgeDistributionChart';
+import { formatDate, formatAmount } from '../utils/format';
 import { API_BASE_URL as API } from '../config/api';
 
 const OperationsPage = () => {
@@ -265,37 +266,6 @@ const OperationsPage = () => {
     setSelectedOperationType('');
     setSelectedCardType('');
     setSelectedTemplateId('');
-  };
-
-  const formatDate = (dateString) => {
-    if (!dateString) return '-';
-    try {
-      const date = new Date(dateString);
-      return date.toLocaleString('es-CR', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit'
-      });
-    } catch {
-      return dateString;
-    }
-  };
-
-  // Helper to format amount - handles legacy receive-reward entries with tier IDs
-  const formatAmount = (op) => {
-    const amount = op.amount;
-    // If no amount, return dash
-    if (amount === null || amount === undefined) return '-';
-    
-    // For receive-reward operations, check if amount looks like a tier ID (very large number)
-    // Tier IDs are typically 5+ digits (e.g., 98061), while actual amounts are smaller
-    if (op.operation_type === 'receive-reward' && amount > 9999) {
-      return 'N/A';
-    }
-    
-    return amount;
   };
 
   const hasActiveFilters = startDate || endDate || selectedGerente || selectedOperationType || selectedCardType || selectedTemplateId;

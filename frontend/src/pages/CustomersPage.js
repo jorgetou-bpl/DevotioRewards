@@ -6,15 +6,7 @@ import { Button } from '../components/ui/button';
 import { Loader2, Users, Menu, Home, Settings, LogOut, Building2, ChevronUp, ChevronDown } from 'lucide-react';
 import { AppMenu } from '../components/AppMenu';
 import { API_BASE_URL as API } from '../config/api';
-
-const formatDate = (dateString) => {
-  if (!dateString) return '-';
-  try {
-    return new Date(dateString).toLocaleDateString('es-CR', { year: 'numeric', month: '2-digit', day: '2-digit' });
-  } catch {
-    return dateString;
-  }
-};
+import { formatDate } from '../utils/format';
 
 const COLUMNS = [
   { key: 'customer_name', label: 'Nombre', sortable: true },

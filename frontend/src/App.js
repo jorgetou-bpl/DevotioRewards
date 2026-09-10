@@ -16,6 +16,7 @@ import AdminSetupPage from "./pages/AdminSetupPage";
 import WorkspaceAdminPage from "./pages/WorkspaceAdminPage";
 import SuperAdminDashboard from "./pages/SuperAdminDashboard";
 import CustomersPage from "./pages/CustomersPage";
+import CustomerProfilePage from "./pages/CustomerProfilePage";
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -138,6 +139,14 @@ function AppRoutes() {
         element={
           <AdminRoute>
             <CustomersPage />
+          </AdminRoute>
+        }
+      />
+      <Route
+        path="/clientes/:phone"
+        element={
+          <AdminRoute>
+            <CustomerProfilePage />
           </AdminRoute>
         }
       />

@@ -15,7 +15,6 @@ import OperationsPage from "./pages/OperationsPage";
 import AdminSetupPage from "./pages/AdminSetupPage";
 import WorkspaceAdminPage from "./pages/WorkspaceAdminPage";
 import SuperAdminDashboard from "./pages/SuperAdminDashboard";
-import CustomersPage from "./pages/CustomersPage";
 import CustomerProfilePage from "./pages/CustomerProfilePage";
 
 // Protected Route Component
@@ -134,14 +133,9 @@ function AppRoutes() {
       />
       {/* Operations now lives at "/" (Home) — redirect the old bookmark/PWA-shortcut path */}
       <Route path="/operations" element={<Navigate to="/" replace />} />
-      <Route
-        path="/clientes"
-        element={
-          <AdminRoute>
-            <CustomersPage />
-          </AdminRoute>
-        }
-      />
+      {/* Customer Base lives as a tab on Home now ("/?tab=clientes"), not its
+          own route — only the profile drill-down is a separate page. */}
+      <Route path="/clientes" element={<Navigate to="/?tab=clientes" replace />} />
       <Route
         path="/clientes/:phone"
         element={

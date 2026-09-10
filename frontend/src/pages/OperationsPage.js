@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
 import { Button } from '../components/ui/button';
@@ -40,18 +40,25 @@ import { AppMenu } from '../components/AppMenu';
 import { ClientMetricsCards } from '../components/dashboard/ClientMetricsCards';
 import { TopCustomersList } from '../components/dashboard/TopCustomersList';
 import { AgeDistributionChart } from '../components/dashboard/AgeDistributionChart';
+import { CustomerBaseTab } from '../components/dashboard/CustomerBaseTab';
 import { formatDate, formatAmount } from '../utils/format';
 import { API_BASE_URL as API } from '../config/api';
 
 const OperationsPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { token, user, logout } = useAuth();
   const { formatCurrency } = useSettings();
   const [menuOpen, setMenuOpen] = useState(false);
 
   // Tab state — this page is Home now, so it opens on the dashboard view;
-  // "Historial" is still one tap away via the tab toggle below.
-  const [activeTab, setActiveTab] = useState('dashboard'); // 'historial' or 'dashboard'
+  // "Historial"/"Clientes" are one tap away via the tab toggle below. Also
+  // readable from ?tab=clientes so the Customer Profile page's back button
+  // can return here with the right tab already active.
+  const [activeTab, setActiveTab] = useState(() => {
+    const tab = new URLSearchParams(location.search).get('tab');
+    return ['dashboard', 'historial', 'clientes'].includes(tab) ? tab : 'dashboard';
+  }); // 'historial' | 'dashboard' | 'clientes'
   
   // Operations state
   const [operations, setOperations] = useState([]);
@@ -213,12 +220,13 @@ const OperationsPage = () => {
   useEffect(() => {
     if (activeTab === 'historial') {
       fetchOperations();
-    } else {
+    } else if (activeTab === 'dashboard') {
       fetchDashboard();
       fetchTrend();
       fetchRecentOps();
       fetchAgeDistribution();
     }
+    // 'clientes' fetches its own data internally (CustomerBaseTab) — nothing to do here.
   }, [activeTab, fetchOperations, fetchDashboard, fetchTrend, fetchRecentOps, fetchAgeDistribution]);
 
   const handleExport = async (format) => {
@@ -299,11 +307,10 @@ const OperationsPage = () => {
 
   // Same menu everywhere (Home, Scanner) — "Inicio" stays in the list even
   // though we're already here, for consistency with the other pages.
+  // "Clientes" is a Home tab now (not a separate destination), so it isn't
+  // duplicated here.
   const menuItems = [
     { icon: Home, label: 'Inicio', action: () => navigate('/'), testId: 'menu-home' },
-    ...(['workspace_admin', 'super_admin'].includes(user?.role) ? [
-      { icon: Users, label: 'Clientes', action: () => navigate('/clientes'), testId: 'menu-clientes' }
-    ] : []),
     { icon: Settings, label: 'Configuración', action: () => navigate('/settings'), testId: 'menu-settings' },
     ...(user?.role === 'workspace_admin' ? [
       { icon: Building2, label: 'Admin Workspace', action: () => navigate('/admin/workspace'), testId: 'menu-admin' }
@@ -371,6 +378,20 @@ const OperationsPage = () => {
             <ClipboardList className="h-4 w-4" />
             Historial
           </button>
+          {['workspace_admin', 'super_admin'].includes(user?.role) && (
+            <button
+              onClick={() => setActiveTab('clientes')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                activeTab === 'clientes'
+                  ? 'bg-white text-[#0B0B16] shadow-sm'
+                  : 'text-zinc-500 hover:text-[#0B0B16]'
+              }`}
+              data-testid="tab-clientes"
+            >
+              <Users className="h-4 w-4" />
+              Clientes
+            </button>
+          )}
         </div>
 
         {/* Date Filter for Dashboard — collapsed by default so Home opens
@@ -1291,6 +1312,10 @@ const OperationsPage = () => {
               </>
             )}
           </>
+        )}
+
+        {activeTab === 'clientes' && ['workspace_admin', 'super_admin'].includes(user?.role) && (
+          <CustomerBaseTab token={token} />
         )}
 
         {/* Version Info */}

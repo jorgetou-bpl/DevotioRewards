@@ -7,10 +7,15 @@
 # different data source and semantics from this file).
 
 from fastapi import APIRouter, HTTPException, Depends
-from typing import Optional
+from fastapi.responses import StreamingResponse
 from datetime import datetime, timezone
+import io
+import csv
+import logging
 from utils.auth import require_workspace_admin
 from utils.config import db
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/customer-insights", tags=["customer-insights"])
 
@@ -95,6 +100,103 @@ async def list_customers(
             "total_pages": (total + items_per_page - 1) // items_per_page
         }
     }
+
+
+@router.get("/customers/export")
+async def export_customers(
+    format: str = "csv",
+    sort_by: str = "last_seen_at",
+    sort_dir: int = -1,
+    current_user: dict = Depends(require_workspace_admin)
+):
+    """Export the full Customer Base (not just the current page) to CSV/XLSX.
+    Registered before /customers/{phone} so "export" isn't matched as a
+    phone number."""
+    ws_id = current_user.get("workspace_id")
+    if sort_by not in ALLOWED_SORTS:
+        sort_by = "last_seen_at"
+
+    cursor = db.customer_stats.find({"workspace_id": ws_id}, {"_id": 0}).sort(sort_by, sort_dir)
+    customers = await cursor.to_list(length=10000)
+
+    headers = ["Nombre", "Teléfono", "Cliente desde", "Total Visitas", "Facturación Total", "Última Visita"]
+    today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+
+    if format.lower() == "csv":
+        output = io.StringIO()
+        writer = csv.writer(output)
+        writer.writerow(headers)
+        for c in customers:
+            writer.writerow([
+                c.get("customer_name", ""),
+                c.get("customer_phone", ""),
+                c.get("first_seen_at", ""),
+                c.get("total_visits", 0),
+                c.get("total_purchase_sum", 0),
+                c.get("last_seen_at", "")
+            ])
+        output.seek(0)
+        filename = f"clientes_{today_str}.csv"
+        return StreamingResponse(
+            iter([output.getvalue()]),
+            media_type="text/csv",
+            headers={
+                "Content-Disposition": f"attachment; filename={filename}",
+                "Content-Type": "text/csv; charset=utf-8"
+            }
+        )
+
+    elif format.lower() == "xlsx":
+        try:
+            from openpyxl import Workbook
+            from openpyxl.styles import Font, Alignment, PatternFill
+
+            wb = Workbook()
+            ws = wb.active
+            ws.title = "Clientes"
+
+            header_font = Font(bold=True, color="FFFFFF")
+            header_fill = PatternFill(start_color="120627", end_color="120627", fill_type="solid")
+            for col, header in enumerate(headers, 1):
+                cell = ws.cell(row=1, column=col, value=header)
+                cell.font = header_font
+                cell.fill = header_fill
+                cell.alignment = Alignment(horizontal="center")
+
+            for row_idx, c in enumerate(customers, 2):
+                ws.cell(row=row_idx, column=1, value=c.get("customer_name", ""))
+                ws.cell(row=row_idx, column=2, value=c.get("customer_phone", ""))
+                ws.cell(row=row_idx, column=3, value=c.get("first_seen_at", ""))
+                ws.cell(row=row_idx, column=4, value=c.get("total_visits", 0))
+                ws.cell(row=row_idx, column=5, value=c.get("total_purchase_sum", 0))
+                ws.cell(row=row_idx, column=6, value=c.get("last_seen_at", ""))
+
+            for col in ws.columns:
+                max_length = 0
+                column = col[0].column_letter
+                for cell in col:
+                    try:
+                        if len(str(cell.value)) > max_length:
+                            max_length = len(str(cell.value))
+                    except Exception:
+                        pass
+                ws.column_dimensions[column].width = min(max_length + 2, 50)
+
+            output = io.BytesIO()
+            wb.save(output)
+            output.seek(0)
+            filename = f"clientes_{today_str}.xlsx"
+            return StreamingResponse(
+                iter([output.getvalue()]),
+                media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                headers={"Content-Disposition": f"attachment; filename={filename}"}
+            )
+        except ImportError:
+            logger.warning("openpyxl not installed, falling back to CSV")
+            raise HTTPException(status_code=400, detail="Formato XLSX no disponible. Use CSV.")
+
+    else:
+        raise HTTPException(status_code=400, detail="Formato no soportado. Use 'csv' o 'xlsx'.")
 
 
 @router.get("/customers/{phone}")

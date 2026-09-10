@@ -39,15 +39,15 @@ const CustomerProfilePage = () => {
       .finally(() => setCustomerLoading(false));
   }, [phone, token, customer]);
 
-  // 2. Live Boomerangme data — independent, own error state, never blocks
-  // the rest of the page if the external call is slow or fails.
+  // 2. Live card data — independent, own error state, never blocks the rest
+  // of the page if the external provider call is slow or fails.
   useEffect(() => {
     if (!customer?.card_id) { setCardLoading(false); return; }
     setCardLoading(true);
     setCardError(null);
     axios.get(`${API}/cards/${customer.card_id}`, { headers: { Authorization: `Bearer ${token}` } })
       .then((res) => setCard(res.data?.card || null))
-      .catch(() => setCardError('No se pudo cargar la información en vivo de Boomerangme'))
+      .catch(() => setCardError('No se pudo cargar la información de la tarjeta'))
       .finally(() => setCardLoading(false));
   }, [customer?.card_id, token]);
 
@@ -76,7 +76,7 @@ const CustomerProfilePage = () => {
     <div className="min-h-screen bg-white" data-testid="customer-profile-page">
       <header className="nav-header">
         <button
-          onClick={() => navigate('/clientes')}
+          onClick={() => navigate('/?tab=clientes')}
           className="flex items-center gap-2 p-2 hover:bg-zinc-100 rounded-lg transition-colors"
           data-testid="back-button"
         >
@@ -132,10 +132,10 @@ const CustomerProfilePage = () => {
           </div>
         )}
 
-        {/* 2. Live Boomerangme panel */}
+        {/* 2. Live card data panel */}
         {customer && (
           <div className="card-brutalist">
-            <h3 className="text-lg font-semibold text-[#0B0B16] mb-4">Datos en vivo de Boomerangme</h3>
+            <h3 className="text-lg font-semibold text-[#0B0B16] mb-4">Datos de la tarjeta</h3>
             {cardLoading ? (
               <div className="flex justify-center py-6"><Loader2 className="h-5 w-5 animate-spin text-zinc-400" /></div>
             ) : cardError ? (
@@ -158,7 +158,7 @@ const CustomerProfilePage = () => {
                 </div>
                 <div className="p-3 bg-zinc-50 rounded-xl">
                   <p className="text-sm font-bold text-[#0B0B16]">{formatDate(card.customer?.createdAt).split(',')[0]}</p>
-                  <p className="text-xs text-zinc-500">Alta real en Boomerangme</p>
+                  <p className="text-xs text-zinc-500">Fecha de alta</p>
                 </div>
               </div>
             ) : (

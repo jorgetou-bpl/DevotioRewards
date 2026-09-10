@@ -318,17 +318,74 @@ async def get_operations_summary(
     ]
     
     by_card_type = await db.operations.aggregate(pipeline_card_type).to_list(length=100)
-    
+
     # Get available card types for filter dropdown
     card_types = await db.operations.distinct("card_type")
-    
+
+    # --- Client-facing insights (same query_filter, so the whole dashboard
+    # stays under one consistent date/card-type filter with no extra round trip) ---
+    pipeline_totals = [
+        {"$match": {**query_filter, "purchase_sum": {"$gt": 0}}},
+        {"$group": {
+            "_id": None,
+            "total_facturacion": {"$sum": "$purchase_sum"},
+            "avg_purchase": {"$avg": "$purchase_sum"}
+        }}
+    ]
+    totals_result = await db.operations.aggregate(pipeline_totals).to_list(length=1)
+    totals = totals_result[0] if totals_result else {"total_facturacion": 0, "avg_purchase": 0}
+
+    pipeline_top_customers = [
+        {"$match": {**query_filter, "customer_phone": {"$nin": [None, ""]}}},
+        {"$group": {
+            "_id": "$customer_phone",
+            "customer_name": {"$last": "$customer_name"},
+            "visit_count": {"$sum": 1},
+            "total_purchase": {"$sum": {"$ifNull": ["$purchase_sum", 0]}}
+        }},
+        {"$facet": {
+            "by_visits": [{"$sort": {"visit_count": -1}}, {"$limit": 10}],
+            "by_purchase": [{"$sort": {"total_purchase": -1}}, {"$limit": 10}]
+        }}
+    ]
+    top_result = await db.operations.aggregate(pipeline_top_customers).to_list(length=1)
+    top_customers = top_result[0] if top_result else {"by_visits": [], "by_purchase": []}
+
+    # "Nuevos miembros" — first-ever operation (customer_stats.first_seen_at,
+    # cheap indexed read) falling within this same filtered date range.
+    new_members_filter = {"workspace_id": ws_id}
+    if "created_at" in query_filter:
+        new_members_filter["first_seen_at"] = query_filter["created_at"]
+    nuevos_miembros = await db.customer_stats.count_documents(new_members_filter)
+
+    # "Clientes habituales" — active in this filtered window AND >=2 visits ever.
+    active_phones = await db.operations.distinct(
+        "customer_phone", {**query_filter, "customer_phone": {"$nin": [None, ""]}}
+    )
+    clientes_habituales = 0
+    if active_phones:
+        clientes_habituales = await db.customer_stats.count_documents({
+            "workspace_id": ws_id,
+            "customer_phone": {"$in": active_phones},
+            "total_visits": {"$gte": 2}
+        })
+
     return {
         "success": True,
         "summary": {
             "total_operations": total_operations,
             "by_gerente": by_gerente,
             "by_type": by_type,
-            "by_card_type": by_card_type
+            "by_card_type": by_card_type,
+            "customer_insights": {
+                "total_visitas": total_operations,
+                "nuevos_miembros": nuevos_miembros,
+                "clientes_habituales": clientes_habituales,
+                "total_facturacion": totals.get("total_facturacion", 0),
+                "avg_purchase": totals.get("avg_purchase", 0),
+                "top_customers_by_visits": top_customers.get("by_visits", []),
+                "top_customers_by_purchase": top_customers.get("by_purchase", [])
+            }
         },
         "filters": {
             "card_types": card_types

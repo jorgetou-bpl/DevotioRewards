@@ -32,10 +32,13 @@ import {
   Menu,
   Home,
   LogOut,
-  Building2
+  Building2,
+  DollarSign
 } from 'lucide-react';
 
 import { AppMenu } from '../components/AppMenu';
+import { ClientMetricsCards } from '../components/dashboard/ClientMetricsCards';
+import { TopCustomersList } from '../components/dashboard/TopCustomersList';
 import { API_BASE_URL as API } from '../config/api';
 
 const OperationsPage = () => {
@@ -566,6 +569,26 @@ const OperationsPage = () => {
               </div>
             ) : dashboardData ? (
               <>
+                {/* Client-facing loyalty metrics — what the business owner
+                    actually wants to see, above the operational sections below */}
+                <ClientMetricsCards insights={dashboardData.customer_insights} formatCurrency={formatCurrency} />
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <TopCustomersList
+                    title="Top 10 por Visitas"
+                    icon={Users}
+                    data={dashboardData.customer_insights?.top_customers_by_visits}
+                    valueKey="visit_count"
+                  />
+                  <TopCustomersList
+                    title="Top 10 por Facturación"
+                    icon={DollarSign}
+                    data={dashboardData.customer_insights?.top_customers_by_purchase}
+                    valueKey="total_purchase"
+                    valueFormatter={formatCurrency}
+                  />
+                </div>
+
                 {/* Summary Cards */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div className="card-brutalist p-6 bg-gradient-to-br from-[#0B0B16] to-[#2a1a4a]">

@@ -39,6 +39,7 @@ import {
 import { AppMenu } from '../components/AppMenu';
 import { ClientMetricsCards } from '../components/dashboard/ClientMetricsCards';
 import { TopCustomersList } from '../components/dashboard/TopCustomersList';
+import { AgeDistributionChart } from '../components/dashboard/AgeDistributionChart';
 import { API_BASE_URL as API } from '../config/api';
 
 const OperationsPage = () => {
@@ -78,6 +79,8 @@ const OperationsPage = () => {
   const [trendData, setTrendData] = useState(null);
   const [recentOps, setRecentOps] = useState([]);
   const [loadingRecentOps, setLoadingRecentOps] = useState(false);
+  const [ageDistribution, setAgeDistribution] = useState(null);
+  const [ageDistributionLoading, setAgeDistributionLoading] = useState(false);
 
   // Filter state
   const [startDate, setStartDate] = useState('');
@@ -192,6 +195,20 @@ const OperationsPage = () => {
     finally { setLoadingRecentOps(false); }
   }, [token]);
 
+  const fetchAgeDistribution = useCallback(async () => {
+    // Backend-gated to workspace_admin/super_admin — skip the call entirely
+    // for operators instead of firing a request that's guaranteed to 403.
+    if (!['workspace_admin', 'super_admin'].includes(user?.role)) return;
+    setAgeDistributionLoading(true);
+    try {
+      const response = await axios.get(`${API}/customer-insights/age-distribution`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setAgeDistribution(response.data);
+    } catch { setAgeDistribution(null); }
+    finally { setAgeDistributionLoading(false); }
+  }, [token, user?.role]);
+
   useEffect(() => {
     if (activeTab === 'historial') {
       fetchOperations();
@@ -199,8 +216,9 @@ const OperationsPage = () => {
       fetchDashboard();
       fetchTrend();
       fetchRecentOps();
+      fetchAgeDistribution();
     }
-  }, [activeTab, fetchOperations, fetchDashboard, fetchTrend, fetchRecentOps]);
+  }, [activeTab, fetchOperations, fetchDashboard, fetchTrend, fetchRecentOps, fetchAgeDistribution]);
 
   const handleExport = async (format) => {
     try {
@@ -588,6 +606,10 @@ const OperationsPage = () => {
                     valueFormatter={formatCurrency}
                   />
                 </div>
+
+                {['workspace_admin', 'super_admin'].includes(user?.role) && (
+                  <AgeDistributionChart data={ageDistribution?.buckets} loading={ageDistributionLoading} />
+                )}
 
                 {/* Summary Cards */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

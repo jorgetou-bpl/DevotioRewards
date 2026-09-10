@@ -19,6 +19,7 @@ from routes.cards import router as cards_router
 from routes.operations import router as operations_router
 from routes.templates import router as templates_router
 from routes.customers import router as customers_router
+from routes.customer_insights import router as customer_insights_router
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -38,6 +39,7 @@ api_router.include_router(cards_router)
 api_router.include_router(operations_router)
 api_router.include_router(templates_router)
 api_router.include_router(customers_router)
+api_router.include_router(customer_insights_router)
 
 # Root-level health check for Kubernetes (MUST be at /health, not /api/health)
 @app.get("/health")

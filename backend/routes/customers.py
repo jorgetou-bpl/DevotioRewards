@@ -68,8 +68,13 @@ async def get_customer(customer_id: str, current_user: dict = Depends(get_curren
 
 @router.get("/{customer_id}/cards")
 async def get_customer_cards(customer_id: str, current_user: dict = Depends(get_current_user), api_key: str = Depends(get_api_key)):
-    """Get all cards for a customer."""
-    response = await call_boomerang_api('GET', f'/customers/{customer_id}/cards', {}, api_key=api_key)
+    """Get all cards for a customer.
+
+    Per docs/BOOMERANGME_API_DOCUMENTATION.md: "/customers/{id}/cards" does
+    not exist on Boomerangme's side and always 404s (confirmed live — a
+    generic HTML error page, not a JSON API response). The documented,
+    working endpoint is "/cards?customerId={id}"."""
+    response = await call_boomerang_api('GET', '/cards', {"customerId": customer_id}, api_key=api_key)
     cards = response.get('data', [])
     
     masked_cards = [mask_pii(card) for card in cards]

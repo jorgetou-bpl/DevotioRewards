@@ -157,7 +157,10 @@ async def search_customer_and_get_card(search_type: str, search_value: str, curr
     if not customer_id:
         return None
     
-    cards_response = await call_boomerang_api('GET', f'/customers/{customer_id}/cards', {}, api_key=api_key)
+    # "/customers/{id}/cards" doesn't exist on Boomerangme's side (always
+    # 404s) — the documented, working endpoint is "/cards?customerId={id}"
+    # (docs/BOOMERANGME_API_DOCUMENTATION.md).
+    cards_response = await call_boomerang_api('GET', '/cards', {"customerId": customer_id}, api_key=api_key)
     
     if cards_response.get('code') != 200:
         return None

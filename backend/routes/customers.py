@@ -28,14 +28,21 @@ async def search_customers(
     api_key: str = Depends(get_api_key)
 ):
     """Search customers by phone or email."""
-    params = f'page={page}&itemsPerPage={itemsPerPage}'
-
+    # call_boomerang_api's GET path does client.get(url, params=data) — passing
+    # a dict here (rather than hand-building "?page=...&phone=..." into the
+    # endpoint string) is required, not just cleaner: httpx's params= argument
+    # replaces the URL's own query string rather than merging with it, so the
+    # old approach silently dropped every query param (confirmed live — the
+    # actual outbound request Boomerangme received was a bare "/customers"
+    # with no phone/email/page at all, which is why search always returned
+    # the full unfiltered customer list instead of a real match).
+    params = {"page": page, "itemsPerPage": itemsPerPage}
     if phone:
-        params += f'&phone={phone}'
+        params["phone"] = phone
     if email:
-        params += f'&email={email}'
+        params["email"] = email
 
-    response = await call_boomerang_api('GET', f'/customers?{params}', {}, api_key=api_key)
+    response = await call_boomerang_api('GET', '/customers', params, api_key=api_key)
     customers = response.get('data', [])
     
     masked_customers = []

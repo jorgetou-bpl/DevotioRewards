@@ -6,7 +6,7 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { toast } from 'sonner';
 import axios from 'axios';
-import { Html5Qrcode } from 'html5-qrcode';
+import { Html5Qrcode, Html5QrcodeScannerState } from 'html5-qrcode';
 import {
   Scan,
   Menu,
@@ -44,6 +44,31 @@ const pickDefaultCamera = (cameras, facing = 'back') => {
     byLabel(/^back/i) ||
     cameras[0]
   );
+};
+
+// html5-qrcode's own start() config (fps/qrbox/etc.) has no way to request
+// continuous autofocus — that's a raw MediaTrackConstraint, only settable via
+// applyVideoConstraints() *after* the stream is confirmed live. Without this,
+// the camera does a single autofocus pass when the stream opens and never
+// refocuses again, which is exactly what made the picture look progressively
+// "desenfocado" the more times a business scanned (each card sits at a
+// slightly different distance than the last). Confirmed against the
+// library's own GitHub issue #308, where this was the maintainer-endorsed
+// fix. Polling for the SCANNING state (rather than a fixed delay) avoids a
+// race where the video track isn't ready yet and the constraint is dropped.
+const enableContinuousAutofocus = async (html5QrCode) => {
+  for (let attempt = 0; attempt < 10; attempt++) {
+    if (html5QrCode.getState() === Html5QrcodeScannerState.SCANNING) break;
+    await new Promise((resolve) => setTimeout(resolve, 150));
+  }
+  try {
+    await html5QrCode.applyVideoConstraints({ advanced: [{ focusMode: 'continuous' }] });
+  } catch (err) {
+    // Not all cameras/browsers support this constraint (e.g. some iOS
+    // Safari versions) — scanning still works without it, just without the
+    // refocus fix, so this must never surface as a user-facing error.
+    console.warn('No se pudo activar el enfoque continuo:', err);
+  }
 };
 
 const ScannerPage = () => {
@@ -145,6 +170,10 @@ const ScannerPage = () => {
         onScanSuccess,
         onScanFailure
       );
+
+      // Fire-and-forget — must never delay the scanner becoming usable or
+      // block on cameras that don't support the constraint.
+      enableContinuousAutofocus(html5QrCode);
 
     } catch (error) {
       console.error('Error del escáner:', error);

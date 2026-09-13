@@ -12,8 +12,13 @@ import uuid
 
 BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', '').rstrip('/')
 
-WORKSPACE_ADMIN_EMAIL = "admin@cafedemo.com"
-WORKSPACE_ADMIN_PASSWORD = "admin123"
+# Devotio Default (super_admin) — not Cafe Demo — deliberately: Cafe Demo's
+# Boomerangme API key returns empty/invalid results (confirmed via
+# `GET /templates` also coming back empty for that workspace), a pre-existing
+# data issue unrelated to this feature. `super_admin` still satisfies
+# `require_workspace_admin`, so it exercises the same role gate.
+ADMIN_EMAIL = "demo@devotio.com"
+ADMIN_PASSWORD = "demo123"
 
 
 class TestPushNotifications:
@@ -24,10 +29,10 @@ class TestPushNotifications:
 
     def get_workspace_admin_token(self):
         resp = self.session.post(f"{BASE_URL}/api/auth/login", json={
-            "email": WORKSPACE_ADMIN_EMAIL,
-            "password": WORKSPACE_ADMIN_PASSWORD
+            "email": ADMIN_EMAIL,
+            "password": ADMIN_PASSWORD
         })
-        assert resp.status_code == 200, f"Workspace admin login failed: {resp.text}"
+        assert resp.status_code == 200, f"Admin login failed: {resp.text}"
         return resp.json().get("token")
 
     def get_workspace_id(self, token):
@@ -84,7 +89,7 @@ class TestPushNotifications:
         admin_token = self.get_workspace_admin_token()
         workspace_id = self.get_workspace_id(admin_token)
 
-        test_email = f"test-operator-{uuid.uuid4().hex[:8]}@cafedemo.com"
+        test_email = f"test-operator-{uuid.uuid4().hex[:8]}@devotio.com"
         test_password = "TestOperator123!"
         create_resp = self.session.post(
             f"{BASE_URL}/api/admin/workspaces/{workspace_id}/users",

@@ -24,7 +24,6 @@ import {
   ScanLine,
   Search,
   Settings,
-  Bell,
   ArrowRight,
   Menu,
   Home,
@@ -39,6 +38,7 @@ import { TrendChart } from '../components/dashboard/TrendChart';
 import { TopCustomersList } from '../components/dashboard/TopCustomersList';
 import { AgeDistributionChart } from '../components/dashboard/AgeDistributionChart';
 import { CustomerBaseTab } from '../components/dashboard/CustomerBaseTab';
+import { PushNotificationsPanel } from '../components/dashboard/PushNotificationsPanel';
 import { formatDate, formatAmount } from '../utils/format';
 import { API_BASE_URL as API } from '../config/api';
 
@@ -667,18 +667,9 @@ const OperationsPage = () => {
                   )}
                 </div>
 
-                {/* Placeholder — reserves the layout slot for the push
-                    notifications panel (separate initiative), so that work
-                    slots in without another Home redesign. */}
-                <div className="card-brutalist border-dashed opacity-70">
-                  <div className="flex items-center gap-3">
-                    <Bell className="h-5 w-5 text-zinc-400" />
-                    <div>
-                      <p className="text-sm font-semibold text-zinc-500">Notificaciones</p>
-                      <p className="text-xs text-zinc-400">Próximamente: configura y dispara notificaciones push desde acá</p>
-                    </div>
-                  </div>
-                </div>
+                {['workspace_admin', 'super_admin'].includes(user?.role) && (
+                  <PushNotificationsPanel token={token} templatesList={templatesList} />
+                )}
               </>
             ) : (
               <div className="text-center py-12">

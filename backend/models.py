@@ -1,6 +1,6 @@
 # Backend Models - Pydantic models for API requests/responses
 
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 from typing import Optional, Literal, List
 
 # ============ USER MODELS ============
@@ -175,3 +175,10 @@ class OperationsFilter(BaseModel):
     gerente: Optional[str] = None
     operation_type: Optional[str] = None
     card_id: Optional[str] = None
+
+# ============ NOTIFICATION MODELS ============
+
+class PushNotificationCreate(BaseModel):
+    message: str = Field(min_length=1)
+    template_id: int = Field(gt=0)
+    scheduled_at: Optional[str] = None  # ISO datetime string with timezone; None = send immediately

@@ -17,10 +17,7 @@ import {
   Check,
   X,
   RefreshCw,
-  TrendingUp,
-  TrendingDown,
   Users,
-  ShoppingCart,
   Award,
   BarChart3,
   ClipboardList,
@@ -38,6 +35,7 @@ import {
 
 import { AppMenu } from '../components/AppMenu';
 import { ClientMetricsCards } from '../components/dashboard/ClientMetricsCards';
+import { TrendChart } from '../components/dashboard/TrendChart';
 import { TopCustomersList } from '../components/dashboard/TopCustomersList';
 import { AgeDistributionChart } from '../components/dashboard/AgeDistributionChart';
 import { CustomerBaseTab } from '../components/dashboard/CustomerBaseTab';
@@ -81,10 +79,9 @@ const OperationsPage = () => {
   const [dashboardTemplateDropdownOpen, setDashboardTemplateDropdownOpen] = useState(false);
   const [showDashboardFilters, setShowDashboardFilters] = useState(false);
 
-  // Home-style additions: a fixed rolling 7-day trend (independent of the
-  // Historial/Dashboard date filter above, so picking a custom range doesn't
-  // break the "vs last week" comparison) and a quick activity feed.
-  const [trendData, setTrendData] = useState(null);
+  // Home-style additions: a quick activity feed (the old fixed rolling
+  // 7-day trend badges were replaced by TrendChart, which has its own
+  // period selector and fetch).
   const [recentOps, setRecentOps] = useState([]);
   const [loadingRecentOps, setLoadingRecentOps] = useState(false);
   const [ageDistribution, setAgeDistribution] = useState(null);
@@ -172,25 +169,6 @@ const OperationsPage = () => {
     }
   }, [token, startDate, endDate, dashboardCardType, dashboardTemplateId]);
 
-  const fetchTrend = useCallback(async () => {
-    const fmt = (d) => d.toISOString().split('T')[0];
-    const today = new Date();
-    const last7Start = new Date(today); last7Start.setDate(today.getDate() - 6);
-    const prev7End = new Date(today); prev7End.setDate(today.getDate() - 7);
-    const prev7Start = new Date(today); prev7Start.setDate(today.getDate() - 13);
-    const sumSales = (summary) => (summary?.by_gerente || []).reduce((s, g) => s + (g.total_purchase_sum || 0), 0);
-    try {
-      const [currentResp, previousResp] = await Promise.all([
-        axios.get(`${API}/operations/summary`, { params: { start_date: fmt(last7Start), end_date: fmt(today) }, headers: { Authorization: `Bearer ${token}` } }),
-        axios.get(`${API}/operations/summary`, { params: { start_date: fmt(prev7Start), end_date: fmt(prev7End) }, headers: { Authorization: `Bearer ${token}` } })
-      ]);
-      setTrendData({
-        current: { ops: currentResp.data?.summary?.total_operations || 0, sales: sumSales(currentResp.data?.summary) },
-        previous: { ops: previousResp.data?.summary?.total_operations || 0, sales: sumSales(previousResp.data?.summary) }
-      });
-    } catch { setTrendData(null); }
-  }, [token]);
-
   const fetchRecentOps = useCallback(async () => {
     setLoadingRecentOps(true);
     try {
@@ -222,12 +200,11 @@ const OperationsPage = () => {
       fetchOperations();
     } else if (activeTab === 'dashboard') {
       fetchDashboard();
-      fetchTrend();
       fetchRecentOps();
       fetchAgeDistribution();
     }
     // 'clientes' fetches its own data internally (CustomerBaseTab) — nothing to do here.
-  }, [activeTab, fetchOperations, fetchDashboard, fetchTrend, fetchRecentOps, fetchAgeDistribution]);
+  }, [activeTab, fetchOperations, fetchDashboard, fetchRecentOps, fetchAgeDistribution]);
 
   const handleExport = async (format) => {
     try {
@@ -277,25 +254,6 @@ const OperationsPage = () => {
   };
 
   const hasActiveFilters = startDate || endDate || selectedGerente || selectedOperationType || selectedCardType || selectedTemplateId;
-
-  // Calculate total sales from dashboard data
-  const totalSales = dashboardData?.by_gerente?.reduce((sum, g) => sum + (g.total_purchase_sum || 0), 0) || 0;
-  const totalGerentes = dashboardData?.by_gerente?.length || 0;
-
-  // "vs. últimos 7 días" delta badge — null when there's nothing to compare
-  // against yet (e.g. a brand-new workspace with no operations last week).
-  const renderTrendBadge = (current, previous) => {
-    if (!trendData || !previous) return null;
-    const pct = Math.round(((current - previous) / previous) * 100);
-    if (pct === 0) return null;
-    const isUp = pct > 0;
-    return (
-      <span className={`inline-flex items-center gap-0.5 text-xs font-medium ${isUp ? 'text-emerald-300' : 'text-red-300'}`}>
-        {isUp ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
-        {Math.abs(pct)}%
-      </span>
-    );
-  };
 
   const configPath = (user?.role === 'super_admin' || user?.role === 'workspace_admin') ? '/admin/workspace' : '/settings';
   const dashboardActiveFilterCount = [startDate, endDate, dashboardCardType, dashboardTemplateId].filter(Boolean).length;
@@ -585,6 +543,13 @@ const OperationsPage = () => {
                     actually wants to see, above the operational sections below */}
                 <ClientMetricsCards insights={dashboardData.customer_insights} formatCurrency={formatCurrency} />
 
+                <TrendChart
+                  token={token}
+                  cardType={dashboardCardType}
+                  templateId={dashboardTemplateId}
+                  formatCurrency={formatCurrency}
+                />
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <TopCustomersList
                     title="Top 10 por Visitas"
@@ -604,59 +569,6 @@ const OperationsPage = () => {
                 {['workspace_admin', 'super_admin'].includes(user?.role) && (
                   <AgeDistributionChart data={ageDistribution?.buckets} loading={ageDistributionLoading} />
                 )}
-
-                {/* Summary Cards */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div className="card-brutalist p-6 bg-gradient-to-br from-[#0B0B16] to-[#2a1a4a]">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-zinc-300 text-sm">Total Operaciones</p>
-                        <div className="flex items-center gap-2 mt-1">
-                          <p className="text-3xl font-bold text-white">
-                            {dashboardData.total_operations?.toLocaleString() || 0}
-                          </p>
-                          {trendData && renderTrendBadge(trendData.current.ops, trendData.previous.ops)}
-                        </div>
-                        {trendData && <p className="text-[10px] text-zinc-400 mt-0.5">vs. últimos 7 días</p>}
-                      </div>
-                      <div className="p-3 bg-white/10 rounded-lg">
-                        <TrendingUp className="h-6 w-6 text-white" />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="card-brutalist p-6 bg-gradient-to-br from-[#8CA4FE] to-[#5B7CF7]">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-pink-100 text-sm">Ventas Totales</p>
-                        <div className="flex items-center gap-2 mt-1">
-                          <p className="text-3xl font-bold text-white">
-                            {formatCurrency(totalSales)}
-                          </p>
-                          {trendData && renderTrendBadge(trendData.current.sales, trendData.previous.sales)}
-                        </div>
-                        {trendData && <p className="text-[10px] text-pink-100/80 mt-0.5">vs. últimos 7 días</p>}
-                      </div>
-                      <div className="p-3 bg-white/10 rounded-lg">
-                        <ShoppingCart className="h-6 w-6 text-white" />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="card-brutalist p-6 bg-gradient-to-br from-[#10b981] to-[#059669]">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-green-100 text-sm">Gerentes Activos</p>
-                        <p className="text-3xl font-bold text-white mt-1">
-                          {totalGerentes}
-                        </p>
-                      </div>
-                      <div className="p-3 bg-white/10 rounded-lg">
-                        <Users className="h-6 w-6 text-white" />
-                      </div>
-                    </div>
-                  </div>
-                </div>
 
                 {/* Recent Activity — a Home should answer "what just happened"
                     without a click into Historial first. */}
@@ -704,10 +616,10 @@ const OperationsPage = () => {
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-lg font-semibold text-[#0B0B16] flex items-center gap-2">
                       <Award className="h-5 w-5 text-[#8CA4FE]" />
-                      Rendimiento por Gerente
+                      Rendimiento por Gerente ({dashboardData.by_gerente?.length || 0} activos)
                     </h3>
                   </div>
-                  
+
                   {dashboardData.by_gerente?.length > 0 ? (
                     <div className="space-y-3">
                       {dashboardData.by_gerente.map((gerente, index) => {
@@ -751,68 +663,6 @@ const OperationsPage = () => {
                     <div className="text-center py-8">
                       <Users className="h-12 w-12 mx-auto text-zinc-300 mb-3" />
                       <p className="text-zinc-500">No hay datos de gerentes</p>
-                    </div>
-                  )}
-                </div>
-
-                {/* Operations by Type */}
-                <div className="card-brutalist">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold text-[#0B0B16] flex items-center gap-2">
-                      <BarChart3 className="h-5 w-5 text-[#8CA4FE]" />
-                      Operaciones por Tipo
-                    </h3>
-                  </div>
-                  
-                  {dashboardData.by_type?.length > 0 ? (
-                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-                      {dashboardData.by_type.map((type, index) => (
-                        <div 
-                          key={type._id || index}
-                          className="p-4 bg-zinc-50 rounded-xl text-center hover:bg-zinc-100 transition-colors"
-                        >
-                          <p className="text-2xl font-bold text-[#0B0B16]">{type.count}</p>
-                          <p className="text-xs text-zinc-500 mt-1 truncate" title={type._id}>
-                            {type._id || 'Sin tipo'}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-center py-8">
-                      <BarChart3 className="h-12 w-12 mx-auto text-zinc-300 mb-3" />
-                      <p className="text-zinc-500">No hay datos de operaciones</p>
-                    </div>
-                  )}
-                </div>
-
-                {/* Operations by Card Type */}
-                <div className="card-brutalist">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold text-[#0B0B16] flex items-center gap-2">
-                      <Award className="h-5 w-5 text-[#10b981]" />
-                      Por Tipo de Tarjeta
-                    </h3>
-                  </div>
-                  
-                  {dashboardData.by_card_type?.length > 0 ? (
-                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-                      {dashboardData.by_card_type.map((cardType, index) => (
-                        <div 
-                          key={cardType._id || index}
-                          className="p-4 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl text-center hover:from-blue-100 hover:to-blue-200 transition-colors"
-                        >
-                          <p className="text-2xl font-bold text-[#0B0B16]">{cardType.count}</p>
-                          <p className="text-xs text-blue-700 mt-1 truncate font-medium" title={cardType._id}>
-                            {cardType._id || 'Sin tipo'}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-center py-8">
-                      <Award className="h-12 w-12 mx-auto text-zinc-300 mb-3" />
-                      <p className="text-zinc-500">No hay datos por tipo de tarjeta</p>
                     </div>
                   )}
                 </div>

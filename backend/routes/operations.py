@@ -3,7 +3,7 @@
 from fastapi import APIRouter, HTTPException, Depends
 from fastapi.responses import StreamingResponse
 from typing import Optional
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 import io
 import csv
 import logging
@@ -294,30 +294,6 @@ async def get_operations_summary(
     ]
     
     by_gerente = await db.operations.aggregate(pipeline).to_list(length=100)
-    
-    pipeline_type = [
-        {"$match": query_filter},
-        {"$group": {
-            "_id": "$operation_label",
-            "count": {"$sum": 1}
-        }},
-        {"$sort": {"count": -1}}
-    ]
-    
-    by_type = await db.operations.aggregate(pipeline_type).to_list(length=100)
-    
-    # Group by card type
-    pipeline_card_type = [
-        {"$match": query_filter},
-        {"$group": {
-            "_id": "$card_type_label",
-            "count": {"$sum": 1},
-            "card_type_key": {"$first": "$card_type"}
-        }},
-        {"$sort": {"count": -1}}
-    ]
-    
-    by_card_type = await db.operations.aggregate(pipeline_card_type).to_list(length=100)
 
     # Get available card types for filter dropdown
     card_types = await db.operations.distinct("card_type")
@@ -375,8 +351,6 @@ async def get_operations_summary(
         "summary": {
             "total_operations": total_operations,
             "by_gerente": by_gerente,
-            "by_type": by_type,
-            "by_card_type": by_card_type,
             "customer_insights": {
                 "total_visitas": total_operations,
                 "nuevos_miembros": nuevos_miembros,
@@ -389,6 +363,91 @@ async def get_operations_summary(
         },
         "filters": {
             "card_types": card_types
+        }
+    }
+
+@router.get("/trend")
+async def get_operations_trend(
+    days: int = 30,
+    card_type: Optional[str] = None,
+    template_id: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """Daily operations count + sales for the last N days, plus the prior
+    N-day period's totals for a delta comparison — powers the dashboard's
+    trend chart. Always bounded by `days` (unlike /summary, which is
+    all-time by default) since an unbounded daily series isn't useful to
+    chart and would mean scanning the full collection."""
+    ws_id = current_user.get("workspace_id")
+    days = max(7, min(days, 90))
+
+    today = datetime.now(timezone.utc).date()
+    current_start = today - timedelta(days=days - 1)
+    previous_start = current_start - timedelta(days=days)
+    previous_end = current_start - timedelta(days=1)
+
+    base_filter = {}
+    if ws_id:
+        base_filter["workspace_id"] = ws_id
+    if card_type:
+        base_filter["card_type"] = card_type
+    if template_id:
+        base_filter["template_id"] = template_id
+
+    current_filter = {**base_filter, "created_at": {"$gte": current_start.isoformat(), "$lte": today.isoformat() + "T23:59:59"}}
+    previous_filter = {**base_filter, "created_at": {"$gte": previous_start.isoformat(), "$lte": previous_end.isoformat() + "T23:59:59"}}
+
+    # Bucket by day using the first 10 chars of the ISO-string created_at
+    # ("YYYY-MM-DD...") — same string-comparison approach already used for
+    # date-range filtering everywhere else in this file, no $dateFromString
+    # cast needed.
+    pipeline_series = [
+        {"$match": current_filter},
+        {"$group": {
+            "_id": {"$substrCP": ["$created_at", 0, 10]},
+            "operations_count": {"$sum": 1},
+            "sales_total": {"$sum": {"$ifNull": ["$purchase_sum", 0]}}
+        }},
+        {"$sort": {"_id": 1}}
+    ]
+    raw_series = await db.operations.aggregate(pipeline_series).to_list(length=100)
+    by_date = {row["_id"]: row for row in raw_series}
+
+    # Fill days with no activity as zeros so the chart's x-axis is continuous.
+    series = []
+    for i in range(days):
+        d = (current_start + timedelta(days=i)).isoformat()
+        row = by_date.get(d, {})
+        series.append({
+            "date": d,
+            "operations_count": row.get("operations_count", 0),
+            "sales_total": row.get("sales_total", 0)
+        })
+
+    pipeline_previous = [
+        {"$match": previous_filter},
+        {"$group": {
+            "_id": None,
+            "operations_count": {"$sum": 1},
+            "sales_total": {"$sum": {"$ifNull": ["$purchase_sum", 0]}}
+        }}
+    ]
+    prev_result = await db.operations.aggregate(pipeline_previous).to_list(length=1)
+    previous_totals = prev_result[0] if prev_result else {"operations_count": 0, "sales_total": 0}
+
+    current_totals = {
+        "operations_count": sum(d["operations_count"] for d in series),
+        "sales_total": sum(d["sales_total"] for d in series)
+    }
+
+    return {
+        "success": True,
+        "days": days,
+        "series": series,
+        "current_period": current_totals,
+        "previous_period": {
+            "operations_count": previous_totals.get("operations_count", 0),
+            "sales_total": previous_totals.get("sales_total", 0)
         }
     }
 

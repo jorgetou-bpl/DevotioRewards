@@ -18,6 +18,7 @@ import {
   Camera,
   CameraOff,
   Building2,
+  Bell,
   ChevronDown
 } from 'lucide-react';
 
@@ -260,6 +261,9 @@ const ScannerPage = () => {
   const menuItems = [
     { icon: Home, label: 'Inicio', action: () => navigate('/'), testId: 'menu-home' },
     { icon: Settings, label: 'Configuración', action: () => navigate('/settings'), testId: 'menu-settings' },
+    ...(['workspace_admin', 'super_admin'].includes(user?.role) ? [
+      { icon: Bell, label: 'Notificaciones', action: () => navigate('/notifications'), testId: 'menu-notifications' }
+    ] : []),
     ...(user?.role === 'workspace_admin' ? [
       { icon: Building2, label: 'Admin Workspace', action: () => navigate('/admin/workspace'), testId: 'menu-admin' }
     ] : []),

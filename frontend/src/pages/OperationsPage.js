@@ -24,6 +24,7 @@ import {
   ScanLine,
   Search,
   Settings,
+  Bell,
   ArrowRight,
   Menu,
   Home,
@@ -38,7 +39,6 @@ import { TrendChart } from '../components/dashboard/TrendChart';
 import { TopCustomersList } from '../components/dashboard/TopCustomersList';
 import { AgeDistributionChart } from '../components/dashboard/AgeDistributionChart';
 import { CustomerBaseTab } from '../components/dashboard/CustomerBaseTab';
-import { PushNotificationsPanel } from '../components/dashboard/PushNotificationsPanel';
 import { formatDate, formatAmount } from '../utils/format';
 import { API_BASE_URL as API } from '../config/api';
 
@@ -270,6 +270,9 @@ const OperationsPage = () => {
   const menuItems = [
     { icon: Home, label: 'Inicio', action: () => navigate('/'), testId: 'menu-home' },
     { icon: Settings, label: 'Configuración', action: () => navigate('/settings'), testId: 'menu-settings' },
+    ...(['workspace_admin', 'super_admin'].includes(user?.role) ? [
+      { icon: Bell, label: 'Notificaciones', action: () => navigate('/notifications'), testId: 'menu-notifications' }
+    ] : []),
     ...(user?.role === 'workspace_admin' ? [
       { icon: Building2, label: 'Admin Workspace', action: () => navigate('/admin/workspace'), testId: 'menu-admin' }
     ] : []),
@@ -508,15 +511,26 @@ const OperationsPage = () => {
           <div className="space-y-6">
             {/* Escanear is the single most-used action on this screen — it used
                 to be the whole app's landing page, so losing one-tap access to
-                it would be a real regression for operators. It gets its own
-                full-width primary button instead of sharing equal billing with
-                Buscar/Configuración below. */}
-            <button onClick={() => navigate('/scanner')}
-              className="w-full flex items-center justify-center gap-3 p-5 rounded-xl bg-[#5B7CF7] text-white font-semibold text-base shadow-sm hover:bg-[#4A6AE0] transition-colors"
-              data-testid="quick-access-scan">
-              <ScanLine className="h-6 w-6" />
-              Escanear
-            </button>
+                it would be a real regression for operators. It keeps its own
+                prominent primary button; admins get Notificaciones right next
+                to it (not in the Buscar/Configuración grid below, which is
+                secondary by comparison). */}
+            <div className={['workspace_admin', 'super_admin'].includes(user?.role) ? 'grid grid-cols-2 gap-3' : ''}>
+              <button onClick={() => navigate('/scanner')}
+                className="w-full flex items-center justify-center gap-3 p-5 rounded-xl bg-[#5B7CF7] text-white font-semibold text-base shadow-sm hover:bg-[#4A6AE0] transition-colors"
+                data-testid="quick-access-scan">
+                <ScanLine className="h-6 w-6" />
+                Escanear
+              </button>
+              {['workspace_admin', 'super_admin'].includes(user?.role) && (
+                <button onClick={() => navigate('/notifications')}
+                  className="w-full flex items-center justify-center gap-3 p-5 rounded-xl bg-[#0B0B16] text-white font-semibold text-base shadow-sm hover:bg-[#0B0B16]/90 transition-colors"
+                  data-testid="quick-access-notifications">
+                  <Bell className="h-6 w-6" />
+                  Notificaciones
+                </button>
+              )}
+            </div>
 
             <div className="grid grid-cols-2 gap-3" data-testid="quick-access-row">
               <button onClick={() => navigate('/search')}
@@ -667,9 +681,6 @@ const OperationsPage = () => {
                   )}
                 </div>
 
-                {['workspace_admin', 'super_admin'].includes(user?.role) && (
-                  <PushNotificationsPanel token={token} templatesList={templatesList} />
-                )}
               </>
             ) : (
               <div className="text-center py-12">

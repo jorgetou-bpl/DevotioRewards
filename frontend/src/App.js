@@ -16,6 +16,7 @@ import AdminSetupPage from "./pages/AdminSetupPage";
 import WorkspaceAdminPage from "./pages/WorkspaceAdminPage";
 import SuperAdminDashboard from "./pages/SuperAdminDashboard";
 import CustomerProfilePage from "./pages/CustomerProfilePage";
+import NotificationsPage from "./pages/NotificationsPage";
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -141,6 +142,14 @@ function AppRoutes() {
         element={
           <AdminRoute>
             <CustomerProfilePage />
+          </AdminRoute>
+        }
+      />
+      <Route
+        path="/notifications"
+        element={
+          <AdminRoute>
+            <NotificationsPage />
           </AdminRoute>
         }
       />

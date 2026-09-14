@@ -182,3 +182,30 @@ class PushNotificationCreate(BaseModel):
     message: str = Field(min_length=1)
     template_id: int = Field(gt=0)
     scheduled_at: Optional[str] = None  # ISO datetime string with timezone; None = send immediately
+
+# ============ GEO-PUSH LOCATION MODELS ============
+# Boomerangme's GeoPush: a location's message surfaces on a customer's lock
+# screen via Apple Wallet's native "relevant location" mechanism when their
+# device is within a fixed ~330ft/100m radius (not configurable — set by
+# Boomerangme/Apple, not us). Non-dismissible while in range, and fires on
+# every entry (no daily cap) — both are iOS PassKit platform behavior, not
+# something either Boomerangme's or our API can override. This model only
+# manages what Boomerangme's own API actually exposes.
+
+class GeoLocationCreate(BaseModel):
+    name: str = Field(min_length=1)
+    address: str = Field(min_length=1)
+    message: str = Field(min_length=1, max_length=85)  # longer text gets cut off on-device
+    latitude: str
+    longitude: str
+    display: bool = True
+    template_ids: List[int] = []
+
+class GeoLocationUpdate(BaseModel):
+    name: Optional[str] = None
+    address: Optional[str] = None
+    message: Optional[str] = Field(default=None, max_length=85)
+    latitude: Optional[str] = None
+    longitude: Optional[str] = None
+    display: Optional[bool] = None
+    template_ids: Optional[List[int]] = None

@@ -92,7 +92,7 @@ export const PushNotificationsPanel = ({ token, templatesList }) => {
             }`}
             data-testid="push-view-geopush"
           >
-            GeoPush
+            Ubicaciones
           </button>
         </div>
       </div>

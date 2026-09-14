@@ -151,7 +151,7 @@ export const GeoPushPanel = ({ token, templatesList }) => {
   return (
     <div className="space-y-4">
       <p className="text-xs text-zinc-500">
-        Cuando un cliente con esta tarjeta esté cerca de la ubicación, la notificación aparece automáticamente en su pantalla de bloqueo (radio fijo de Apple Wallet, no configurable).
+        Cuando un cliente con esta tarjeta esté cerca de la ubicación, la notificación aparece automáticamente en su pantalla de bloqueo — envío geolocalizado dentro de un radio de 100 metros (330 pies), fijado por Apple Wallet y no configurable.
       </p>
 
       {!formOpen && (

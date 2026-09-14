@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { toast } from 'sonner';
-import { MapPin, Loader2, Plus, Pencil, Trash2, X } from 'lucide-react';
+import { MapPin, Loader2, Plus, Pencil, Trash2, X, LocateFixed } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Textarea } from '../ui/textarea';
@@ -35,6 +35,35 @@ export const GeoPushPanel = ({ token, templatesList }) => {
   const [form, setForm] = useState(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [locating, setLocating] = useState(false);
+
+  // Boomerangme's own dashboard auto-fills lat/long from the device's current
+  // position when configuring GeoPush. Kept optional — whoever sets this up
+  // might not be standing at the actual store, so manual entry always stays
+  // available too.
+  const handleUseCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      toast.error('Este navegador no soporta geolocalización');
+      return;
+    }
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setForm((f) => ({
+          ...f,
+          latitude: String(position.coords.latitude),
+          longitude: String(position.coords.longitude)
+        }));
+        setLocating(false);
+        toast.success('Ubicación actual aplicada');
+      },
+      () => {
+        setLocating(false);
+        toast.error('No se pudo obtener la ubicación — ingresala manualmente');
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  };
 
   const templateName = useCallback(
     (id) => templatesList.find((t) => String(t.id) === String(id))?.name || `#${id}`,
@@ -151,19 +180,28 @@ export const GeoPushPanel = ({ token, templatesList }) => {
             <Input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} placeholder="Dirección física" data-testid="geopush-address" />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-xs font-medium text-zinc-500 mb-1 block">Latitud</label>
-              <Input value={form.latitude} onChange={(e) => setForm({ ...form, latitude: e.target.value })} placeholder="9.9281" data-testid="geopush-latitude" />
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <label className="text-xs font-medium text-zinc-500">Ubicación</label>
+              <button
+                type="button"
+                onClick={handleUseCurrentLocation}
+                disabled={locating}
+                className="text-xs font-medium text-[#5B7CF7] hover:underline flex items-center gap-1 disabled:opacity-50"
+                data-testid="geopush-use-current-location"
+              >
+                {locating ? <Loader2 className="h-3 w-3 animate-spin" /> : <LocateFixed className="h-3 w-3" />}
+                Usar mi ubicación actual
+              </button>
             </div>
-            <div>
-              <label className="text-xs font-medium text-zinc-500 mb-1 block">Longitud</label>
-              <Input value={form.longitude} onChange={(e) => setForm({ ...form, longitude: e.target.value })} placeholder="-84.0907" data-testid="geopush-longitude" />
+            <div className="grid grid-cols-2 gap-3">
+              <Input value={form.latitude} onChange={(e) => setForm({ ...form, latitude: e.target.value })} placeholder="Latitud, ej. 9.9281" data-testid="geopush-latitude" />
+              <Input value={form.longitude} onChange={(e) => setForm({ ...form, longitude: e.target.value })} placeholder="Longitud, ej. -84.0907" data-testid="geopush-longitude" />
             </div>
+            <p className="text-xs text-zinc-400 mt-1">
+              Útil si estás configurando esto desde el local. Si no, ingresalas a mano — podés sacarlas de Google Maps con clic derecho sobre el punto exacto.
+            </p>
           </div>
-          <p className="text-xs text-zinc-400 -mt-2">
-            Sacá la latitud/longitud desde Google Maps: clic derecho sobre el punto exacto y copiá las coordenadas.
-          </p>
 
           <div>
             <label className="text-xs font-medium text-zinc-500 mb-1 block flex items-center justify-between">

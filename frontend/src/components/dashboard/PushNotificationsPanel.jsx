@@ -17,6 +17,7 @@ import {
   AlertDialogAction
 } from '../ui/alert-dialog';
 import { PushHistoryList } from './PushHistoryList';
+import { GeoPushPanel } from './GeoPushPanel';
 import { API_BASE_URL as API } from '../../config/api';
 
 // Replaces the reserved Dashboard placeholder. v1 scope: broadcast to the
@@ -24,7 +25,7 @@ import { API_BASE_URL as API } from '../../config/api';
 // segmentation is a fast-follow pending a Boomerangme API confirmation
 // (see project plan), so no segment selector ships yet.
 export const PushNotificationsPanel = ({ token, templatesList }) => {
-  const [view, setView] = useState('compose'); // 'compose' | 'history'
+  const [view, setView] = useState('compose'); // 'compose' | 'history' | 'geopush'
   const [message, setMessage] = useState('');
   const [selectedTemplateId, setSelectedTemplateId] = useState('');
   const [scheduled, setScheduled] = useState(false);
@@ -74,6 +75,15 @@ export const PushNotificationsPanel = ({ token, templatesList }) => {
             data-testid="push-view-compose"
           >
             Nuevo mensaje
+          </button>
+          <button
+            onClick={() => setView('geopush')}
+            className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+              view === 'geopush' ? 'bg-white text-[#0B0B16] shadow-sm' : 'text-zinc-500 hover:text-[#0B0B16]'
+            }`}
+            data-testid="push-view-geopush"
+          >
+            Ubicaciones
           </button>
           <button
             onClick={() => setView('history')}
@@ -166,8 +176,10 @@ export const PushNotificationsPanel = ({ token, templatesList }) => {
             </AlertDialogContent>
           </AlertDialog>
         </div>
-      ) : (
+      ) : view === 'history' ? (
         <PushHistoryList token={token} templatesList={templatesList} refreshKey={historyRefreshKey} />
+      ) : (
+        <GeoPushPanel token={token} templatesList={templatesList} />
       )}
     </div>
   );

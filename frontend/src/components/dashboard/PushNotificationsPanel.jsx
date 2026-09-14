@@ -77,15 +77,6 @@ export const PushNotificationsPanel = ({ token, templatesList }) => {
             Nuevo mensaje
           </button>
           <button
-            onClick={() => setView('history')}
-            className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
-              view === 'history' ? 'bg-white text-[#0B0B16] shadow-sm' : 'text-zinc-500 hover:text-[#0B0B16]'
-            }`}
-            data-testid="push-view-history"
-          >
-            Historial
-          </button>
-          <button
             onClick={() => setView('geopush')}
             className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
               view === 'geopush' ? 'bg-white text-[#0B0B16] shadow-sm' : 'text-zinc-500 hover:text-[#0B0B16]'
@@ -93,6 +84,15 @@ export const PushNotificationsPanel = ({ token, templatesList }) => {
             data-testid="push-view-geopush"
           >
             Ubicaciones
+          </button>
+          <button
+            onClick={() => setView('history')}
+            className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+              view === 'history' ? 'bg-white text-[#0B0B16] shadow-sm' : 'text-zinc-500 hover:text-[#0B0B16]'
+            }`}
+            data-testid="push-view-history"
+          >
+            Historial
           </button>
         </div>
       </div>

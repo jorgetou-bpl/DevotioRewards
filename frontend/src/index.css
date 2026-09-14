@@ -22,18 +22,25 @@
 @tailwind utilities;
 
 :root {
-    /* Devotio Rewards Brand Colors */
-    --primary: #0B0B16;
+    /* Devotio Rewards Brand Colors — prefixed brand-* to avoid colliding
+       with the shadcn/Tailwind convention variables of the same base name
+       defined below in @layer base (--primary, --secondary, --background,
+       --border). Unlayered CSS always wins the cascade over @layer rules
+       regardless of source order, so an unprefixed hex value here would
+       silently break every shadcn component's bg-primary/bg-background/
+       border-border/etc. utility classes — they'd compute an invalid
+       hsl(#0B0B16)-style value instead of the intended hsl(227 91% 66%). */
+    --brand-primary: #0B0B16;
     --primary-light: #8CA4FE;
-    --secondary: #FFFFFF;
+    --brand-secondary: #FFFFFF;
     --accent-pink: #8CA4FE;
     --accent-purple: #0B0B16;
     --accent-gradient: linear-gradient(135deg, #8CA4FE 0%, #1447E6 100%);
-    --background: #FFFFFF;
+    --brand-background: #FFFFFF;
     --surface: #F4F4F5;
     --text-primary: #0B0B16;
     --text-secondary: #71717A;
-    --border: #E4E4E7;
+    --brand-border: #E4E4E7;
     --success: #00C853;
     --error: #FF3333;
     --warning: #FFD700;
@@ -55,7 +62,7 @@ body {
     font-family: 'Figtree', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    background-color: var(--background);
+    background-color: var(--brand-background);
     color: var(--text-primary);
 }
 
@@ -63,7 +70,7 @@ h1, h2, h3, h4, h5, h6 {
     font-family: 'Figtree', sans-serif;
     font-weight: 600;
     letter-spacing: -0.02em;
-    color: var(--primary);
+    color: var(--brand-primary);
 }
 
 code, .mono {

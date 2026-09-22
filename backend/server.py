@@ -22,6 +22,7 @@ from routes.customers import router as customers_router
 from routes.customer_insights import router as customer_insights_router
 from routes.notifications import router as notifications_router
 from routes.geo_push import router as geo_push_router
+from routes.contifico import router as contifico_router
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -44,6 +45,7 @@ api_router.include_router(customers_router)
 api_router.include_router(customer_insights_router)
 api_router.include_router(notifications_router)
 api_router.include_router(geo_push_router)
+api_router.include_router(contifico_router)
 
 # Root-level health check for Kubernetes (MUST be at /health, not /api/health)
 @app.get("/health")
@@ -176,7 +178,11 @@ async def ensure_indexes():
     await db.customer_stats.create_index([("workspace_id", 1), ("total_purchase_sum", -1)])
     await db.customer_stats.create_index([("workspace_id", 1), ("last_seen_at", -1)])
     await db.customer_stats.create_index([("workspace_id", 1), ("first_seen_at", 1)])
-    logger.info("Migration: Ensured operations/customer_stats indexes")
+    await db.contifico_transactions.create_index([("workspace_id", 1), ("created_at", -1)])
+    await db.contifico_transactions.create_index([("workspace_id", 1), ("status", 1)])
+    await db.contifico_transactions.create_index([("workspace_id", 1), ("documento_id", 1)], unique=True)
+    await db.customer_identifiers.create_index([("workspace_id", 1), ("cedula", 1)], unique=True)
+    logger.info("Migration: Ensured operations/customer_stats/contifico indexes")
 
 
 async def backfill_customer_stats():

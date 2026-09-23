@@ -23,6 +23,8 @@ from routes.customer_insights import router as customer_insights_router
 from routes.notifications import router as notifications_router
 from routes.geo_push import router as geo_push_router
 from routes.contifico import router as contifico_router
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from utils.geo_scheduler import sync_geo_schedules
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -182,6 +184,7 @@ async def ensure_indexes():
     await db.contifico_transactions.create_index([("workspace_id", 1), ("status", 1)])
     await db.contifico_transactions.create_index([("workspace_id", 1), ("documento_id", 1)], unique=True)
     await db.customer_identifiers.create_index([("workspace_id", 1), ("cedula", 1)], unique=True)
+    await db.geo_location_schedules.create_index([("workspace_id", 1), ("location_id", 1)], unique=True)
     logger.info("Migration: Ensured operations/customer_stats/contifico indexes")
 
 
@@ -221,7 +224,20 @@ async def backfill_customer_stats():
     if backfilled:
         logger.info(f"Migration: Backfilled customer_stats for {backfilled} customers")
 
+# GeoPush schedule sync — flips Boomerangme's `display` on a timer to
+# approximate business-hours scheduling (see utils/geo_scheduler.py for why
+# this has to live outside Boomerangme's own API entirely).
+geo_scheduler = AsyncIOScheduler()
+
+@app.on_event("startup")
+async def start_geo_scheduler():
+    geo_scheduler.add_job(sync_geo_schedules, "interval", minutes=5, next_run_time=datetime.now(timezone.utc))
+    geo_scheduler.start()
+    logger.info("geo_scheduler: started (every 5 minutes)")
+
+
 # Shutdown handler
 @app.on_event("shutdown")
 async def shutdown_db_client():
+    geo_scheduler.shutdown(wait=False)
     client.close()

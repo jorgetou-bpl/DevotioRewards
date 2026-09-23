@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { toast } from 'sonner';
-import { MapPin, Loader2, Plus, Pencil, Trash2, X, LocateFixed } from 'lucide-react';
+import { MapPin, Loader2, Plus, Pencil, Trash2, X, LocateFixed, Clock } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Textarea } from '../ui/textarea';
@@ -20,7 +20,10 @@ import { API_BASE_URL as API } from '../../config/api';
 
 const MESSAGE_MAX_LENGTH = 85; // Boomerangme cuts off longer text on-device
 
-const EMPTY_FORM = { name: '', address: '', message: '', latitude: '', longitude: '', display: true, template_ids: [] };
+const EMPTY_FORM = {
+  name: '', address: '', message: '', latitude: '', longitude: '', display: true, template_ids: [],
+  schedule_enabled: false, open_time: '08:00', close_time: '17:00'
+};
 
 // Manages Boomerangme's GeoPush locations — the ~330ft/100m radius and
 // non-dismissible-while-in-range behavior are fixed by Apple Wallet's own
@@ -98,7 +101,9 @@ export const GeoPushPanel = ({ token, templatesList }) => {
     setForm({
       name: loc.name || '', address: loc.address || '', message: loc.message || '',
       latitude: loc.latitude || '', longitude: loc.longitude || '',
-      display: loc.display !== false, template_ids: loc.template_ids || []
+      display: loc.display !== false, template_ids: loc.template_ids || [],
+      schedule_enabled: loc.schedule_enabled || false,
+      open_time: loc.open_time || '08:00', close_time: loc.close_time || '17:00'
     });
     setFormOpen(true);
   };
@@ -110,7 +115,8 @@ export const GeoPushPanel = ({ token, templatesList }) => {
     }));
   };
 
-  const canSave = form.name.trim() && form.address.trim() && form.message.trim() && form.latitude.trim() && form.longitude.trim();
+  const canSave = form.name.trim() && form.address.trim() && form.message.trim() && form.latitude.trim() && form.longitude.trim()
+    && (!form.schedule_enabled || (form.open_time && form.close_time && form.open_time < form.close_time));
 
   const handleSave = async () => {
     setSaving(true);
@@ -118,7 +124,10 @@ export const GeoPushPanel = ({ token, templatesList }) => {
       const payload = {
         name: form.name.trim(), address: form.address.trim(), message: form.message.trim(),
         latitude: form.latitude.trim(), longitude: form.longitude.trim(),
-        display: form.display, template_ids: form.template_ids
+        display: form.display, template_ids: form.template_ids,
+        schedule_enabled: form.schedule_enabled,
+        open_time: form.schedule_enabled ? form.open_time : null,
+        close_time: form.schedule_enabled ? form.close_time : null
       };
       if (editingId) {
         await axios.patch(`${API}/geo-locations/${editingId}`, payload, { headers: { Authorization: `Bearer ${token}` } });
@@ -240,6 +249,50 @@ export const GeoPushPanel = ({ token, templatesList }) => {
             <label htmlFor="geopush-display" className="text-sm text-zinc-700 cursor-pointer">Activa</label>
           </div>
 
+          <div className="border-t border-zinc-100 pt-3">
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="geopush-schedule"
+                checked={form.schedule_enabled}
+                onCheckedChange={(c) => setForm({ ...form, schedule_enabled: c === true })}
+              />
+              <label htmlFor="geopush-schedule" className="text-sm text-zinc-700 cursor-pointer flex items-center gap-1">
+                <Clock className="h-3.5 w-3.5 text-zinc-400" />
+                Aplicar horario (solo activa dentro de este rango)
+              </label>
+            </div>
+
+            {form.schedule_enabled && (
+              <>
+                <div className="grid grid-cols-2 gap-3 mt-2">
+                  <div>
+                    <label className="text-xs font-medium text-zinc-500 mb-1 block">Abre</label>
+                    <input
+                      type="time"
+                      value={form.open_time}
+                      onChange={(e) => setForm({ ...form, open_time: e.target.value })}
+                      className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm"
+                      data-testid="geopush-open-time"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-zinc-500 mb-1 block">Cierra</label>
+                    <input
+                      type="time"
+                      value={form.close_time}
+                      onChange={(e) => setForm({ ...form, close_time: e.target.value })}
+                      className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm"
+                      data-testid="geopush-close-time"
+                    />
+                  </div>
+                </div>
+                <p className="text-xs text-zinc-400 mt-1">
+                  Se activa y desactiva sola según la hora (revisión cada 5 min, puede haber unos minutos de margen). Fuera de este horario, la notificación de proximidad queda apagada aunque el cliente esté cerca.
+                </p>
+              </>
+            )}
+          </div>
+
           <Button onClick={handleSave} disabled={!canSave || saving} className="w-full bg-[#0B0B16] hover:bg-[#0B0B16]/90" data-testid="geopush-save-btn">
             {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
             {editingId ? 'Guardar cambios' : 'Crear ubicación'}
@@ -273,6 +326,12 @@ export const GeoPushPanel = ({ token, templatesList }) => {
                   <p className="text-xs text-zinc-500 truncate">{loc.address}</p>
                   <p className="text-xs text-zinc-400 mt-1">"{loc.message}"</p>
                   <p className="text-xs text-zinc-400">{(loc.template_ids || []).map(templateName).join(', ') || 'Sin tarjetas asignadas'}</p>
+                  {loc.schedule_enabled && (
+                    <p className="text-xs text-[#5B7CF7] flex items-center gap-1 mt-0.5">
+                      <Clock className="h-3 w-3" />
+                      {loc.open_time} – {loc.close_time}
+                    </p>
+                  )}
                 </div>
                 <div className="flex items-center gap-1 shrink-0">
                   <button onClick={() => openEditForm(loc)} className="p-1.5 text-zinc-400 hover:text-[#5B7CF7]" data-testid="geopush-edit-btn">

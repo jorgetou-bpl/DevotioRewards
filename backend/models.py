@@ -200,6 +200,12 @@ class GeoLocationCreate(BaseModel):
     longitude: str
     display: bool = True
     template_ids: List[int] = []
+    # Boomerangme has no concept of a schedule — stored locally and applied
+    # by our own job that toggles `display` on Boomerangme's side. HH:MM,
+    # same window every day; no overnight wraparound (e.g. 22:00-02:00).
+    schedule_enabled: bool = False
+    open_time: Optional[str] = Field(default=None, pattern=r'^([01]\d|2[0-3]):[0-5]\d$')
+    close_time: Optional[str] = Field(default=None, pattern=r'^([01]\d|2[0-3]):[0-5]\d$')
 
 class GeoLocationUpdate(BaseModel):
     name: Optional[str] = None
@@ -208,4 +214,8 @@ class GeoLocationUpdate(BaseModel):
     latitude: Optional[str] = None
     longitude: Optional[str] = None
     display: Optional[bool] = None
+    template_ids: Optional[List[int]] = None
+    schedule_enabled: Optional[bool] = None
+    open_time: Optional[str] = Field(default=None, pattern=r'^([01]\d|2[0-3]):[0-5]\d$')
+    close_time: Optional[str] = Field(default=None, pattern=r'^([01]\d|2[0-3]):[0-5]\d$')
     template_ids: Optional[List[int]] = None

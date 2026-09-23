@@ -366,6 +366,54 @@ async def get_operations_summary(
         }
     }
 
+@router.get("/rewards-summary")
+async def get_rewards_summary(
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """Emitted-vs-redeemed rewards, from db.rewards_earned (written in
+    routes/cards.py: one doc per reward tier reached, status flips
+    pending->redeemed with a captured redeemed_value). That field was
+    already being recorded on every redemption but never aggregated
+    anywhere until now. Same start_date/end_date convention as /summary,
+    matched against earned_at (when the reward was reached, not redeemed) so
+    this stays on the same filter as the rest of the dashboard."""
+    ws_id = current_user.get("workspace_id")
+    query_filter = {"workspace_id": ws_id} if ws_id else {}
+
+    if start_date:
+        query_filter["earned_at"] = {"$gte": start_date}
+    if end_date:
+        if "earned_at" in query_filter:
+            query_filter["earned_at"]["$lte"] = end_date + "T23:59:59"
+        else:
+            query_filter["earned_at"] = {"$lte": end_date + "T23:59:59"}
+
+    issued_count = await db.rewards_earned.count_documents(query_filter)
+    redeemed_pipeline = [
+        {"$match": {**query_filter, "status": "redeemed"}},
+        {"$group": {
+            "_id": None,
+            "redeemed_count": {"$sum": 1},
+            "redeemed_value_total": {"$sum": {"$ifNull": ["$redeemed_value", 0]}}
+        }}
+    ]
+    redeemed_result = await db.rewards_earned.aggregate(redeemed_pipeline).to_list(length=1)
+    redeemed = redeemed_result[0] if redeemed_result else {"redeemed_count": 0, "redeemed_value_total": 0}
+
+    redeemed_count = redeemed.get("redeemed_count", 0)
+    return {
+        "success": True,
+        "rewards": {
+            "issued_count": issued_count,
+            "redeemed_count": redeemed_count,
+            "redemption_rate": (redeemed_count / issued_count) if issued_count else 0,
+            "redeemed_value_total": redeemed.get("redeemed_value_total", 0)
+        }
+    }
+
+
 @router.get("/trend")
 async def get_operations_trend(
     days: int = 30,

@@ -1,11 +1,11 @@
 import React from 'react';
 import { Users } from 'lucide-react';
 
-// Reusable ranked customer list — same visual language as the "Rendimiento
-// por Gerente" leaderboard elsewhere on this page (numbered badge, name +
-// secondary stat, proportional bar). Used twice: Top 10 by visits, Top 10 by
-// purchase amount.
-export const TopCustomersList = ({ title, icon: Icon, data = [], valueKey, valueFormatter }) => {
+// Reusable ranked list — numbered badge, name + primary stat, proportional
+// bar, optional secondary line under the name. Used for Top 10 by visits and
+// the Gerente Leaderboard (same shape: a name, one ranking number, one
+// secondary figure).
+export const TopCustomersList = ({ title, icon: Icon, data = [], nameKey = 'customer_name', valueKey, valueFormatter, renderSubtitle }) => {
   const maxValue = data[0]?.[valueKey] || 1;
 
   return (
@@ -34,7 +34,10 @@ export const TopCustomersList = ({ title, icon: Icon, data = [], valueKey, value
                     }`}>
                       {index + 1}
                     </span>
-                    <p className="font-medium text-[#0B0B16] truncate">{customer.customer_name || 'Sin nombre'}</p>
+                    <div className="min-w-0">
+                      <p className="font-medium text-[#0B0B16] truncate">{customer[nameKey] || 'Sin nombre'}</p>
+                      {renderSubtitle && <p className="text-xs text-zinc-500">{renderSubtitle(customer)}</p>}
+                    </div>
                   </div>
                   <span className="text-sm font-bold text-[#0B0B16] flex-shrink-0 ml-2">
                     {valueFormatter ? valueFormatter(value) : value}

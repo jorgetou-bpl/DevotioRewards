@@ -172,6 +172,38 @@ class TestOperationsAPI:
         
         print(f"SUCCESS: Operations summary - Total: {summary['total_operations']}")
     
+    def test_rewards_summary(self):
+        """Test GET /api/operations/rewards-summary — emitted vs. redeemed
+        rewards, from db.rewards_earned (redeemed_value was already being
+        captured on every redemption but never aggregated before this)."""
+        response = self.session.get(f"{BASE_URL}/api/operations/rewards-summary")
+        assert response.status_code == 200
+
+        data = response.json()
+        assert data.get("success") is True
+        rewards = data.get("rewards", {})
+        for field in ["issued_count", "redeemed_count", "redemption_rate", "redeemed_value_total"]:
+            assert field in rewards
+        assert rewards["redeemed_count"] <= rewards["issued_count"]
+        print(f"SUCCESS: Rewards summary - {rewards['issued_count']} issued, {rewards['redeemed_count']} redeemed")
+
+    def test_rewards_summary_requires_auth(self):
+        response = requests.get(f"{BASE_URL}/api/operations/rewards-summary")
+        assert response.status_code == 401
+
+    def test_visit_recurrence(self):
+        """Test GET /api/customer-insights/visit-recurrence — lifetime
+        visit-count buckets, open to every role (unlike age-distribution)."""
+        response = self.session.get(f"{BASE_URL}/api/customer-insights/visit-recurrence")
+        assert response.status_code == 200
+
+        data = response.json()
+        assert data.get("success") is True
+        buckets = data.get("buckets", [])
+        assert len(buckets) == 3
+        assert {b["label"] for b in buckets} == {"1 visita", "2-3 visitas", "4+ visitas"}
+        print(f"SUCCESS: Visit recurrence - {sum(b['count'] for b in buckets)} customers bucketed")
+
     def test_add_stamp_creates_operation_log(self):
         """Test that add-stamp action creates an operation log with gerente"""
         # Perform add-stamp action on DEMO card

@@ -30,7 +30,10 @@ import {
   Home,
   LogOut,
   Building2,
-  DollarSign
+  DollarSign,
+  Receipt,
+  UserPlus,
+  Repeat
 } from 'lucide-react';
 
 import { AppMenu } from '../components/AppMenu';
@@ -38,6 +41,8 @@ import { ClientMetricsCards } from '../components/dashboard/ClientMetricsCards';
 import { TrendChart } from '../components/dashboard/TrendChart';
 import { TopCustomersList } from '../components/dashboard/TopCustomersList';
 import { AgeDistributionChart } from '../components/dashboard/AgeDistributionChart';
+import { RecurrenceChart } from '../components/dashboard/RecurrenceChart';
+import { RewardsSummary } from '../components/dashboard/RewardsSummary';
 import { CustomerBaseTab } from '../components/dashboard/CustomerBaseTab';
 import { formatDate, formatAmount } from '../utils/format';
 import { API_BASE_URL as API } from '../config/api';
@@ -78,6 +83,23 @@ const OperationsPage = () => {
   const [dashboardTemplateId, setDashboardTemplateId] = useState('');
   const [dashboardTemplateDropdownOpen, setDashboardTemplateDropdownOpen] = useState(false);
   const [showDashboardFilters, setShowDashboardFilters] = useState(false);
+
+  // Dashboard's own date range — deliberately separate from Historial's
+  // startDate/endDate below. Sharing that state would make "Hoy" leak in as
+  // Historial's default too, which wasn't asked for. Defaults to today.
+  const todayStr = () => new Date().toISOString().slice(0, 10);
+  const daysAgoStr = (n) => {
+    const d = new Date();
+    d.setDate(d.getDate() - n);
+    return d.toISOString().slice(0, 10);
+  };
+  const [dashboardStartDate, setDashboardStartDate] = useState(todayStr());
+  const [dashboardEndDate, setDashboardEndDate] = useState(todayStr());
+
+  const [rewardsSummary, setRewardsSummary] = useState(null);
+  const [rewardsSummaryLoading, setRewardsSummaryLoading] = useState(false);
+  const [recurrence, setRecurrence] = useState(null);
+  const [recurrenceLoading, setRecurrenceLoading] = useState(false);
 
   // Home-style additions: a quick activity feed (the old fixed rolling
   // 7-day trend badges were replaced by TrendChart, which has its own
@@ -146,8 +168,8 @@ const OperationsPage = () => {
     try {
       setDashboardLoading(true);
       const params = new URLSearchParams();
-      if (startDate) params.append('start_date', startDate);
-      if (endDate) params.append('end_date', endDate);
+      if (dashboardStartDate) params.append('start_date', dashboardStartDate);
+      if (dashboardEndDate) params.append('end_date', dashboardEndDate);
       if (dashboardCardType) params.append('card_type', dashboardCardType);
       if (dashboardTemplateId) params.append('template_id', dashboardTemplateId);
 
@@ -167,7 +189,32 @@ const OperationsPage = () => {
     } finally {
       setDashboardLoading(false);
     }
-  }, [token, startDate, endDate, dashboardCardType, dashboardTemplateId]);
+  }, [token, dashboardStartDate, dashboardEndDate, dashboardCardType, dashboardTemplateId]);
+
+  const fetchRewardsSummary = useCallback(async () => {
+    setRewardsSummaryLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (dashboardStartDate) params.append('start_date', dashboardStartDate);
+      if (dashboardEndDate) params.append('end_date', dashboardEndDate);
+      const response = await axios.get(`${API}/operations/rewards-summary?${params.toString()}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setRewardsSummary(response.data?.rewards || null);
+    } catch { setRewardsSummary(null); }
+    finally { setRewardsSummaryLoading(false); }
+  }, [token, dashboardStartDate, dashboardEndDate]);
+
+  const fetchRecurrence = useCallback(async () => {
+    setRecurrenceLoading(true);
+    try {
+      const response = await axios.get(`${API}/customer-insights/visit-recurrence`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setRecurrence(response.data?.buckets || null);
+    } catch { setRecurrence(null); }
+    finally { setRecurrenceLoading(false); }
+  }, [token]);
 
   const fetchRecentOps = useCallback(async () => {
     setLoadingRecentOps(true);
@@ -202,9 +249,11 @@ const OperationsPage = () => {
       fetchDashboard();
       fetchRecentOps();
       fetchAgeDistribution();
+      fetchRewardsSummary();
+      fetchRecurrence();
     }
     // 'clientes' fetches its own data internally (CustomerBaseTab) — nothing to do here.
-  }, [activeTab, fetchOperations, fetchDashboard, fetchRecentOps, fetchAgeDistribution]);
+  }, [activeTab, fetchOperations, fetchDashboard, fetchRecentOps, fetchAgeDistribution, fetchRewardsSummary, fetchRecurrence]);
 
   const handleExport = async (format) => {
     try {
@@ -256,7 +305,13 @@ const OperationsPage = () => {
   const hasActiveFilters = startDate || endDate || selectedGerente || selectedOperationType || selectedCardType || selectedTemplateId;
 
   const configPath = (user?.role === 'super_admin' || user?.role === 'workspace_admin') ? '/admin/workspace' : '/settings';
-  const dashboardActiveFilterCount = [startDate, endDate, dashboardCardType, dashboardTemplateId].filter(Boolean).length;
+  // "Hoy" is the natural default, not a custom filter — only count the date
+  // range if it was moved off of that default, so the badge doesn't show
+  // "2 filtros activos" on a fresh page load.
+  const isDefaultDashboardDateRange = dashboardStartDate === todayStr() && dashboardEndDate === todayStr();
+  const dashboardActiveFilterCount = [
+    !isDefaultDashboardDateRange, dashboardCardType, dashboardTemplateId
+  ].filter(Boolean).length;
 
   const handleLogout = () => {
     logout();
@@ -378,6 +433,28 @@ const OperationsPage = () => {
         )}
         {activeTab === 'dashboard' && showDashboardFilters && (
           <div className="card-brutalist mb-6">
+            <div className="flex items-center gap-2 mb-4">
+              {[
+                { label: 'Hoy', start: todayStr(), end: todayStr() },
+                { label: '7 días', start: daysAgoStr(6), end: todayStr() },
+                { label: '30 días', start: daysAgoStr(29), end: todayStr() },
+                { label: '90 días', start: daysAgoStr(89), end: todayStr() },
+              ].map((preset) => {
+                const active = dashboardStartDate === preset.start && dashboardEndDate === preset.end;
+                return (
+                  <button
+                    key={preset.label}
+                    onClick={() => { setDashboardStartDate(preset.start); setDashboardEndDate(preset.end); }}
+                    className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+                      active ? 'bg-[#0B0B16] text-white' : 'bg-zinc-100 text-zinc-600 hover:text-[#0B0B16]'
+                    }`}
+                    data-testid={`dashboard-preset-${preset.label}`}
+                  >
+                    {preset.label}
+                  </button>
+                );
+              })}
+            </div>
             <div className="flex flex-col sm:flex-row sm:items-end gap-4">
               <div className="flex-1">
                 <label className="block text-sm font-medium text-zinc-700 mb-1">
@@ -385,8 +462,8 @@ const OperationsPage = () => {
                 </label>
                 <Input
                   type="date"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
+                  value={dashboardStartDate}
+                  onChange={(e) => setDashboardStartDate(e.target.value)}
                   className="border-2 border-zinc-200"
                   data-testid="dashboard-start-date"
                 />
@@ -397,8 +474,8 @@ const OperationsPage = () => {
                 </label>
                 <Input
                   type="date"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
+                  value={dashboardEndDate}
+                  onChange={(e) => setDashboardEndDate(e.target.value)}
                   className="border-2 border-zinc-200"
                   data-testid="dashboard-end-date"
                 />
@@ -493,10 +570,10 @@ const OperationsPage = () => {
               >
                 {dashboardLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Aplicar'}
               </Button>
-              {(startDate || endDate || dashboardCardType || dashboardTemplateId) && (
+              {(!isDefaultDashboardDateRange || dashboardCardType || dashboardTemplateId) && (
                 <Button
                   variant="outline"
-                  onClick={() => { setStartDate(''); setEndDate(''); setDashboardCardType(''); setDashboardTemplateId(''); }}
+                  onClick={() => { setDashboardStartDate(todayStr()); setDashboardEndDate(todayStr()); setDashboardCardType(''); setDashboardTemplateId(''); }}
                   className="border-2 border-zinc-200"
                 >
                   <X className="h-4 w-4" />
@@ -547,45 +624,73 @@ const OperationsPage = () => {
               </button>
             </div>
 
+            {/* Tendencia arriba de todo, independiente de dashboardData —
+                tiene su propio fetch y su propio selector de 7/30/90 días,
+                no depende del filtro de fecha del resto del Dashboard. */}
+            <TrendChart
+              token={token}
+              cardType={dashboardCardType}
+              templateId={dashboardTemplateId}
+              formatCurrency={formatCurrency}
+            />
+
             {dashboardLoading ? (
               <div className="flex justify-center py-12">
                 <Loader2 className="h-8 w-8 animate-spin text-[#0B0B16]" />
               </div>
             ) : dashboardData ? (
               <>
-                {/* Client-facing loyalty metrics — what the business owner
-                    actually wants to see, above the operational sections below */}
-                <ClientMetricsCards insights={dashboardData.customer_insights} formatCurrency={formatCurrency} />
+                {/* Pilar: Finanzas */}
+                <section>
+                  <h2 className="text-xs font-bold uppercase tracking-widest text-[#5B7CF7] mb-3">Finanzas</h2>
+                  <div className="space-y-4">
+                    <ClientMetricsCards tiles={[
+                      { icon: DollarSign, label: 'Facturación Total', value: formatCurrency(dashboardData.customer_insights?.total_facturacion || 0) },
+                      { icon: Receipt, label: 'Venta Promedio', value: formatCurrency(dashboardData.customer_insights?.avg_purchase || 0) }
+                    ]} />
+                    <RewardsSummary rewards={rewardsSummary} formatCurrency={formatCurrency} loading={rewardsSummaryLoading} />
+                  </div>
+                </section>
 
-                <TrendChart
-                  token={token}
-                  cardType={dashboardCardType}
-                  templateId={dashboardTemplateId}
-                  formatCurrency={formatCurrency}
-                />
+                {/* Pilar: Visitas */}
+                <section>
+                  <h2 className="text-xs font-bold uppercase tracking-widest text-[#5B7CF7] mb-3">Visitas</h2>
+                  <div className="space-y-4">
+                    <ClientMetricsCards tiles={[
+                      { icon: Users, label: 'Total Visitas', value: dashboardData.customer_insights?.total_visitas ?? 0 },
+                      { icon: UserPlus, label: 'Nuevos Miembros', value: dashboardData.customer_insights?.nuevos_miembros ?? 0 },
+                      { icon: Repeat, label: 'Clientes Habituales', value: dashboardData.customer_insights?.clientes_habituales ?? 0 }
+                    ]} />
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <TopCustomersList
+                        title="Top 10 por Visitas"
+                        icon={Users}
+                        data={dashboardData.customer_insights?.top_customers_by_visits}
+                        valueKey="visit_count"
+                      />
+                      {['workspace_admin', 'super_admin'].includes(user?.role) && (
+                        <AgeDistributionChart data={ageDistribution?.buckets} loading={ageDistributionLoading} />
+                      )}
+                    </div>
+                    <RecurrenceChart data={recurrence} loading={recurrenceLoading} />
+                  </div>
+                </section>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Pilar: Desempeño */}
+                <section>
+                  <h2 className="text-xs font-bold uppercase tracking-widest text-[#5B7CF7] mb-3">Desempeño</h2>
                   <TopCustomersList
-                    title="Top 10 por Visitas"
-                    icon={Users}
-                    data={dashboardData.customer_insights?.top_customers_by_visits}
-                    valueKey="visit_count"
+                    title={`Rendimiento por Gerente (${dashboardData.by_gerente?.length || 0} activos)`}
+                    icon={Award}
+                    data={(dashboardData.by_gerente || []).map((g) => ({ ...g, gerente_name: g._id }))}
+                    nameKey="gerente_name"
+                    valueKey="count"
+                    renderSubtitle={(g) => `${formatCurrency(g.total_purchase_sum || 0)} en ventas`}
                   />
-                  <TopCustomersList
-                    title="Top 10 por Facturación"
-                    icon={DollarSign}
-                    data={dashboardData.customer_insights?.top_customers_by_purchase}
-                    valueKey="total_purchase"
-                    valueFormatter={formatCurrency}
-                  />
-                </div>
+                </section>
 
-                {['workspace_admin', 'super_admin'].includes(user?.role) && (
-                  <AgeDistributionChart data={ageDistribution?.buckets} loading={ageDistributionLoading} />
-                )}
-
-                {/* Recent Activity — a Home should answer "what just happened"
-                    without a click into Historial first. */}
+                {/* Actividad Reciente — al final: es la vista operativa del
+                    día a día, no parte del resumen ejecutivo de arriba. */}
                 <div className="card-brutalist">
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-lg font-semibold text-[#0B0B16] flex items-center gap-2">
@@ -624,63 +729,6 @@ const OperationsPage = () => {
                     </div>
                   )}
                 </div>
-
-                {/* Gerente Leaderboard */}
-                <div className="card-brutalist">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold text-[#0B0B16] flex items-center gap-2">
-                      <Award className="h-5 w-5 text-[#8CA4FE]" />
-                      Rendimiento por Gerente ({dashboardData.by_gerente?.length || 0} activos)
-                    </h3>
-                  </div>
-
-                  {dashboardData.by_gerente?.length > 0 ? (
-                    <div className="space-y-3">
-                      {dashboardData.by_gerente.map((gerente, index) => {
-                        const maxCount = dashboardData.by_gerente[0]?.count || 1;
-                        const percentage = (gerente.count / maxCount) * 100;
-                        
-                        return (
-                          <div key={gerente._id || index} className="relative">
-                            <div className="flex items-center justify-between mb-1">
-                              <div className="flex items-center gap-3">
-                                <span className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold ${
-                                  index === 0 ? 'bg-yellow-100 text-yellow-700' :
-                                  index === 1 ? 'bg-zinc-100 text-zinc-600' :
-                                  index === 2 ? 'bg-orange-100 text-orange-700' :
-                                  'bg-zinc-50 text-zinc-500'
-                                }`}>
-                                  {index + 1}
-                                </span>
-                                <div>
-                                  <p className="font-medium text-[#0B0B16]">{gerente._id || 'Sin nombre'}</p>
-                                  <p className="text-xs text-zinc-500">
-                                    {formatCurrency(gerente.total_purchase_sum || 0)} en ventas
-                                  </p>
-                                </div>
-                              </div>
-                              <span className="text-lg font-bold text-[#0B0B16]">
-                                {gerente.count}
-                              </span>
-                            </div>
-                            <div className="h-2 bg-zinc-100 rounded-full overflow-hidden">
-                              <div 
-                                className="h-full bg-gradient-to-r from-[#8CA4FE] to-[#5B7CF7] rounded-full transition-all duration-500"
-                                style={{ width: `${percentage}%` }}
-                              />
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  ) : (
-                    <div className="text-center py-8">
-                      <Users className="h-12 w-12 mx-auto text-zinc-300 mb-3" />
-                      <p className="text-zinc-500">No hay datos de gerentes</p>
-                    </div>
-                  )}
-                </div>
-
               </>
             ) : (
               <div className="text-center py-12">

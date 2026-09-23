@@ -12,7 +12,7 @@ from datetime import datetime, timezone
 import io
 import csv
 import logging
-from utils.auth import require_workspace_admin
+from utils.auth import get_current_user, require_workspace_admin
 from utils.config import db
 
 logger = logging.getLogger(__name__)
@@ -63,6 +63,37 @@ async def age_distribution(current_user: dict = Depends(require_workspace_admin)
         "buckets": [{"label": label, "count": buckets[label]} for label, _, _ in AGE_BUCKETS],
         "customers_with_data": with_data,
         "total_customers": total_customers
+    }
+
+
+VISIT_BUCKETS = [
+    ("1 visita", 1, 2),
+    ("2-3 visitas", 2, 4),
+    ("4+ visitas", 4, 10**9),
+]
+
+
+@router.get("/visit-recurrence")
+async def visit_recurrence(current_user: dict = Depends(get_current_user)):
+    """Bucket customer_stats.total_visits into recurrence groups — a lifetime
+    trait per customer (like age), not a per-period metric, so unlike
+    /operations/summary this has no start_date/end_date. Open to every role
+    (unlike age-distribution): visit counts aren't sensitive the way DOB is,
+    and operators already see per-customer visit counts elsewhere."""
+    ws_id = current_user.get("workspace_id")
+    buckets = {label: 0 for label, _, _ in VISIT_BUCKETS}
+
+    cursor = db.customer_stats.find({"workspace_id": ws_id}, {"total_visits": 1})
+    async for doc in cursor:
+        visits = doc.get("total_visits") or 0
+        for label, lo, hi in VISIT_BUCKETS:
+            if lo <= visits < hi:
+                buckets[label] += 1
+                break
+
+    return {
+        "success": True,
+        "buckets": [{"label": label, "count": buckets[label]} for label, _, _ in VISIT_BUCKETS]
     }
 
 

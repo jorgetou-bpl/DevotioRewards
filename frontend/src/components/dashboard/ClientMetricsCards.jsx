@@ -1,23 +1,23 @@
 import React from 'react';
-import { Users, UserPlus, Repeat, DollarSign, Receipt } from 'lucide-react';
 
-// Client-facing loyalty-program health metrics — the set the client asked for
-// in place of Boomerangme's own confusing dashboard (ROI/retention-cost
-// metrics, unreliable gender/device breakdowns). "Total Visitas" is an alias
-// for the same number already shown as "Total Operaciones" elsewhere on this
-// page, just relabeled for this client-facing section.
-export const ClientMetricsCards = ({ insights, formatCurrency }) => {
-  const tiles = [
-    { icon: Users, label: 'Total Visitas', value: insights?.total_visitas ?? 0 },
-    { icon: UserPlus, label: 'Nuevos Miembros', value: insights?.nuevos_miembros ?? 0 },
-    { icon: Repeat, label: 'Clientes Habituales', value: insights?.clientes_habituales ?? 0 },
-    { icon: DollarSign, label: 'Facturación Total', value: formatCurrency(insights?.total_facturacion || 0) },
-    { icon: Receipt, label: 'Venta Promedio', value: formatCurrency(insights?.avg_purchase || 0) }
-  ];
+// Tailwind's JIT scanner only picks up class names that appear literally in
+// source — a template-literal grid-cols-${n} would silently produce no CSS.
+const GRID_CLASS_BY_COUNT = {
+  2: 'grid-cols-2',
+  3: 'grid-cols-2 sm:grid-cols-3',
+  4: 'grid-cols-2 sm:grid-cols-4',
+  5: 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-5'
+};
+
+// Generic tile-row renderer — the actual metric sets (Finanzas vs. Visitas)
+// are built by the caller (OperationsPage.js) so the same component serves
+// both pillars without hardcoding which metrics belong to which section.
+export const ClientMetricsCards = ({ tiles = [] }) => {
+  const gridClass = GRID_CLASS_BY_COUNT[tiles.length] || 'grid-cols-2 sm:grid-cols-3';
 
   return (
     <div className="card-brutalist" data-testid="client-metrics-cards">
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+      <div className={`grid ${gridClass} gap-3`}>
         {tiles.map(({ icon: Icon, label, value }) => (
           <div key={label} className="p-4 bg-zinc-50 rounded-xl text-center">
             <Icon className="h-5 w-5 mx-auto text-[#5B7CF7] mb-2" />

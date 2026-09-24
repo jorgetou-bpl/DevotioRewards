@@ -18,7 +18,6 @@ import {
   X,
   RefreshCw,
   Users,
-  Award,
   BarChart3,
   ClipboardList,
   ScanLine,
@@ -33,16 +32,22 @@ import {
   DollarSign,
   Receipt,
   UserPlus,
-  Repeat
+  Repeat,
+  Activity,
+  Wallet
 } from 'lucide-react';
 
 import { AppMenu } from '../components/AppMenu';
 import { ClientMetricsCards } from '../components/dashboard/ClientMetricsCards';
 import { TrendChart } from '../components/dashboard/TrendChart';
+import { SimpleTrendLineChart } from '../components/dashboard/SimpleTrendLineChart';
 import { TopCustomersList } from '../components/dashboard/TopCustomersList';
 import { AgeDistributionChart } from '../components/dashboard/AgeDistributionChart';
 import { RecurrenceChart } from '../components/dashboard/RecurrenceChart';
+import { NewCustomersByMonthChart } from '../components/dashboard/NewCustomersByMonthChart';
 import { RewardsSummary } from '../components/dashboard/RewardsSummary';
+import { EnrollmentRateChart } from '../components/dashboard/EnrollmentRateChart';
+import { EngagementRetentionChart } from '../components/dashboard/EngagementRetentionChart';
 import { CustomerBaseTab } from '../components/dashboard/CustomerBaseTab';
 import { formatDate, formatAmount } from '../utils/format';
 import { API_BASE_URL as API } from '../config/api';
@@ -82,7 +87,7 @@ const OperationsPage = () => {
   const [dashboardCardTypeDropdownOpen, setDashboardCardTypeDropdownOpen] = useState(false);
   const [dashboardTemplateId, setDashboardTemplateId] = useState('');
   const [dashboardTemplateDropdownOpen, setDashboardTemplateDropdownOpen] = useState(false);
-  const [showDashboardFilters, setShowDashboardFilters] = useState(false);
+  const [showDashboardFilters, setShowDashboardFilters] = useState(true);
 
   // Dashboard's own date range — deliberately separate from Historial's
   // startDate/endDate below. Sharing that state would make "Hoy" leak in as
@@ -100,6 +105,14 @@ const OperationsPage = () => {
   const [rewardsSummaryLoading, setRewardsSummaryLoading] = useState(false);
   const [recurrence, setRecurrence] = useState(null);
   const [recurrenceLoading, setRecurrenceLoading] = useState(false);
+
+  // Captured from TrendChart's own fetch (via onDataChange) so
+  // ActiveCustomersTrendChart/AvgSpendTrendChart can reuse the same series
+  // instead of each firing an identical request for the same date range.
+  // No separate loading flag: !trendData covers first load; a brief stale
+  // frame during period switches is an acceptable tradeoff for not
+  // duplicating TrendChart's own loading state here.
+  const [trendData, setTrendData] = useState(null);
 
   // Home-style additions: a quick activity feed (the old fixed rolling
   // 7-day trend badges were replaced by TrendChart, which has its own
@@ -453,8 +466,9 @@ const OperationsPage = () => {
 
             {/* Filtros del Dashboard — justo debajo de los accesos rápidos,
                 para que sea fácil ver qué filtro está aplicado contra la data
-                de abajo, en vez de vivir escondido arriba de todo. Colapsado
-                por defecto; el badge muestra cuántos filtros están activos. */}
+                de abajo, en vez de vivir escondido arriba de todo. Visibles
+                por defecto: es el único control de fecha de toda la página,
+                incluida la Tendencia (que ya no tiene su propio selector). */}
             <div>
               <button
                 onClick={() => setShowDashboardFilters(!showDashboardFilters)}
@@ -624,13 +638,16 @@ const OperationsPage = () => {
             )}
 
             {/* Tendencia arriba de todo, independiente de dashboardData —
-                tiene su propio fetch y su propio selector de 7/30/90 días,
-                no depende del filtro de fecha del resto del Dashboard. */}
+                tiene su propio fetch pero usa el mismo rango de fechas del
+                filtro de página (sin selector propio). */}
             <TrendChart
               token={token}
+              startDate={dashboardStartDate}
+              endDate={dashboardEndDate}
               cardType={dashboardCardType}
               templateId={dashboardTemplateId}
               formatCurrency={formatCurrency}
+              onDataChange={setTrendData}
             />
 
             {dashboardLoading ? (
@@ -661,6 +678,24 @@ const OperationsPage = () => {
                       { icon: Repeat, label: 'Clientes Habituales', value: dashboardData.customer_insights?.clientes_habituales ?? 0 }
                     ]} />
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <SimpleTrendLineChart
+                        title="Clientes Activos"
+                        icon={Activity}
+                        data={trendData}
+                        loading={!trendData}
+                        dataKey="active_customers"
+                      />
+                      <SimpleTrendLineChart
+                        title="Gasto Promedio"
+                        icon={Wallet}
+                        data={trendData}
+                        loading={!trendData}
+                        dataKey="avg_spend"
+                        valueFormatter={formatCurrency}
+                        color="#0B0B16"
+                      />
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <TopCustomersList
                         title="Top 10 por Visitas"
                         icon={Users}
@@ -670,22 +705,19 @@ const OperationsPage = () => {
                       {['workspace_admin', 'super_admin'].includes(user?.role) && (
                         <AgeDistributionChart data={ageDistribution?.buckets} loading={ageDistributionLoading} />
                       )}
+                      <NewCustomersByMonthChart token={token} />
+                      <RecurrenceChart data={recurrence} loading={recurrenceLoading} />
                     </div>
-                    <RecurrenceChart data={recurrence} loading={recurrenceLoading} />
                   </div>
                 </section>
 
                 {/* Pilar: Desempeño */}
                 <section>
                   <h2 className="text-xs font-bold uppercase tracking-widest text-[#5B7CF7] mb-3">Desempeño</h2>
-                  <TopCustomersList
-                    title={`Rendimiento por Gerente (${dashboardData.by_gerente?.length || 0} activos)`}
-                    icon={Award}
-                    data={(dashboardData.by_gerente || []).map((g) => ({ ...g, gerente_name: g._id }))}
-                    nameKey="gerente_name"
-                    valueKey="count"
-                    renderSubtitle={(g) => `${formatCurrency(g.total_purchase_sum || 0)} en ventas`}
-                  />
+                  <div className="space-y-4">
+                    <EnrollmentRateChart token={token} startDate={dashboardStartDate} endDate={dashboardEndDate} />
+                    <EngagementRetentionChart token={token} />
+                  </div>
                 </section>
 
                 {/* Actividad Reciente — al final: es la vista operativa del

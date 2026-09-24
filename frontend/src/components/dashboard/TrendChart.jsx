@@ -4,8 +4,6 @@ import { Loader2, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { API_BASE_URL as API } from '../../config/api';
 
-const PERIODS = [7, 30, 90];
-
 const calcDelta = (current, previous) => {
   if (!previous) return current > 0 ? { pct: null, direction: 'up' } : { pct: 0, direction: 'flat' };
   const pct = ((current - previous) / previous) * 100;
@@ -26,29 +24,30 @@ const DeltaBadge = ({ label, delta }) => {
   );
 };
 
+const todayStr = () => new Date().toISOString().slice(0, 10);
+
 // First multi-series chart in the app (AgeDistributionChart is single-series)
 // — reuses the same visual language: card-brutalist wrapper, #8CA4FE/#5B7CF7
 // palette, CartesianGrid horizontal-only, same loading/empty conventions.
+//
+// No period selector of its own — driven entirely by startDate/endDate
+// (the single page-level Dashboard filter in OperationsPage.js). Hourly
+// view kicks in automatically when that range collapses to exactly today.
 //
 // "Operaciones" is deliberately labeled "Visitas" everywhere in this
 // component — ClientMetricsCards already treats operations_count and visit
 // count as the same number ("Total Visitas" is an alias for it), so this
 // chart follows that same convention instead of introducing a second name
 // for the same metric.
-export const TrendChart = ({ token, cardType, templateId, formatCurrency }) => {
-  // 'today' switches the backend to hourly (Costa Rica local time) instead
-  // of the day-bucketed series the numeric periods use. Default stays at 7
-  // days, not "Hoy" — an hour-by-hour view is more of an operational/staffing
-  // tool ("when are we busiest today") than a retention signal, which is
-  // what a business owner opens this dashboard for first.
-  const [period, setPeriod] = useState(7);
+export const TrendChart = ({ token, startDate, endDate, cardType, templateId, formatCurrency, onDataChange }) => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const isToday = startDate === todayStr() && endDate === todayStr();
 
   const fetchTrend = useCallback(async () => {
     setLoading(true);
     try {
-      const params = period === 'today' ? { granularity: 'hour' } : { days: period };
+      const params = isToday ? { granularity: 'hour' } : { start_date: startDate, end_date: endDate };
       if (cardType) params.card_type = cardType;
       if (templateId) params.template_id = templateId;
       const response = await axios.get(`${API}/operations/trend`, {
@@ -56,12 +55,15 @@ export const TrendChart = ({ token, cardType, templateId, formatCurrency }) => {
         headers: { Authorization: `Bearer ${token}` }
       });
       setData(response.data);
+      onDataChange?.(response.data);
     } catch {
       setData(null);
+      onDataChange?.(null);
     } finally {
       setLoading(false);
     }
-  }, [token, period, cardType, templateId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token, startDate, endDate, isToday, cardType, templateId, onDataChange]);
 
   useEffect(() => { fetchTrend(); }, [fetchTrend]);
 
@@ -72,32 +74,7 @@ export const TrendChart = ({ token, cardType, templateId, formatCurrency }) => {
 
   return (
     <div className="card-brutalist" data-testid="trend-chart">
-      <div className="flex items-center justify-between flex-wrap gap-3 mb-4">
-        <h3 className="text-lg font-semibold text-[#0B0B16]">Tendencia en el Tiempo</h3>
-        <div className="flex items-center gap-1 bg-zinc-100 p-1 rounded-lg">
-          <button
-            onClick={() => setPeriod('today')}
-            className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
-              period === 'today' ? 'bg-white text-[#0B0B16] shadow-sm' : 'text-zinc-500 hover:text-[#0B0B16]'
-            }`}
-            data-testid="trend-period-today"
-          >
-            Hoy
-          </button>
-          {PERIODS.map((p) => (
-            <button
-              key={p}
-              onClick={() => setPeriod(p)}
-              className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
-                period === p ? 'bg-white text-[#0B0B16] shadow-sm' : 'text-zinc-500 hover:text-[#0B0B16]'
-              }`}
-              data-testid={`trend-period-${p}`}
-            >
-              {p}d
-            </button>
-          ))}
-        </div>
-      </div>
+      <h3 className="text-lg font-semibold text-[#0B0B16] mb-4">Tendencia en el Tiempo</h3>
 
       {loading ? (
         <div className="flex justify-center py-12">

@@ -97,6 +97,49 @@ async def visit_recurrence(current_user: dict = Depends(get_current_user)):
     }
 
 
+MONTH_NAMES_ES = [
+    "Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"
+]
+
+
+@router.get("/new-customers-by-month")
+async def new_customers_by_month(months: int = 6, current_user: dict = Depends(get_current_user)):
+    """Cuenta de customer_stats.first_seen_at por mes, últimos N meses —
+    mismo patrón que age-distribution/visit-recurrence (bucketing en Python,
+    dataset chico). Va junto a Distribución por Edad en el pilar Visitas."""
+    ws_id = current_user.get("workspace_id")
+    months = max(3, min(months, 24))
+
+    today = datetime.now(timezone.utc).date()
+    month_keys = []
+    y, m = today.year, today.month
+    for _ in range(months):
+        month_keys.append(f"{y:04d}-{m:02d}")
+        m -= 1
+        if m == 0:
+            m = 12
+            y -= 1
+    month_keys.reverse()
+
+    counts = {k: 0 for k in month_keys}
+    earliest = month_keys[0]
+    cursor = db.customer_stats.find(
+        {"workspace_id": ws_id, "first_seen_at": {"$gte": earliest}},
+        {"first_seen_at": 1}
+    )
+    async for doc in cursor:
+        month_key = (doc.get("first_seen_at") or "")[:7]
+        if month_key in counts:
+            counts[month_key] += 1
+
+    buckets = []
+    for k in month_keys:
+        year, month = k.split("-")
+        buckets.append({"label": f"{MONTH_NAMES_ES[int(month) - 1]} {year}", "count": counts[k]})
+
+    return {"success": True, "buckets": buckets}
+
+
 ALLOWED_SORTS = {"last_seen_at", "total_visits", "first_seen_at", "customer_name", "total_purchase_sum"}
 
 

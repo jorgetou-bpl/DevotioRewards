@@ -449,8 +449,8 @@ async def _get_hourly_trend(ws_id: Optional[str], card_type: Optional[str], temp
                 "$lt": range_end_cr.astimezone(timezone.utc).isoformat()
             }
         }
-        buckets = {h: {"operations_count": 0, "sales_total": 0} for h in range(24)}
-        cursor = db.operations.find(query_filter, {"created_at": 1, "purchase_sum": 1})
+        buckets = {h: {"operations_count": 0, "sales_total": 0, "customers": set(), "purchase_sum_total": 0, "purchase_count": 0} for h in range(24)}
+        cursor = db.operations.find(query_filter, {"created_at": 1, "purchase_sum": 1, "customer_phone": 1})
         async for doc in cursor:
             try:
                 local_dt = datetime.fromisoformat(doc["created_at"]).astimezone(APP_TIMEZONE)
@@ -460,14 +460,26 @@ async def _get_hourly_trend(ws_id: Optional[str], card_type: Optional[str], temp
                 continue  # guards against any stray cross-boundary doc
             bucket = buckets[local_dt.hour]
             bucket["operations_count"] += 1
-            bucket["sales_total"] += doc.get("purchase_sum") or 0
+            purchase_sum = doc.get("purchase_sum") or 0
+            bucket["sales_total"] += purchase_sum
+            if doc.get("customer_phone"):
+                bucket["customers"].add(doc["customer_phone"])
+            if purchase_sum > 0:
+                bucket["purchase_sum_total"] += purchase_sum
+                bucket["purchase_count"] += 1
         return buckets
 
     today_buckets = await _bucket_by_hour(today_start_cr)
     yesterday_buckets = await _bucket_by_hour(yesterday_start_cr)
 
     series = [
-        {"date": f"{h:02d}:00", "operations_count": today_buckets[h]["operations_count"], "sales_total": today_buckets[h]["sales_total"]}
+        {
+            "date": f"{h:02d}:00",
+            "operations_count": today_buckets[h]["operations_count"],
+            "sales_total": today_buckets[h]["sales_total"],
+            "active_customers": len(today_buckets[h]["customers"]),
+            "avg_spend": (today_buckets[h]["purchase_sum_total"] / today_buckets[h]["purchase_count"]) if today_buckets[h]["purchase_count"] else 0
+        }
         for h in range(24)
     ]
     current_totals = {
@@ -491,28 +503,41 @@ async def _get_hourly_trend(ws_id: Optional[str], card_type: Optional[str], temp
 @router.get("/trend")
 async def get_operations_trend(
     days: int = 30,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
     granularity: str = "day",
     card_type: Optional[str] = None,
     template_id: Optional[str] = None,
     current_user: dict = Depends(get_current_user)
 ):
-    """Daily operations count + sales for the last N days, plus the prior
-    N-day period's totals for a delta comparison — powers the dashboard's
-    trend chart. Always bounded by `days` (unlike /summary, which is
-    all-time by default) since an unbounded daily series isn't useful to
-    chart and would mean scanning the full collection.
+    """Operations count + sales bucketed by day, plus the prior period's
+    totals for a delta comparison — powers the dashboard's trend chart (and,
+    via the same payload, Active Customers / Avg Spend, which reuse this
+    series rather than fetching separately).
+
+    start_date/end_date (same convention as /summary) take precedence when
+    given — this is what the single page-level date filter now drives,
+    instead of this chart having its own separate period selector. `days`
+    (last N days ending today) is kept as a fallback for any caller that
+    doesn't pass explicit dates.
 
     granularity="hour" switches to today-only, bucketed by hour in Costa
-    Rica local time (see _get_hourly_trend) — `days` is ignored in that mode."""
+    Rica local time (see _get_hourly_trend) — everything else is ignored in
+    that mode. The frontend triggers it when start_date == end_date == today."""
     ws_id = current_user.get("workspace_id")
 
     if granularity == "hour":
         return await _get_hourly_trend(ws_id, card_type, template_id)
 
-    days = max(7, min(days, 90))
-
     today = datetime.now(timezone.utc).date()
-    current_start = today - timedelta(days=days - 1)
+    if start_date and end_date:
+        current_start = datetime.fromisoformat(start_date).date()
+        current_end = datetime.fromisoformat(end_date).date()
+        days = (current_end - current_start).days + 1
+    else:
+        days = max(7, min(days, 90))
+        current_start = today - timedelta(days=days - 1)
+        current_end = today
     previous_start = current_start - timedelta(days=days)
     previous_end = current_start - timedelta(days=1)
 
@@ -524,7 +549,7 @@ async def get_operations_trend(
     if template_id:
         base_filter["template_id"] = template_id
 
-    current_filter = {**base_filter, "created_at": {"$gte": current_start.isoformat(), "$lte": today.isoformat() + "T23:59:59"}}
+    current_filter = {**base_filter, "created_at": {"$gte": current_start.isoformat(), "$lte": current_end.isoformat() + "T23:59:59"}}
     previous_filter = {**base_filter, "created_at": {"$gte": previous_start.isoformat(), "$lte": previous_end.isoformat() + "T23:59:59"}}
 
     # Bucket by day using the first 10 chars of the ISO-string created_at
@@ -536,7 +561,13 @@ async def get_operations_trend(
         {"$group": {
             "_id": {"$substrCP": ["$created_at", 0, 10]},
             "operations_count": {"$sum": 1},
-            "sales_total": {"$sum": {"$ifNull": ["$purchase_sum", 0]}}
+            "sales_total": {"$sum": {"$ifNull": ["$purchase_sum", 0]}},
+            "customers": {"$addToSet": "$customer_phone"},
+            # Same "average of purchases that had revenue" definition as
+            # /summary's avg_purchase — not sales_total/operations_count,
+            # which would be diluted by non-purchase ops (e.g. redemptions).
+            "purchase_sum_total": {"$sum": {"$cond": [{"$gt": ["$purchase_sum", 0]}, "$purchase_sum", 0]}},
+            "purchase_count": {"$sum": {"$cond": [{"$gt": ["$purchase_sum", 0]}, 1, 0]}}
         }},
         {"$sort": {"_id": 1}}
     ]
@@ -548,10 +579,14 @@ async def get_operations_trend(
     for i in range(days):
         d = (current_start + timedelta(days=i)).isoformat()
         row = by_date.get(d, {})
+        purchase_count = row.get("purchase_count", 0)
+        active_customers = len({c for c in row.get("customers", []) if c})
         series.append({
             "date": d,
             "operations_count": row.get("operations_count", 0),
-            "sales_total": row.get("sales_total", 0)
+            "sales_total": row.get("sales_total", 0),
+            "active_customers": active_customers,
+            "avg_spend": (row.get("purchase_sum_total", 0) / purchase_count) if purchase_count else 0
         })
 
     pipeline_previous = [
@@ -581,6 +616,132 @@ async def get_operations_trend(
             "sales_total": previous_totals.get("sales_total", 0)
         }
     }
+
+
+@router.get("/enrollment-trend")
+async def get_enrollment_trend(
+    days: int = 30,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """Tasa de Inscripción per día: qué % de las visitas de ese día fueron de
+    un cliente nuevo (customer_stats.first_seen_at cayendo ese día) frente al
+    total de visitas del día. Same start_date/end_date-takes-precedence
+    convention as /trend, driven by the same page-level filter — no separate
+    period selector on this chart either. Endpoint stays separate from
+    /trend itself since it crosses a different collection (customer_stats)
+    and lives in a different dashboard pillar (Desempeño, not Visitas)."""
+    ws_id = current_user.get("workspace_id")
+    today = datetime.now(timezone.utc).date()
+    if start_date and end_date:
+        start = datetime.fromisoformat(start_date).date()
+        end = datetime.fromisoformat(end_date).date()
+        days = (end - start).days + 1
+    else:
+        days = max(7, min(days, 90))
+        start = today - timedelta(days=days - 1)
+        end = today
+
+    ops_filter = {"created_at": {"$gte": start.isoformat(), "$lte": end.isoformat() + "T23:59:59"}}
+    if ws_id:
+        ops_filter["workspace_id"] = ws_id
+    visits_pipeline = [
+        {"$match": ops_filter},
+        {"$group": {"_id": {"$substrCP": ["$created_at", 0, 10]}, "total_visits": {"$sum": 1}}}
+    ]
+    visits_by_day = {r["_id"]: r["total_visits"] for r in await db.operations.aggregate(visits_pipeline).to_list(length=100)}
+
+    new_filter = {"first_seen_at": {"$gte": start.isoformat(), "$lte": end.isoformat() + "T23:59:59"}}
+    if ws_id:
+        new_filter["workspace_id"] = ws_id
+    new_pipeline = [
+        {"$match": new_filter},
+        {"$group": {"_id": {"$substrCP": ["$first_seen_at", 0, 10]}, "new_customers": {"$sum": 1}}}
+    ]
+    new_by_day = {r["_id"]: r["new_customers"] for r in await db.customer_stats.aggregate(new_pipeline).to_list(length=100)}
+
+    series = []
+    for i in range(days):
+        d = (start + timedelta(days=i)).isoformat()
+        total_visits = visits_by_day.get(d, 0)
+        new_customers = new_by_day.get(d, 0)
+        series.append({
+            "date": d,
+            "new_customers": new_customers,
+            "total_visits": total_visits,
+            "enrollment_rate": (new_customers / total_visits) if total_visits else 0
+        })
+
+    return {"success": True, "days": days, "series": series}
+
+
+@router.get("/weekly-performance-trend")
+async def get_weekly_performance_trend(
+    weeks: int = 8,
+    current_user: dict = Depends(get_current_user)
+):
+    """Engagement y Retención — a diferencia de /trend y /enrollment-trend,
+    esto se calcula en semanas fijas, no días: con ventanas de un día,
+    'clientes con 2+ visitas' o 'retención' casi no tiene señal (la mayoría
+    de negocios no ven al mismo cliente dos veces en 24h). Cada semana corre
+    lunes-domingo.
+
+    - Tasa de Interacción (engagement_rate) = % de clientes activos esa
+      semana que tuvieron 2+ visitas esa misma semana.
+    - Tasa de Retención (retention_rate) = % de los clientes activos la
+      semana anterior que también estuvieron activos esta semana — retención
+      período a período, no cohortes (decisión confirmada con el cliente)."""
+    ws_id = current_user.get("workspace_id")
+    weeks = max(4, min(weeks, 26))
+
+    today = datetime.now(timezone.utc).date()
+    this_monday = today - timedelta(days=today.weekday())
+    # +1 extra week so the oldest requested week has a "previous week" to
+    # compare against for its own retention_rate.
+    earliest_monday = this_monday - timedelta(weeks=weeks)
+
+    base_filter = {"workspace_id": ws_id} if ws_id else {}
+    query_filter = {
+        **base_filter,
+        "created_at": {"$gte": earliest_monday.isoformat(), "$lte": today.isoformat() + "T23:59:59"}
+    }
+
+    # customers_by_week[monday_iso] = {customer_phone: visit_count_that_week}
+    customers_by_week = {}
+    cursor = db.operations.find(query_filter, {"created_at": 1, "customer_phone": 1})
+    async for doc in cursor:
+        phone = doc.get("customer_phone")
+        if not phone:
+            continue
+        try:
+            doc_date = datetime.fromisoformat(doc["created_at"]).date()
+        except (ValueError, TypeError):
+            continue
+        monday = (doc_date - timedelta(days=doc_date.weekday())).isoformat()
+        week_map = customers_by_week.setdefault(monday, {})
+        week_map[phone] = week_map.get(phone, 0) + 1
+
+    series = []
+    for i in range(weeks):
+        week_start = earliest_monday + timedelta(weeks=i + 1)  # skip the extra lookback week
+        prev_week_start = week_start - timedelta(weeks=1)
+        week_customers = customers_by_week.get(week_start.isoformat(), {})
+        prev_customers = customers_by_week.get(prev_week_start.isoformat(), {})
+
+        active_count = len(week_customers)
+        engaged_count = sum(1 for v in week_customers.values() if v >= 2)
+        retained_count = len(set(week_customers.keys()) & set(prev_customers.keys()))
+
+        series.append({
+            "week_start": week_start.isoformat(),
+            "active_customers": active_count,
+            "engagement_rate": (engaged_count / active_count) if active_count else 0,
+            "retention_rate": (retained_count / len(prev_customers)) if prev_customers else 0
+        })
+
+    return {"success": True, "weeks": weeks, "series": series}
+
 
 @router.delete("/reset")
 async def reset_operations(

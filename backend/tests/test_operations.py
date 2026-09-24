@@ -181,6 +181,68 @@ class TestOperationsAPI:
         assert data.get("granularity") == "day"
         assert len(data.get("series", [])) == 7
 
+    def test_trend_explicit_date_range_takes_precedence(self):
+        """start_date/end_date (the single page-level filter) drives this
+        chart now, not its own period selector — days is only a fallback."""
+        from datetime import date, timedelta
+        today = date.today()
+        week_ago = today - timedelta(days=6)
+        response = self.session.get(
+            f"{BASE_URL}/api/operations/trend",
+            params={"start_date": week_ago.isoformat(), "end_date": today.isoformat()}
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert data.get("granularity") == "day"
+        assert data.get("days") == 7
+        series = data.get("series", [])
+        assert series[0]["date"] == week_ago.isoformat()
+        assert series[-1]["date"] == today.isoformat()
+
+    def test_trend_series_has_active_customers_and_avg_spend(self):
+        """Each /trend series bucket (day or hour) now also carries
+        active_customers (distinct count) and avg_spend — powers the
+        Active-Customers/Avg-Spend trend charts, which reuse this same
+        payload instead of a separate fetch."""
+        response = self.session.get(f"{BASE_URL}/api/operations/trend?days=7")
+        assert response.status_code == 200
+        series = response.json().get("series", [])
+        assert len(series) == 7
+        for bucket in series:
+            assert "active_customers" in bucket
+            assert "avg_spend" in bucket
+
+    def test_enrollment_trend(self):
+        response = self.session.get(f"{BASE_URL}/api/operations/enrollment-trend?days=7")
+        assert response.status_code == 200
+        data = response.json()
+        assert data.get("success") is True
+        series = data.get("series", [])
+        assert len(series) == 7
+        for bucket in series:
+            assert {"date", "new_customers", "total_visits", "enrollment_rate"} <= bucket.keys()
+            assert bucket["new_customers"] <= bucket["total_visits"] or bucket["total_visits"] == 0
+
+    def test_weekly_performance_trend(self):
+        response = self.session.get(f"{BASE_URL}/api/operations/weekly-performance-trend?weeks=8")
+        assert response.status_code == 200
+        data = response.json()
+        assert data.get("success") is True
+        series = data.get("series", [])
+        assert len(series) == 8
+        for bucket in series:
+            assert 0 <= bucket["engagement_rate"] <= 1
+            assert 0 <= bucket["retention_rate"] <= 1
+
+    def test_new_customers_by_month(self):
+        response = self.session.get(f"{BASE_URL}/api/customer-insights/new-customers-by-month?months=6")
+        assert response.status_code == 200
+        data = response.json()
+        assert data.get("success") is True
+        buckets = data.get("buckets", [])
+        assert len(buckets) == 6
+        assert all("label" in b and "count" in b for b in buckets)
+
     def test_operations_summary(self):
         """Test operations summary endpoint"""
         response = self.session.get(f"{BASE_URL}/api/operations/summary")

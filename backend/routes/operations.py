@@ -4,6 +4,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from fastapi.responses import StreamingResponse
 from typing import Optional
 from datetime import datetime, timezone, timedelta
+from zoneinfo import ZoneInfo
 import io
 import csv
 import logging
@@ -13,6 +14,12 @@ from utils.boomerang import OPERATION_TYPES
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/operations", tags=["operations"])
+
+# Same assumption as utils/geo_scheduler.py: Devotio's whole current book of
+# business is Costa Rica. Needed here specifically for hourly "Hoy" bucketing
+# — created_at is stored as UTC, and CR is UTC-6, so a raw UTC-hour slice
+# would show a customer's 8am visit as "14:00".
+APP_TIMEZONE = ZoneInfo("America/Costa_Rica")
 
 def _resolve_workspace_id(current_user: dict, workspace_id: Optional[str] = None) -> Optional[str]:
     """Only super_admin may target a workspace other than their own."""
@@ -414,9 +421,77 @@ async def get_rewards_summary(
     }
 
 
+async def _get_hourly_trend(ws_id: Optional[str], card_type: Optional[str], template_id: Optional[str]):
+    """Today, bucketed by hour in Costa Rica local time — not the UTC hour
+    created_at is stored in, which would shift every bucket by 6 hours.
+    Compares against the same hour range yesterday. Reads matching docs and
+    buckets in Python (small dataset — bounded to ~1-2 days of one
+    workspace's operations) rather than a Mongo $dateTrunc pipeline, since
+    Mongo has no built-in "convert to this IANA zone" aggregation stage."""
+    now_cr = datetime.now(APP_TIMEZONE)
+    today_start_cr = now_cr.replace(hour=0, minute=0, second=0, microsecond=0)
+    yesterday_start_cr = today_start_cr - timedelta(days=1)
+
+    base_filter = {}
+    if ws_id:
+        base_filter["workspace_id"] = ws_id
+    if card_type:
+        base_filter["card_type"] = card_type
+    if template_id:
+        base_filter["template_id"] = template_id
+
+    async def _bucket_by_hour(range_start_cr):
+        range_end_cr = range_start_cr + timedelta(days=1)
+        query_filter = {
+            **base_filter,
+            "created_at": {
+                "$gte": range_start_cr.astimezone(timezone.utc).isoformat(),
+                "$lt": range_end_cr.astimezone(timezone.utc).isoformat()
+            }
+        }
+        buckets = {h: {"operations_count": 0, "sales_total": 0} for h in range(24)}
+        cursor = db.operations.find(query_filter, {"created_at": 1, "purchase_sum": 1})
+        async for doc in cursor:
+            try:
+                local_dt = datetime.fromisoformat(doc["created_at"]).astimezone(APP_TIMEZONE)
+            except (ValueError, TypeError, KeyError):
+                continue
+            if local_dt.date() != range_start_cr.date():
+                continue  # guards against any stray cross-boundary doc
+            bucket = buckets[local_dt.hour]
+            bucket["operations_count"] += 1
+            bucket["sales_total"] += doc.get("purchase_sum") or 0
+        return buckets
+
+    today_buckets = await _bucket_by_hour(today_start_cr)
+    yesterday_buckets = await _bucket_by_hour(yesterday_start_cr)
+
+    series = [
+        {"date": f"{h:02d}:00", "operations_count": today_buckets[h]["operations_count"], "sales_total": today_buckets[h]["sales_total"]}
+        for h in range(24)
+    ]
+    current_totals = {
+        "operations_count": sum(b["operations_count"] for b in today_buckets.values()),
+        "sales_total": sum(b["sales_total"] for b in today_buckets.values())
+    }
+    previous_totals = {
+        "operations_count": sum(b["operations_count"] for b in yesterday_buckets.values()),
+        "sales_total": sum(b["sales_total"] for b in yesterday_buckets.values())
+    }
+
+    return {
+        "success": True,
+        "granularity": "hour",
+        "series": series,
+        "current_period": current_totals,
+        "previous_period": previous_totals
+    }
+
+
 @router.get("/trend")
 async def get_operations_trend(
     days: int = 30,
+    granularity: str = "day",
     card_type: Optional[str] = None,
     template_id: Optional[str] = None,
     current_user: dict = Depends(get_current_user)
@@ -425,8 +500,15 @@ async def get_operations_trend(
     N-day period's totals for a delta comparison — powers the dashboard's
     trend chart. Always bounded by `days` (unlike /summary, which is
     all-time by default) since an unbounded daily series isn't useful to
-    chart and would mean scanning the full collection."""
+    chart and would mean scanning the full collection.
+
+    granularity="hour" switches to today-only, bucketed by hour in Costa
+    Rica local time (see _get_hourly_trend) — `days` is ignored in that mode."""
     ws_id = current_user.get("workspace_id")
+
+    if granularity == "hour":
+        return await _get_hourly_trend(ws_id, card_type, template_id)
+
     days = max(7, min(days, 90))
 
     today = datetime.now(timezone.utc).date()
@@ -490,6 +572,7 @@ async def get_operations_trend(
 
     return {
         "success": True,
+        "granularity": "day",
         "days": days,
         "series": series,
         "current_period": current_totals,

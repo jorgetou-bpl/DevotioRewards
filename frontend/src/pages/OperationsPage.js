@@ -410,179 +410,6 @@ const OperationsPage = () => {
           )}
         </div>
 
-        {/* Date Filter for Dashboard — collapsed by default so Home opens
-            straight into the numbers, not a form; the toggle shows how many
-            filters are active so it's clear something's applied even collapsed. */}
-        {activeTab === 'dashboard' && (
-          <div className="mb-6">
-            <button
-              onClick={() => setShowDashboardFilters(!showDashboardFilters)}
-              className="flex items-center gap-2 text-sm font-medium text-zinc-600 hover:text-[#0B0B16] transition-colors"
-              data-testid="toggle-dashboard-filters"
-            >
-              <Filter className="h-4 w-4" />
-              Filtros
-              {dashboardActiveFilterCount > 0 && (
-                <span className="inline-flex items-center justify-center h-5 min-w-5 px-1 rounded-full bg-[#5B7CF7] text-white text-xs font-semibold">
-                  {dashboardActiveFilterCount}
-                </span>
-              )}
-              <ChevronDown className={`h-4 w-4 transition-transform ${showDashboardFilters ? 'rotate-180' : ''}`} />
-            </button>
-          </div>
-        )}
-        {activeTab === 'dashboard' && showDashboardFilters && (
-          <div className="card-brutalist mb-6">
-            <div className="flex items-center gap-2 mb-4">
-              {[
-                { label: 'Hoy', start: todayStr(), end: todayStr() },
-                { label: '7 días', start: daysAgoStr(6), end: todayStr() },
-                { label: '30 días', start: daysAgoStr(29), end: todayStr() },
-                { label: '90 días', start: daysAgoStr(89), end: todayStr() },
-              ].map((preset) => {
-                const active = dashboardStartDate === preset.start && dashboardEndDate === preset.end;
-                return (
-                  <button
-                    key={preset.label}
-                    onClick={() => { setDashboardStartDate(preset.start); setDashboardEndDate(preset.end); }}
-                    className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
-                      active ? 'bg-[#0B0B16] text-white' : 'bg-zinc-100 text-zinc-600 hover:text-[#0B0B16]'
-                    }`}
-                    data-testid={`dashboard-preset-${preset.label}`}
-                  >
-                    {preset.label}
-                  </button>
-                );
-              })}
-            </div>
-            <div className="flex flex-col sm:flex-row sm:items-end gap-4">
-              <div className="flex-1">
-                <label className="block text-sm font-medium text-zinc-700 mb-1">
-                  Fecha inicio
-                </label>
-                <Input
-                  type="date"
-                  value={dashboardStartDate}
-                  onChange={(e) => setDashboardStartDate(e.target.value)}
-                  className="border-2 border-zinc-200"
-                  data-testid="dashboard-start-date"
-                />
-              </div>
-              <div className="flex-1">
-                <label className="block text-sm font-medium text-zinc-700 mb-1">
-                  Fecha fin
-                </label>
-                <Input
-                  type="date"
-                  value={dashboardEndDate}
-                  onChange={(e) => setDashboardEndDate(e.target.value)}
-                  className="border-2 border-zinc-200"
-                  data-testid="dashboard-end-date"
-                />
-              </div>
-              <div className="flex-1 relative">
-                <label className="block text-sm font-medium text-zinc-700 mb-1">
-                  Tipo de tarjeta
-                </label>
-                <button
-                  onClick={() => setDashboardCardTypeDropdownOpen(!dashboardCardTypeDropdownOpen)}
-                  className="w-full flex items-center justify-between p-2 border-2 border-zinc-200 rounded-md hover:border-[#0B0B16] transition-colors bg-white h-10"
-                  data-testid="dashboard-card-type-dropdown"
-                >
-                  <span className={dashboardCardType ? 'text-[#0B0B16]' : 'text-zinc-400'}>
-                    {dashboardCardType || 'Todos'}
-                  </span>
-                  <ChevronDown className={`h-4 w-4 text-zinc-400 transition-transform ${dashboardCardTypeDropdownOpen ? 'rotate-180' : ''}`} />
-                </button>
-                
-                {dashboardCardTypeDropdownOpen && (
-                  <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-zinc-200 rounded-md shadow-lg z-50 max-h-48 overflow-y-auto">
-                    <button
-                      onClick={() => {
-                        setDashboardCardType('');
-                        setDashboardCardTypeDropdownOpen(false);
-                      }}
-                      className={`w-full flex items-center justify-between p-2 hover:bg-zinc-50 ${!dashboardCardType ? 'bg-purple-50' : ''}`}
-                    >
-                      <span>Todos</span>
-                      {!dashboardCardType && <Check className="h-4 w-4 text-[#0B0B16]" />}
-                    </button>
-                    {dashboardFilters.card_types?.map((cardType) => (
-                      <button
-                        key={cardType}
-                        onClick={() => {
-                          setDashboardCardType(cardType);
-                          setDashboardTemplateId('');
-                          setDashboardCardTypeDropdownOpen(false);
-                        }}
-                        className={`w-full flex items-center justify-between p-2 hover:bg-zinc-50 ${dashboardCardType === cardType ? 'bg-purple-50' : ''}`}
-                      >
-                        <span className="capitalize">{cardType || 'Sin tipo'}</span>
-                        {dashboardCardType === cardType && <Check className="h-4 w-4 text-[#0B0B16]" />}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-              {dashboardCardType && templatesList.some((t) => t.type === dashboardCardType) && (
-                <div className="flex-1 relative">
-                  <label className="block text-sm font-medium text-zinc-700 mb-1">
-                    Tarjeta específica
-                  </label>
-                  <button
-                    onClick={() => setDashboardTemplateDropdownOpen(!dashboardTemplateDropdownOpen)}
-                    className="w-full flex items-center justify-between p-2 border-2 border-zinc-200 rounded-md hover:border-[#0B0B16] transition-colors bg-white h-10"
-                    data-testid="dashboard-template-dropdown"
-                  >
-                    <span className={dashboardTemplateId ? 'text-[#0B0B16]' : 'text-zinc-400'}>
-                      {templatesList.find((t) => String(t.id) === dashboardTemplateId)?.name || 'Todas'}
-                    </span>
-                    <ChevronDown className={`h-4 w-4 text-zinc-400 transition-transform ${dashboardTemplateDropdownOpen ? 'rotate-180' : ''}`} />
-                  </button>
-                  {dashboardTemplateDropdownOpen && (
-                    <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-zinc-200 rounded-md shadow-lg z-50 max-h-48 overflow-y-auto">
-                      <button
-                        onClick={() => { setDashboardTemplateId(''); setDashboardTemplateDropdownOpen(false); }}
-                        className={`w-full flex items-center justify-between p-2 hover:bg-zinc-50 ${!dashboardTemplateId ? 'bg-purple-50' : ''}`}
-                      >
-                        <span>Todas</span>
-                        {!dashboardTemplateId && <Check className="h-4 w-4 text-[#0B0B16]" />}
-                      </button>
-                      {templatesList.filter((t) => t.type === dashboardCardType).map((t) => (
-                        <button
-                          key={t.id}
-                          onClick={() => { setDashboardTemplateId(String(t.id)); setDashboardTemplateDropdownOpen(false); }}
-                          className={`w-full flex items-center justify-between p-2 hover:bg-zinc-50 ${dashboardTemplateId === String(t.id) ? 'bg-purple-50' : ''}`}
-                        >
-                          <span>{t.name}</span>
-                          {dashboardTemplateId === String(t.id) && <Check className="h-4 w-4 text-[#0B0B16]" />}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-              <Button
-                onClick={fetchDashboard}
-                className="btn-primary"
-                disabled={dashboardLoading}
-                data-testid="apply-dashboard-filter"
-              >
-                {dashboardLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Aplicar'}
-              </Button>
-              {(!isDefaultDashboardDateRange || dashboardCardType || dashboardTemplateId) && (
-                <Button
-                  variant="outline"
-                  onClick={() => { setDashboardStartDate(todayStr()); setDashboardEndDate(todayStr()); setDashboardCardType(''); setDashboardTemplateId(''); }}
-                  className="border-2 border-zinc-200"
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              )}
-            </div>
-          </div>
-        )}
-
         {/* Dashboard View */}
         {activeTab === 'dashboard' && (
           <div className="space-y-6">
@@ -623,6 +450,178 @@ const OperationsPage = () => {
                 <span className="text-xs font-medium text-[#0B0B16]">Configuración</span>
               </button>
             </div>
+
+            {/* Filtros del Dashboard — justo debajo de los accesos rápidos,
+                para que sea fácil ver qué filtro está aplicado contra la data
+                de abajo, en vez de vivir escondido arriba de todo. Colapsado
+                por defecto; el badge muestra cuántos filtros están activos. */}
+            <div>
+              <button
+                onClick={() => setShowDashboardFilters(!showDashboardFilters)}
+                className="flex items-center gap-2 text-sm font-medium text-zinc-600 hover:text-[#0B0B16] transition-colors"
+                data-testid="toggle-dashboard-filters"
+              >
+                <Filter className="h-4 w-4" />
+                Filtros
+                {dashboardActiveFilterCount > 0 && (
+                  <span className="inline-flex items-center justify-center h-5 min-w-5 px-1 rounded-full bg-[#5B7CF7] text-white text-xs font-semibold">
+                    {dashboardActiveFilterCount}
+                  </span>
+                )}
+                <ChevronDown className={`h-4 w-4 transition-transform ${showDashboardFilters ? 'rotate-180' : ''}`} />
+              </button>
+            </div>
+            {showDashboardFilters && (
+              <div className="card-brutalist">
+                <div className="flex items-center gap-2 mb-4">
+                  {[
+                    { label: 'Hoy', start: todayStr(), end: todayStr() },
+                    { label: '7 días', start: daysAgoStr(6), end: todayStr() },
+                    { label: '30 días', start: daysAgoStr(29), end: todayStr() },
+                    { label: '90 días', start: daysAgoStr(89), end: todayStr() },
+                  ].map((preset) => {
+                    const active = dashboardStartDate === preset.start && dashboardEndDate === preset.end;
+                    return (
+                      <button
+                        key={preset.label}
+                        onClick={() => { setDashboardStartDate(preset.start); setDashboardEndDate(preset.end); }}
+                        className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+                          active ? 'bg-[#0B0B16] text-white' : 'bg-zinc-100 text-zinc-600 hover:text-[#0B0B16]'
+                        }`}
+                        data-testid={`dashboard-preset-${preset.label}`}
+                      >
+                        {preset.label}
+                      </button>
+                    );
+                  })}
+                </div>
+                <div className="flex flex-col sm:flex-row sm:items-end gap-4">
+                  <div className="flex-1">
+                    <label className="block text-sm font-medium text-zinc-700 mb-1">
+                      Fecha inicio
+                    </label>
+                    <Input
+                      type="date"
+                      value={dashboardStartDate}
+                      onChange={(e) => setDashboardStartDate(e.target.value)}
+                      className="border-2 border-zinc-200"
+                      data-testid="dashboard-start-date"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <label className="block text-sm font-medium text-zinc-700 mb-1">
+                      Fecha fin
+                    </label>
+                    <Input
+                      type="date"
+                      value={dashboardEndDate}
+                      onChange={(e) => setDashboardEndDate(e.target.value)}
+                      className="border-2 border-zinc-200"
+                      data-testid="dashboard-end-date"
+                    />
+                  </div>
+                  <div className="flex-1 relative">
+                    <label className="block text-sm font-medium text-zinc-700 mb-1">
+                      Tipo de tarjeta
+                    </label>
+                    <button
+                      onClick={() => setDashboardCardTypeDropdownOpen(!dashboardCardTypeDropdownOpen)}
+                      className="w-full flex items-center justify-between p-2 border-2 border-zinc-200 rounded-md hover:border-[#0B0B16] transition-colors bg-white h-10"
+                      data-testid="dashboard-card-type-dropdown"
+                    >
+                      <span className={dashboardCardType ? 'text-[#0B0B16]' : 'text-zinc-400'}>
+                        {dashboardCardType || 'Todos'}
+                      </span>
+                      <ChevronDown className={`h-4 w-4 text-zinc-400 transition-transform ${dashboardCardTypeDropdownOpen ? 'rotate-180' : ''}`} />
+                    </button>
+
+                    {dashboardCardTypeDropdownOpen && (
+                      <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-zinc-200 rounded-md shadow-lg z-50 max-h-48 overflow-y-auto">
+                        <button
+                          onClick={() => {
+                            setDashboardCardType('');
+                            setDashboardCardTypeDropdownOpen(false);
+                          }}
+                          className={`w-full flex items-center justify-between p-2 hover:bg-zinc-50 ${!dashboardCardType ? 'bg-purple-50' : ''}`}
+                        >
+                          <span>Todos</span>
+                          {!dashboardCardType && <Check className="h-4 w-4 text-[#0B0B16]" />}
+                        </button>
+                        {dashboardFilters.card_types?.map((cardType) => (
+                          <button
+                            key={cardType}
+                            onClick={() => {
+                              setDashboardCardType(cardType);
+                              setDashboardTemplateId('');
+                              setDashboardCardTypeDropdownOpen(false);
+                            }}
+                            className={`w-full flex items-center justify-between p-2 hover:bg-zinc-50 ${dashboardCardType === cardType ? 'bg-purple-50' : ''}`}
+                          >
+                            <span className="capitalize">{cardType || 'Sin tipo'}</span>
+                            {dashboardCardType === cardType && <Check className="h-4 w-4 text-[#0B0B16]" />}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  {dashboardCardType && templatesList.some((t) => t.type === dashboardCardType) && (
+                    <div className="flex-1 relative">
+                      <label className="block text-sm font-medium text-zinc-700 mb-1">
+                        Tarjeta específica
+                      </label>
+                      <button
+                        onClick={() => setDashboardTemplateDropdownOpen(!dashboardTemplateDropdownOpen)}
+                        className="w-full flex items-center justify-between p-2 border-2 border-zinc-200 rounded-md hover:border-[#0B0B16] transition-colors bg-white h-10"
+                        data-testid="dashboard-template-dropdown"
+                      >
+                        <span className={dashboardTemplateId ? 'text-[#0B0B16]' : 'text-zinc-400'}>
+                          {templatesList.find((t) => String(t.id) === dashboardTemplateId)?.name || 'Todas'}
+                        </span>
+                        <ChevronDown className={`h-4 w-4 text-zinc-400 transition-transform ${dashboardTemplateDropdownOpen ? 'rotate-180' : ''}`} />
+                      </button>
+                      {dashboardTemplateDropdownOpen && (
+                        <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-zinc-200 rounded-md shadow-lg z-50 max-h-48 overflow-y-auto">
+                          <button
+                            onClick={() => { setDashboardTemplateId(''); setDashboardTemplateDropdownOpen(false); }}
+                            className={`w-full flex items-center justify-between p-2 hover:bg-zinc-50 ${!dashboardTemplateId ? 'bg-purple-50' : ''}`}
+                          >
+                            <span>Todas</span>
+                            {!dashboardTemplateId && <Check className="h-4 w-4 text-[#0B0B16]" />}
+                          </button>
+                          {templatesList.filter((t) => t.type === dashboardCardType).map((t) => (
+                            <button
+                              key={t.id}
+                              onClick={() => { setDashboardTemplateId(String(t.id)); setDashboardTemplateDropdownOpen(false); }}
+                              className={`w-full flex items-center justify-between p-2 hover:bg-zinc-50 ${dashboardTemplateId === String(t.id) ? 'bg-purple-50' : ''}`}
+                            >
+                              <span>{t.name}</span>
+                              {dashboardTemplateId === String(t.id) && <Check className="h-4 w-4 text-[#0B0B16]" />}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  <Button
+                    onClick={fetchDashboard}
+                    className="btn-primary"
+                    disabled={dashboardLoading}
+                    data-testid="apply-dashboard-filter"
+                  >
+                    {dashboardLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Aplicar'}
+                  </Button>
+                  {(!isDefaultDashboardDateRange || dashboardCardType || dashboardTemplateId) && (
+                    <Button
+                      variant="outline"
+                      onClick={() => { setDashboardStartDate(todayStr()); setDashboardEndDate(todayStr()); setDashboardCardType(''); setDashboardTemplateId(''); }}
+                      className="border-2 border-zinc-200"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* Tendencia arriba de todo, independiente de dashboardData —
                 tiene su propio fetch y su propio selector de 7/30/90 días,

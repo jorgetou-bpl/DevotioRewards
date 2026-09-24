@@ -29,15 +29,26 @@ const DeltaBadge = ({ label, delta }) => {
 // First multi-series chart in the app (AgeDistributionChart is single-series)
 // — reuses the same visual language: card-brutalist wrapper, #8CA4FE/#5B7CF7
 // palette, CartesianGrid horizontal-only, same loading/empty conventions.
+//
+// "Operaciones" is deliberately labeled "Visitas" everywhere in this
+// component — ClientMetricsCards already treats operations_count and visit
+// count as the same number ("Total Visitas" is an alias for it), so this
+// chart follows that same convention instead of introducing a second name
+// for the same metric.
 export const TrendChart = ({ token, cardType, templateId, formatCurrency }) => {
-  const [days, setDays] = useState(30);
+  // 'today' switches the backend to hourly (Costa Rica local time) instead
+  // of the day-bucketed series the numeric periods use. Default stays at 7
+  // days, not "Hoy" — an hour-by-hour view is more of an operational/staffing
+  // tool ("when are we busiest today") than a retention signal, which is
+  // what a business owner opens this dashboard for first.
+  const [period, setPeriod] = useState(7);
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
 
   const fetchTrend = useCallback(async () => {
     setLoading(true);
     try {
-      const params = { days };
+      const params = period === 'today' ? { granularity: 'hour' } : { days: period };
       if (cardType) params.card_type = cardType;
       if (templateId) params.template_id = templateId;
       const response = await axios.get(`${API}/operations/trend`, {
@@ -50,10 +61,11 @@ export const TrendChart = ({ token, cardType, templateId, formatCurrency }) => {
     } finally {
       setLoading(false);
     }
-  }, [token, days, cardType, templateId]);
+  }, [token, period, cardType, templateId]);
 
   useEffect(() => { fetchTrend(); }, [fetchTrend]);
 
+  const isHourly = data?.granularity === 'hour';
   const hasActivity = data?.series?.some((d) => d.operations_count > 0);
   const opsDelta = data ? calcDelta(data.current_period.operations_count, data.previous_period.operations_count) : null;
   const salesDelta = data ? calcDelta(data.current_period.sales_total, data.previous_period.sales_total) : null;
@@ -63,12 +75,21 @@ export const TrendChart = ({ token, cardType, templateId, formatCurrency }) => {
       <div className="flex items-center justify-between flex-wrap gap-3 mb-4">
         <h3 className="text-lg font-semibold text-[#0B0B16]">Tendencia en el Tiempo</h3>
         <div className="flex items-center gap-1 bg-zinc-100 p-1 rounded-lg">
+          <button
+            onClick={() => setPeriod('today')}
+            className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+              period === 'today' ? 'bg-white text-[#0B0B16] shadow-sm' : 'text-zinc-500 hover:text-[#0B0B16]'
+            }`}
+            data-testid="trend-period-today"
+          >
+            Hoy
+          </button>
           {PERIODS.map((p) => (
             <button
               key={p}
-              onClick={() => setDays(p)}
+              onClick={() => setPeriod(p)}
               className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
-                days === p ? 'bg-white text-[#0B0B16] shadow-sm' : 'text-zinc-500 hover:text-[#0B0B16]'
+                period === p ? 'bg-white text-[#0B0B16] shadow-sm' : 'text-zinc-500 hover:text-[#0B0B16]'
               }`}
               data-testid={`trend-period-${p}`}
             >
@@ -85,8 +106,8 @@ export const TrendChart = ({ token, cardType, templateId, formatCurrency }) => {
       ) : hasActivity ? (
         <>
           <div className="flex items-center gap-6 mb-4">
-            <DeltaBadge label="Operaciones vs período anterior" delta={opsDelta} />
-            <DeltaBadge label="Ventas vs período anterior" delta={salesDelta} />
+            <DeltaBadge label={isHourly ? 'Visitas vs. ayer' : 'Visitas vs período anterior'} delta={opsDelta} />
+            <DeltaBadge label={isHourly ? 'Ventas vs. ayer' : 'Ventas vs período anterior'} delta={salesDelta} />
           </div>
           <ResponsiveContainer width="100%" height={260}>
             <ComposedChart data={data.series} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
@@ -95,7 +116,7 @@ export const TrendChart = ({ token, cardType, templateId, formatCurrency }) => {
                 dataKey="date"
                 tick={{ fontSize: 11, fill: '#71717A' }}
                 tickLine={false}
-                tickFormatter={(d) => new Date(d).toLocaleDateString('es-CR', { day: '2-digit', month: '2-digit' })}
+                tickFormatter={isHourly ? undefined : (d) => new Date(d).toLocaleDateString('es-CR', { day: '2-digit', month: '2-digit' })}
                 minTickGap={20}
               />
               <YAxis yAxisId="left" tick={{ fontSize: 11, fill: '#71717A' }} axisLine={false} tickLine={false} width={28} allowDecimals={false} />
@@ -109,10 +130,10 @@ export const TrendChart = ({ token, cardType, templateId, formatCurrency }) => {
                 tickFormatter={(v) => formatCurrency(v)}
               />
               <Tooltip
-                labelFormatter={(d) => new Date(d).toLocaleDateString('es-CR', { day: '2-digit', month: '2-digit', year: 'numeric' })}
-                formatter={(value, name) => name === 'sales_total' ? [formatCurrency(value), 'Ventas'] : [value, 'Operaciones']}
+                labelFormatter={isHourly ? undefined : (d) => new Date(d).toLocaleDateString('es-CR', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                formatter={(value, name) => name === 'sales_total' ? [formatCurrency(value), 'Ventas'] : [value, 'Visitas']}
               />
-              <Legend formatter={(value) => value === 'sales_total' ? 'Ventas' : 'Operaciones'} wrapperStyle={{ fontSize: 12 }} />
+              <Legend formatter={(value) => value === 'sales_total' ? 'Ventas' : 'Visitas'} wrapperStyle={{ fontSize: 12 }} />
               <Bar yAxisId="left" dataKey="operations_count" fill="#8CA4FE" radius={[4, 4, 0, 0]} />
               <Line yAxisId="right" type="monotone" dataKey="sales_total" stroke="#5B7CF7" strokeWidth={2} dot={false} />
             </ComposedChart>

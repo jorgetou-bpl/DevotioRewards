@@ -156,6 +156,31 @@ class TestOperationsAPI:
         
         print("SUCCESS: XLSX export works")
     
+    def test_trend_hourly_granularity(self):
+        """Test GET /api/operations/trend?granularity=hour — today bucketed
+        by hour in Costa Rica local time (see routes/operations.py's
+        _get_hourly_trend for the UTC->CR conversion this exists to verify
+        doesn't regress)."""
+        response = self.session.get(f"{BASE_URL}/api/operations/trend?granularity=hour")
+        assert response.status_code == 200
+
+        data = response.json()
+        assert data.get("success") is True
+        assert data.get("granularity") == "hour"
+        series = data.get("series", [])
+        assert len(series) == 24
+        assert [s["date"] for s in series] == [f"{h:02d}:00" for h in range(24)]
+        print(f"SUCCESS: Hourly trend - {data['current_period']['operations_count']} visitas hoy")
+
+    def test_trend_day_granularity_default(self):
+        """Default (no granularity param) still returns the day-bucketed
+        series, now tagged granularity="day" for the frontend to branch on."""
+        response = self.session.get(f"{BASE_URL}/api/operations/trend?days=7")
+        assert response.status_code == 200
+        data = response.json()
+        assert data.get("granularity") == "day"
+        assert len(data.get("series", [])) == 7
+
     def test_operations_summary(self):
         """Test operations summary endpoint"""
         response = self.session.get(f"{BASE_URL}/api/operations/summary")

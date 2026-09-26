@@ -123,6 +123,28 @@ async def search_customer_base(
     return {"success": True, "customers": matches, "match_type": "name" if matches else None}
 
 
+@router.get("/by-phone/{phone}/cards")
+async def get_cards_by_phone(phone: str, current_user: dict = Depends(get_current_user), api_key: str = Depends(get_api_key)):
+    """All of a customer's cards, resolved live from Boomerangme by phone.
+    customer_stats only tracks the single most-recently-scanned card_id per
+    phone (overwritten on every new scan), so it can't answer "how many
+    cards does this customer have" — this always goes to the source of
+    truth instead. No path-ordering conflict with /{customer_id} below:
+    /by-phone/... is a distinct 3-segment prefix, not a bare single segment."""
+    customers_response = await call_boomerang_api('GET', '/customers', {"phone": phone}, raise_on_error=False, api_key=api_key)
+    boomerang_customers = customers_response.get('data') or []
+    if not boomerang_customers:
+        return {"success": True, "cards": []}
+
+    customer_id = boomerang_customers[0].get('id')
+    if not customer_id:
+        return {"success": True, "cards": []}
+
+    cards_response = await call_boomerang_api('GET', '/cards', {"customerId": customer_id}, raise_on_error=False, api_key=api_key)
+    cards = cards_response.get('data') or []
+    return {"success": True, "cards": [mask_pii(c) for c in cards]}
+
+
 @router.get("/{customer_id}")
 async def get_customer(customer_id: str, current_user: dict = Depends(get_current_user), api_key: str = Depends(get_api_key)):
     """Get customer details."""

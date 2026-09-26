@@ -18,9 +18,11 @@ const CustomerProfilePage = () => {
   const [customer, setCustomer] = useState(location.state?.customer || null);
   const [customerLoading, setCustomerLoading] = useState(!location.state?.customer);
 
-  const [card, setCard] = useState(null);
+  const [cards, setCards] = useState([]);
+  const [selectedCardId, setSelectedCardId] = useState(null);
   const [cardLoading, setCardLoading] = useState(true);
   const [cardError, setCardError] = useState(null);
+  const card = cards.find((c) => c.id === selectedCardId) || null;
 
   const [operations, setOperations] = useState([]);
   const [opsLoading, setOpsLoading] = useState(true);
@@ -40,16 +42,23 @@ const CustomerProfilePage = () => {
   }, [phone, token, customer]);
 
   // 2. Live card data — independent, own error state, never blocks the rest
-  // of the page if the external provider call is slow or fails.
+  // of the page if the external provider call is slow or fails. Resolved by
+  // phone (not customer.card_id, which only ever tracks the single most
+  // recently scanned card) so a customer with 2+ cards sees all of them,
+  // switchable via the tabs below instead of always showing just the last one.
   useEffect(() => {
-    if (!customer?.card_id) { setCardLoading(false); return; }
+    if (!phone) { setCardLoading(false); return; }
     setCardLoading(true);
     setCardError(null);
-    axios.get(`${API}/cards/${customer.card_id}`, { headers: { Authorization: `Bearer ${token}` } })
-      .then((res) => setCard(res.data?.card || null))
+    axios.get(`${API}/customers/by-phone/${encodeURIComponent(phone)}/cards`, { headers: { Authorization: `Bearer ${token}` } })
+      .then((res) => {
+        const fetchedCards = res.data?.cards || [];
+        setCards(fetchedCards);
+        setSelectedCardId(fetchedCards[0]?.id || null);
+      })
       .catch(() => setCardError('No se pudo cargar la información de la tarjeta'))
       .finally(() => setCardLoading(false));
-  }, [customer?.card_id, token]);
+  }, [phone, token]);
 
   // 3. Transaction history — local, independent.
   const fetchOperations = useCallback(async (page = 1) => {
@@ -135,7 +144,25 @@ const CustomerProfilePage = () => {
         {/* 2. Live card data panel */}
         {customer && (
           <div className="card-brutalist">
-            <h3 className="text-lg font-semibold text-[#0B0B16] mb-4">Datos de la tarjeta</h3>
+            <div className="flex items-center justify-between flex-wrap gap-2 mb-4">
+              <h3 className="text-lg font-semibold text-[#0B0B16]">Datos de la tarjeta</h3>
+              {cards.length > 1 && (
+                <div className="flex items-center gap-1 bg-zinc-100 p-1 rounded-lg" data-testid="card-selector">
+                  {cards.map((c, i) => (
+                    <button
+                      key={c.id}
+                      onClick={() => setSelectedCardId(c.id)}
+                      className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all capitalize ${
+                        selectedCardId === c.id ? 'bg-white text-[#0B0B16] shadow-sm' : 'text-zinc-500 hover:text-[#0B0B16]'
+                      }`}
+                      data-testid={`card-tab-${i}`}
+                    >
+                      {c.type || `Tarjeta ${i + 1}`}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
             {cardLoading ? (
               <div className="flex justify-center py-6"><Loader2 className="h-5 w-5 animate-spin text-zinc-400" /></div>
             ) : cardError ? (

@@ -21,3 +21,10 @@ BOOMERANG_API_KEY = os.environ.get('BOOMERANG_API_KEY', '')
 JWT_SECRET = os.environ.get('JWT_SECRET', 'scanner-app-secret-key-change-in-production')
 JWT_ALGORITHM = 'HS256'
 JWT_EXPIRATION_HOURS = 24
+
+# Transactional email (password reset) — RESEND_API_KEY not yet provisioned;
+# utils/email.py raises a clear error rather than silently no-op-ing if a
+# send is attempted before it's set.
+RESEND_API_KEY = os.environ.get('RESEND_API_KEY', '')
+RESEND_FROM_EMAIL = os.environ.get('RESEND_FROM_EMAIL', 'no-reply@devotiorewards.com')
+FRONTEND_URL = os.environ.get('FRONTEND_URL', 'http://localhost:3000')

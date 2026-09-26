@@ -8,6 +8,7 @@ import { AppLayout } from "./components/AppLayout";
 
 // Pages
 import LoginPage from "./pages/LoginPage";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
 import ScannerPage from "./pages/ScannerPage";
 import ResultPage from "./pages/ResultPage";
 import SettingsPage from "./pages/SettingsPage";
@@ -96,6 +97,11 @@ function AppRoutes() {
           </PublicRoute>
         }
       />
+      {/* No auth gating — the reset token itself is the credential, and a
+          currently-logged-in browser (e.g. testing, shared device) must
+          still be able to reach this form instead of being redirected
+          away by PublicRoute's isAuthenticated check. */}
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route
         path="/"
         element={

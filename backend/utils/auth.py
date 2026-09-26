@@ -25,6 +25,35 @@ def create_token(user_id: str) -> str:
     payload = {'user_id': user_id, 'exp': datetime.now(timezone.utc) + timedelta(hours=JWT_EXPIRATION_HOURS)}
     return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
 
+PASSWORD_RESET_EXPIRATION_MINUTES = 15
+
+def create_password_reset_token(user_id: str) -> str:
+    """Short-lived, single-purpose token — reuses the same JWT_SECRET as
+    normal login tokens but a distinct `purpose` claim and a much shorter
+    expiry, so a leaked reset link can't be replayed as a session token
+    (get_current_user never checks `purpose`, but this token's `exp` alone
+    limits the blast radius, and reset-password explicitly rejects any
+    token where purpose != 'password_reset')."""
+    payload = {
+        'user_id': user_id,
+        'purpose': 'password_reset',
+        'exp': datetime.now(timezone.utc) + timedelta(minutes=PASSWORD_RESET_EXPIRATION_MINUTES)
+    }
+    return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
+
+def verify_password_reset_token(token: str) -> str | None:
+    """Returns the user_id if the token is a valid, unexpired password-reset
+    token; None otherwise (caller turns that into a generic error — never
+    distinguishes "expired" from "malformed" from "wrong purpose" to a
+    client, to avoid leaking anything about token validity)."""
+    try:
+        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+    except jwt.PyJWTError:
+        return None
+    if payload.get('purpose') != 'password_reset':
+        return None
+    return payload.get('user_id')
+
 async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(get_credentials)):
     """Extract and validate user from JWT token"""
     try:

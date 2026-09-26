@@ -25,6 +25,16 @@ class UserResponse(BaseModel):
     workspace_name: Optional[str] = None
     location: Optional[str] = None
 
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+class ResetPasswordRequest(BaseModel):
+    token: str
+    new_password: str = Field(min_length=6)
+
+class BackupEmailsUpdate(BaseModel):
+    backup_emails: List[EmailStr] = []
+
 # ============ ADMIN SETUP MODELS ============
 
 class AdminUserCreate(BaseModel):

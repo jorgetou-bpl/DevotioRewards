@@ -7,7 +7,7 @@ import os
 from datetime import datetime, timezone
 from models import (
     WorkspaceCreate, WorkspaceUpdate, WorkspaceResponse,
-    WorkspaceUserCreate, WorkspaceLocation
+    WorkspaceUserCreate, WorkspaceLocation, BackupEmailsUpdate
 )
 from utils.config import db
 from utils.auth import hash_password, require_super_admin, require_workspace_admin
@@ -189,7 +189,8 @@ async def list_workspace_users(workspace_id: str, current_user: dict = Depends(r
             "email": user.get("email"),
             "name": user.get("name"),
             "role": user.get("role"),
-            "location": user.get("location")
+            "location": user.get("location"),
+            "backup_emails": user.get("backup_emails", [])
         })
     return {"success": True, "users": users}
 
@@ -273,6 +274,26 @@ async def update_user_role(workspace_id: str, user_id: str, data: dict, current_
     return {"success": True, "message": f"Rol actualizado a '{new_role}'"}
 
 
+@router.put("/workspaces/{workspace_id}/users/{user_id}/backup-emails")
+async def update_backup_emails(
+    workspace_id: str, user_id: str, data: BackupEmailsUpdate,
+    current_user: dict = Depends(require_workspace_admin)
+):
+    """Backup emails let account recovery (POST /auth/forgot-password) reach
+    a workspace_admin even if they've lost access to their own primary
+    inbox — the reset link goes to whichever address requested it, main or
+    backup, both resolve to the same account."""
+    if current_user.get("role") == "workspace_admin" and current_user.get("workspace_id") != workspace_id:
+        raise HTTPException(status_code=403, detail="No tiene acceso a este workspace")
+
+    target_user = await db.users.find_one({"id": user_id, "workspace_id": workspace_id})
+    if not target_user:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+
+    await db.users.update_one({"id": user_id}, {"$set": {"backup_emails": data.backup_emails}})
+    return {"success": True, "backup_emails": data.backup_emails}
+
+
 # ============ SUPER ADMIN DASHBOARD ============
 
 @router.post("/verify-master-code")
@@ -343,7 +364,8 @@ async def get_workspace_users_admin(workspace_id: str, current_user: dict = Depe
             "email": user.get("email"),
             "name": user.get("name"),
             "role": user.get("role"),
-            "location": user.get("location")
+            "location": user.get("location"),
+            "backup_emails": user.get("backup_emails", [])
         })
     return {"success": True, "users": users}
 

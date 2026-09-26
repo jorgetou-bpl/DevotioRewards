@@ -7,7 +7,8 @@ import { Input } from '../components/ui/input';
 import {
   ArrowLeft, Building2, Users, MapPin, Key, Plus, Trash2, Loader2, Save,
   Eye, EyeOff, UserPlus, Activity, ChevronDown, ChevronUp, RefreshCw,
-  Settings, Stamp, Percent, Gift, MessageSquare, DollarSign, AlertTriangle, Star, Search, Copy, Check, Camera
+  Settings, Stamp, Percent, Gift, MessageSquare, DollarSign, AlertTriangle, Star, Search, Copy, Check, Camera,
+  Mail, Pencil
 } from 'lucide-react';
 
 import { API_BASE_URL as API } from '../config/api';
@@ -44,6 +45,8 @@ const WorkspaceAdminPage = () => {
   const [locations, setLocations] = useState([]);
   const [savingLocations, setSavingLocations] = useState(false);
   const [editingRole, setEditingRole] = useState(null);
+  const [editingBackupEmails, setEditingBackupEmails] = useState(null);
+  const [backupEmailsInput, setBackupEmailsInput] = useState('');
   const [resetModal, setResetModal] = useState({ open: false, user: null });
   const [resetMode, setResetMode] = useState('auto');
   const [manualPassword, setManualPassword] = useState('');
@@ -185,6 +188,21 @@ const WorkspaceAdminPage = () => {
       setEditingRole(null);
       await fetchUsers(targetWorkspaceId);
     } catch (error) { toast.error(error.response?.data?.detail || 'Error al actualizar rol'); }
+  };
+
+  const handleUpdateBackupEmails = async (userId, emailsCsv) => {
+    const backup_emails = emailsCsv.split(',').map((e) => e.trim()).filter(Boolean);
+    try {
+      const token = localStorage.getItem('token');
+      await axios.put(
+        `${API}/admin/workspaces/${targetWorkspaceId}/users/${userId}/backup-emails`,
+        { backup_emails },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast.success('Correos de respaldo actualizados');
+      setEditingBackupEmails(null);
+      await fetchUsers(targetWorkspaceId);
+    } catch (error) { toast.error(error.response?.data?.detail || 'Error al actualizar correos de respaldo'); }
   };
 
   const handleResetPassword = async () => {
@@ -625,6 +643,36 @@ const WorkspaceAdminPage = () => {
                               </button>
                             )}
                             {u.location && <span className="text-xs px-2 py-0.5 rounded-full bg-blue-50 text-blue-600">{u.location}</span>}
+                          </div>
+                          <div className="mt-2">
+                            {editingBackupEmails === u.id ? (
+                              <div className="flex items-center gap-2">
+                                <Input
+                                  value={backupEmailsInput}
+                                  onChange={(e) => setBackupEmailsInput(e.target.value)}
+                                  placeholder="correo1@ejemplo.com, correo2@ejemplo.com"
+                                  className="text-xs h-8"
+                                  data-testid={`backup-emails-input-${u.id}`}
+                                  autoFocus
+                                />
+                                <Button size="sm" className="h-8 text-xs btn-primary" onClick={() => handleUpdateBackupEmails(u.id, backupEmailsInput)} data-testid={`save-backup-emails-${u.id}`}>
+                                  Guardar
+                                </Button>
+                                <Button size="sm" variant="outline" className="h-8 text-xs border-2 border-zinc-200" onClick={() => setEditingBackupEmails(null)}>
+                                  Cancelar
+                                </Button>
+                              </div>
+                            ) : (
+                              <button
+                                onClick={() => { setEditingBackupEmails(u.id); setBackupEmailsInput((u.backup_emails || []).join(', ')); }}
+                                className="flex items-center gap-1.5 text-xs text-zinc-400 hover:text-[#5B7CF7] transition-colors"
+                                data-testid={`edit-backup-emails-${u.id}`}
+                              >
+                                <Mail className="h-3 w-3" />
+                                {u.backup_emails?.length > 0 ? u.backup_emails.join(', ') : 'Agregar correo de respaldo'}
+                                <Pencil className="h-3 w-3" />
+                              </button>
+                            )}
                           </div>
                         </div>
                         {canEdit && (

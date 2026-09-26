@@ -176,6 +176,10 @@ class OperationsFilter(BaseModel):
     operation_type: Optional[str] = None
     card_id: Optional[str] = None
 
+class OperationEdit(BaseModel):
+    purchase_sum: Optional[float] = None
+    note: Optional[str] = None
+
 # ============ NOTIFICATION MODELS ============
 
 class PushNotificationCreate(BaseModel):

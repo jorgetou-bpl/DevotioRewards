@@ -19,13 +19,15 @@ import {
 } from 'lucide-react';
 import { formatDate, formatAmount } from '../utils/format';
 import { API_BASE_URL as API } from '../config/api';
+import { OperationRowActions } from '../components/dashboard/OperationRowActions';
 
 // Extracted from the old OperationsPage "Historial" tab — now its own route
 // (`/historial`) reachable from AppLayout's sidebar instead of an internal
 // tab. Fetches unconditionally on mount instead of being gated by tab state.
 const HistorialPage = () => {
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const { formatCurrency } = useSettings();
+  const canEditOperations = ['workspace_admin', 'super_admin'].includes(user?.role);
 
   const [operations, setOperations] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -485,6 +487,7 @@ const HistorialPage = () => {
                   <th className="p-3 text-left text-xs font-semibold uppercase">Compra</th>
                   <th className="p-3 text-left text-xs font-semibold uppercase">Gerente</th>
                   <th className="p-3 text-left text-xs font-semibold uppercase">Nota</th>
+                  {canEditOperations && <th className="p-3 text-left text-xs font-semibold uppercase">Acciones</th>}
                 </tr>
               </thead>
               <tbody>
@@ -522,6 +525,11 @@ const HistorialPage = () => {
                     <td className="p-3 text-sm text-zinc-500 max-w-[150px] truncate" title={op.note}>
                       {op.note || '-'}
                     </td>
+                    {canEditOperations && (
+                      <td className="p-3">
+                        <OperationRowActions operation={op} token={token} onChanged={() => fetchOperations(meta.page)} />
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>
@@ -577,6 +585,11 @@ const HistorialPage = () => {
                     </span>
                   )}
                 </div>
+                {canEditOperations && (
+                  <div className="flex justify-end mt-2 pt-2 border-t border-zinc-100">
+                    <OperationRowActions operation={op} token={token} onChanged={() => fetchOperations(meta.page)} />
+                  </div>
+                )}
               </div>
             ))}
           </div>

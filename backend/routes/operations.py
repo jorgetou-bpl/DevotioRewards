@@ -8,9 +8,11 @@ from zoneinfo import ZoneInfo
 import io
 import csv
 import logging
-from utils.auth import get_current_user, require_super_admin
+import uuid
+from models import OperationEdit
+from utils.auth import get_current_user, require_super_admin, require_workspace_admin
 from utils.config import db
-from utils.boomerang import OPERATION_TYPES
+from utils.boomerang import OPERATION_TYPES, call_boomerang_api, get_workspace_api_key, mask_pii
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/operations", tags=["operations"])
@@ -756,3 +758,162 @@ async def reset_operations(
         raise HTTPException(status_code=400, detail="Debe especificar un workspace")
     result = await db.operations.delete_many({"workspace_id": ws_id})
     return {"success": True, "deleted_count": result.deleted_count}
+
+
+@router.patch("/{operation_id}")
+async def edit_operation(
+    operation_id: str,
+    payload: OperationEdit,
+    current_user: dict = Depends(require_workspace_admin)
+):
+    """Correct a past transaction's purchase amount/note. Never touches the
+    Boomerangme card balance — there's no endpoint to edit a past accrual,
+    only to add/subtract going forward, so this is a local-record-only
+    correction, kept in sync with customer_stats.total_purchase_sum."""
+    ws_id = current_user.get("workspace_id")
+    operation = await db.operations.find_one({"id": operation_id, "workspace_id": ws_id})
+    if not operation:
+        raise HTTPException(status_code=404, detail="Operación no encontrada")
+    if operation.get("canceled"):
+        raise HTTPException(status_code=400, detail="No se puede editar una operación cancelada")
+
+    update_fields = {}
+    purchase_delta = 0.0
+    if payload.purchase_sum is not None:
+        old_purchase = operation.get("purchase_sum") or 0
+        purchase_delta = payload.purchase_sum - old_purchase
+        update_fields["purchase_sum"] = payload.purchase_sum
+    if payload.note is not None:
+        update_fields["note"] = payload.note
+
+    if not update_fields:
+        raise HTTPException(status_code=400, detail="Nada que actualizar")
+
+    await db.operations.update_one({"id": operation_id}, {"$set": update_fields})
+
+    if purchase_delta and operation.get("customer_phone"):
+        await db.customer_stats.update_one(
+            {"workspace_id": ws_id, "customer_phone": operation["customer_phone"]},
+            {"$inc": {"total_purchase_sum": purchase_delta}}
+        )
+
+    return {"success": True, "message": "Operación actualizada"}
+
+
+# operation_type -> (Boomerangme reversal endpoint, request body field name).
+# Only types with an exact Boomerangme inverse are cancelable in Fase 1 —
+# add-stamp fires 3 chained Boomerangme calls internally (stamp+visit+
+# purchase) with no way to undo all three, and add-purchase/add-transaction-
+# amount (cashback) have no subtract-* counterpart at all. Confirmed with
+# Jorge: block those branches entirely rather than ship an approximate
+# reversal for money-adjacent operations.
+CANCELABLE_REVERSALS = {
+    "add-point": ("subtract-point", "points"),
+    "add-scores": ("subtract-scores", "scores"),
+    "add-visit": ("subtract-visit", "visits"),
+}
+
+
+@router.post("/{operation_id}/cancel")
+async def cancel_operation(
+    operation_id: str,
+    current_user: dict = Depends(require_workspace_admin)
+):
+    """Reverse a transaction: calls the matching Boomerangme subtract-*
+    endpoint (real balance change, not just a local flag), logs a new
+    "cancellation" operation row referencing the original, marks the
+    original canceled, and backs out its effect on customer_stats."""
+    ws_id = current_user.get("workspace_id")
+    operation = await db.operations.find_one({"id": operation_id, "workspace_id": ws_id})
+    if not operation:
+        raise HTTPException(status_code=404, detail="Operación no encontrada")
+    if operation.get("canceled"):
+        raise HTTPException(status_code=400, detail="Esta operación ya fue cancelada")
+
+    op_type = operation.get("operation_type")
+    reversal = CANCELABLE_REVERSALS.get(op_type)
+    if not reversal:
+        raise HTTPException(
+            status_code=400,
+            detail="Esta operación no se puede cancelar todavía — solo Puntos, Scores y Visitas admiten reversión exacta"
+        )
+    reversal_endpoint, amount_field = reversal
+
+    api_key = await get_workspace_api_key(current_user)
+    amount = operation.get("amount") or 1
+    boomerang_payload = {amount_field: amount}
+    if operation.get("purchase_sum"):
+        boomerang_payload["purchaseSum"] = operation["purchase_sum"]
+
+    response = await call_boomerang_api(
+        'POST', f'/cards/{operation["card_id"]}/{reversal_endpoint}', boomerang_payload, api_key=api_key
+    )
+    card_data = response.get('data', {}) or {}
+    card_balance = card_data.get('balance', {}) or {}
+
+    now_iso = datetime.now(timezone.utc).isoformat()
+    cancellation_record = {
+        "id": str(uuid.uuid4()),
+        "created_at": now_iso,
+        "workspace_id": ws_id,
+        "card_id": operation.get("card_id"),
+        "customer_name": operation.get("customer_name"),
+        "customer_phone": operation.get("customer_phone"),
+        "device": operation.get("device"),
+        "template_id": operation.get("template_id"),
+        "card_type": operation.get("card_type"),
+        "card_type_label": operation.get("card_type_label"),
+        "operation_type": "cancellation",
+        "operation_label": f"Cancelación de {OPERATION_TYPES.get(op_type, op_type)}",
+        "note": f"Cancela operación {operation_id}",
+        "amount": -amount,
+        "balance": card_balance.get('balance') or card_balance.get('bonusBalance') or card_balance.get('visitsAvailable'),
+        "purchase_sum": -(operation.get("purchase_sum") or 0) or None,
+        "redeemed_value": None,
+        "gerente": current_user.get('name', 'Unknown'),
+        "gerente_email": current_user.get('email', ''),
+        "user_id": current_user.get('id', ''),
+        "source": "scanner",
+        "original_operation_id": operation_id
+    }
+    await db.operations.insert_one(cancellation_record)
+
+    await db.operations.update_one(
+        {"id": operation_id},
+        {"$set": {"canceled": True, "canceled_at": now_iso, "canceled_by": current_user.get('name', 'Unknown')}}
+    )
+
+    customer_phone = operation.get("customer_phone")
+    if customer_phone:
+        await db.customer_stats.update_one(
+            {"workspace_id": ws_id, "customer_phone": customer_phone},
+            {"$inc": {
+                "total_visits": -1,
+                "total_purchase_sum": -(operation.get("purchase_sum") or 0)
+            }}
+        )
+        # The canceled op might have been this customer's most recent or very
+        # first visit — recompute both from what's left rather than leaving
+        # customer_stats pointing at a now-canceled operation. Two cheap
+        # point queries per cancel, not worth a special case for "was it
+        # actually the extreme one".
+        remaining_latest = await db.operations.find_one(
+            {"workspace_id": ws_id, "customer_phone": customer_phone, "canceled": {"$ne": True}},
+            sort=[("created_at", -1)]
+        )
+        remaining_earliest = await db.operations.find_one(
+            {"workspace_id": ws_id, "customer_phone": customer_phone, "canceled": {"$ne": True}},
+            sort=[("created_at", 1)]
+        )
+        recompute_fields = {}
+        if remaining_latest:
+            recompute_fields["last_seen_at"] = remaining_latest["created_at"]
+        if remaining_earliest:
+            recompute_fields["first_seen_at"] = remaining_earliest["created_at"]
+        if recompute_fields:
+            await db.customer_stats.update_one(
+                {"workspace_id": ws_id, "customer_phone": customer_phone},
+                {"$set": recompute_fields}
+            )
+
+    return {"success": True, "message": "Operación cancelada", "card": mask_pii(card_data) if card_data else None}

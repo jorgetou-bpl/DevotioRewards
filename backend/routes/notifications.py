@@ -5,15 +5,32 @@
 
 from fastapi import APIRouter, HTTPException, Depends
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
+import asyncio
 import logging
 
 from models import PushNotificationCreate
 from utils.auth import require_workspace_admin
 from utils.boomerang import call_boomerang_api, get_user_friendly_error, get_workspace_api_key
+from utils.config import db
+from routes.customer_insights import _apply_filters
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/notifications", tags=["notifications"])
+
+# Boomerangme's public API has no bulk-segment param on /pushes (confirmed
+# absent from the ReDoc spec — only message/templateId/cardId/scheduledAt),
+# so a segmented send is one POST /pushes call per matching card. Their
+# documented rate limit is 10 req/sec; this keeps comfortably under it.
+_SEGMENT_SEND_DELAY_SECONDS = 0.15
+
+
+async def _card_ids_for_filters(ws_id: str, filter_list: List[dict]) -> List[str]:
+    query = {"workspace_id": ws_id}
+    _apply_filters(query, filter_list)
+    cursor = db.customer_stats.find(query, {"card_id": 1, "_id": 0})
+    docs = await cursor.to_list(length=5000)
+    return [d["card_id"] for d in docs if d.get("card_id")]
 
 
 def _to_boomerang_datetime(iso_string: str) -> str:
@@ -31,18 +48,48 @@ async def send_push_notification(
     payload: PushNotificationCreate,
     current_user: dict = Depends(require_workspace_admin)
 ):
-    """Send (or schedule) a push notification to every cardholder of the
-    given Boomerangme template for the current workspace — cardId is
-    intentionally omitted so Boomerangme broadcasts to the whole audience.
-    Audience segmentation is not supported yet (see project plan)."""
-    body = {"message": payload.message, "templateId": payload.template_id}
+    """Send (or schedule) a push notification. Without `filters`: broadcasts
+    to every cardholder of the given template (cardId omitted). With
+    `filters` (same {field, operator, value} shape as the Customer Base
+    segment filters): resolves the matching customer_stats docs' card_ids
+    and sends one POST /pushes per card, since Boomerangme has no bulk-
+    segment param — so this is N calls, not one, and the response reports
+    sent/failed counts instead of a single push id."""
+    api_key = await get_workspace_api_key(current_user)
+    scheduled_at = None
     if payload.scheduled_at:
         try:
-            body["scheduledAt"] = _to_boomerang_datetime(payload.scheduled_at)
+            scheduled_at = _to_boomerang_datetime(payload.scheduled_at)
         except ValueError:
             raise HTTPException(status_code=422, detail="Fecha de programación inválida")
 
-    api_key = await get_workspace_api_key(current_user)
+    if payload.filters:
+        ws_id = current_user.get("workspace_id")
+        card_ids = await _card_ids_for_filters(ws_id, payload.filters)
+        if not card_ids:
+            raise HTTPException(status_code=400, detail="Ningún cliente cumple ese filtro")
+
+        sent, failed = 0, 0
+        for card_id in card_ids:
+            body = {"message": payload.message, "templateId": payload.template_id, "cardId": card_id}
+            if scheduled_at:
+                body["scheduledAt"] = scheduled_at
+            response = await call_boomerang_api('POST', '/pushes', body, raise_on_error=False, api_key=api_key)
+            if response.get("code", 500) < 400:
+                sent += 1
+            else:
+                failed += 1
+            await asyncio.sleep(_SEGMENT_SEND_DELAY_SECONDS)
+
+        return {
+            "success": True,
+            "push": {"segment_total": len(card_ids), "segment_sent": sent, "segment_failed": failed}
+        }
+
+    body = {"message": payload.message, "templateId": payload.template_id}
+    if scheduled_at:
+        body["scheduledAt"] = scheduled_at
+
     response = await call_boomerang_api('POST', '/pushes', body, api_key=api_key)
 
     data = response.get("data") or {}

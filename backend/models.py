@@ -182,6 +182,7 @@ class PushNotificationCreate(BaseModel):
     message: str = Field(min_length=1)
     template_id: int = Field(gt=0)
     scheduled_at: Optional[str] = None  # ISO datetime string with timezone; None = send immediately
+    filters: Optional[List[dict]] = None  # same {field, operator, value} shape as customer_insights.py's segment filters
 
 # ============ GEO-PUSH LOCATION MODELS ============
 # Boomerangme's GeoPush: a location's message surfaces on a customer's lock

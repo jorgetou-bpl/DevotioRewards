@@ -7,6 +7,14 @@ import { Input } from '../ui/input';
 import { Loader2, Users, ChevronUp, ChevronDown, FileText, FileSpreadsheet, Search, X } from 'lucide-react';
 import { API_BASE_URL as API } from '../../config/api';
 import { formatDate } from '../../utils/format';
+import { SegmentFilterBar } from './SegmentFilterBar';
+
+const MATCH_TYPE_LABELS = {
+  phone: 'por teléfono',
+  email: 'por correo',
+  cedula: 'por cédula',
+  name: 'por nombre'
+};
 
 const COLUMNS = [
   { key: 'customer_name', label: 'Nombre', sortable: true },
@@ -38,11 +46,17 @@ export const CustomerBaseTab = ({ token, templateId }) => {
   const [searchResults, setSearchResults] = useState(null);
   const [searchMatchType, setSearchMatchType] = useState(null);
 
+  // Segment filters (SegmentFilterBar) — independent of search; while a
+  // search is active its own result set takes over the display, same as
+  // pagination/sort do today.
+  const [activeFilters, setActiveFilters] = useState([]);
+
   const fetchCustomers = useCallback(async (page = 1) => {
     setLoading(true);
     try {
       const params = { page, items_per_page: 25, sort_by: sortBy, sort_dir: sortDir };
       if (templateId) params.template_id = templateId;
+      if (activeFilters.length > 0) params.filters = JSON.stringify(activeFilters);
       const response = await axios.get(`${API}/customer-insights/customers`, {
         params,
         headers: { Authorization: `Bearer ${token}` }
@@ -56,7 +70,7 @@ export const CustomerBaseTab = ({ token, templateId }) => {
     } finally {
       setLoading(false);
     }
-  }, [token, sortBy, sortDir, templateId]);
+  }, [token, sortBy, sortDir, templateId, activeFilters]);
 
   useEffect(() => { fetchCustomers(1); }, [fetchCustomers]);
 
@@ -101,8 +115,10 @@ export const CustomerBaseTab = ({ token, templateId }) => {
   const handleExport = async (format) => {
     try {
       setExporting(true);
+      const params = { format, sort_by: sortBy, sort_dir: sortDir };
+      if (activeFilters.length > 0) params.filters = JSON.stringify(activeFilters);
       const response = await axios.get(`${API}/customer-insights/customers/export`, {
-        params: { format, sort_by: sortBy, sort_dir: sortDir },
+        params,
         headers: { Authorization: `Bearer ${token}` },
         responseType: 'blob'
       });
@@ -174,11 +190,20 @@ export const CustomerBaseTab = ({ token, templateId }) => {
         </div>
       </form>
 
+      {!isSearchActive && (
+        <SegmentFilterBar
+          onApply={(filters) => setActiveFilters(filters)}
+          onClear={() => setActiveFilters([])}
+        />
+      )}
+
       <div className="flex items-center justify-between flex-wrap gap-2">
         <p className="text-zinc-500 text-sm">
           {isSearchActive
-            ? `${displayedCustomers.length} resultado(s) para "${activeSearch}"`
-            : 'Todos los clientes con actividad registrada en este negocio'}
+            ? `${displayedCustomers.length} resultado(s) para "${activeSearch}"${MATCH_TYPE_LABELS[searchMatchType] ? ` (${MATCH_TYPE_LABELS[searchMatchType]})` : ''}`
+            : activeFilters.length > 0
+              ? `${meta.total} cliente(s) que cumplen el filtro`
+              : 'Todos los clientes con actividad registrada en este negocio'}
         </p>
         {!isSearchActive && (
           <div className="flex items-center gap-2">

@@ -154,7 +154,8 @@ async def upsert_customer_stats(
     card_id: str,
     purchase_sum: float = None,
     date_of_birth: str = None,
-    now_iso: str = None
+    now_iso: str = None,
+    card_balance: dict = None
 ):
     """Incrementally maintain a per-customer stats cache, updated as a side
     effect of every scan. This is what powers "nuevos miembros"/"clientes
@@ -162,12 +163,30 @@ async def upsert_customer_stats(
     history on every dashboard load, and it's also where date_of_birth gets
     captured — Boomerangme has no bulk endpoint for it, but we already fetch
     it on every single-card action, so caching it here costs zero extra API
-    calls instead of requiring a separate sync job."""
+    calls instead of requiring a separate sync job.
+
+    `card_balance` (Boomerangme's raw balance object) is cached the same
+    way — stamps/points_balance/rewards_available feed the segment filters
+    on the Customer Base/push audience (see routes/customer_insights.py).
+    Snapshot as of the customer's last visit, not live — acceptable for
+    segmentation, same tradeoff as everything else in this cache."""
     if not customer_phone:
         return  # anonymous/no-customer flows — nothing to key the cache on
     set_fields = {"customer_name": customer_name, "last_seen_at": now_iso, "card_id": card_id}
     if date_of_birth:
         set_fields["date_of_birth"] = date_of_birth
+    if card_balance:
+        stamps = card_balance.get("numberStampsTotal")
+        points_balance = card_balance.get("balance")
+        if points_balance is None:
+            points_balance = card_balance.get("bonusBalance")
+        rewards_available = card_balance.get("numberRewardsUnused")
+        if stamps is not None:
+            set_fields["stamps"] = stamps
+        if points_balance is not None:
+            set_fields["points_balance"] = points_balance
+        if rewards_available is not None:
+            set_fields["rewards_available"] = rewards_available
     await db.customer_stats.update_one(
         {"workspace_id": workspace_id, "customer_phone": customer_phone},
         {
@@ -204,8 +223,8 @@ async def log_operation(
         card_type = str(card_type_raw).lower().replace('_card', '').replace(' ', '_')
         card_type_label = CARD_TYPE_LABELS.get(card_type, CARD_TYPE_LABELS.get(card_type_raw, card_type_raw))
         
+        card_balance = card_data.get('balance', {}) if card_data else {}
         if balance is None and card_data:
-            card_balance = card_data.get('balance', {})
             balance = (
                 card_balance.get('currentNumberOfUses') or
                 card_balance.get('balance') or
@@ -249,7 +268,8 @@ async def log_operation(
                 card_id=card_id,
                 purchase_sum=purchase_sum,
                 date_of_birth=customer.get('dateOfBirth'),
-                now_iso=operation_record["created_at"]
+                now_iso=operation_record["created_at"],
+                card_balance=card_balance
             )
         except Exception as e:
             logger.error(f"Failed to upsert customer_stats for card {card_id}: {e}")

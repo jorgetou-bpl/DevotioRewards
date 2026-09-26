@@ -12,6 +12,7 @@ from datetime import datetime, timezone
 from typing import Optional
 import io
 import csv
+import json
 import logging
 from utils.auth import get_current_user, require_workspace_admin
 from utils.config import db
@@ -143,6 +144,48 @@ async def new_customers_by_month(months: int = 6, current_user: dict = Depends(g
 
 ALLOWED_SORTS = {"last_seen_at", "total_visits", "first_seen_at", "customer_name", "total_purchase_sum"}
 
+# Simple filters shared between the Customer Base list/export and (fast-
+# follow) push notification targeting — a "segment" on either side is just
+# a named preset built from these same field/operator/value triples, so the
+# two features can never drift apart in what a given segment means.
+FILTERABLE_FIELDS = {
+    "total_visits", "total_purchase_sum", "stamps", "points_balance",
+    "rewards_available", "last_seen_at", "first_seen_at"
+}
+OPERATOR_MAP = {"gte": "$gte", "lte": "$lte", "eq": "$eq"}
+
+
+def _parse_filters(filters_json: Optional[str]) -> list:
+    if not filters_json:
+        return []
+    try:
+        parsed = json.loads(filters_json)
+        return parsed if isinstance(parsed, list) else []
+    except (ValueError, TypeError):
+        return []
+
+
+def _apply_filters(query: dict, filter_list: list) -> None:
+    """Mutates `query` in place. "avg_spend" isn't a stored field (it's
+    total_purchase_sum/total_visits), so it's the one case built as a Mongo
+    $expr instead of a direct field comparison; everything else in
+    FILTERABLE_FIELDS maps straight onto a customer_stats field."""
+    expr_clauses = []
+    for f in filter_list:
+        field, operator, value = f.get("field"), f.get("operator"), f.get("value")
+        mongo_op = OPERATOR_MAP.get(operator)
+        if not mongo_op or value is None:
+            continue
+        if field == "avg_spend":
+            expr_clauses.append({mongo_op: [
+                {"$cond": [{"$gt": ["$total_visits", 0]}, {"$divide": ["$total_purchase_sum", "$total_visits"]}, 0]},
+                value
+            ]})
+        elif field in FILTERABLE_FIELDS:
+            query.setdefault(field, {})[mongo_op] = value
+    if expr_clauses:
+        query["$expr"] = {"$and": expr_clauses} if len(expr_clauses) > 1 else expr_clauses[0]
+
 
 async def _phones_for_template(ws_id: str, template_id: str) -> list:
     """customer_stats has no template_id field (a customer's card_id is
@@ -162,6 +205,7 @@ async def list_customers(
     sort_by: str = "last_seen_at",
     sort_dir: int = -1,
     template_id: Optional[str] = None,
+    filters: Optional[str] = None,
     current_user: dict = Depends(require_workspace_admin)
 ):
     """Customer Base — the local customer_stats cache, not a live Boomerangme
@@ -173,6 +217,7 @@ async def list_customers(
     query = {"workspace_id": ws_id}
     if template_id:
         query["customer_phone"] = {"$in": await _phones_for_template(ws_id, template_id)}
+    _apply_filters(query, _parse_filters(filters))
 
     total = await db.customer_stats.count_documents(query)
     cursor = db.customer_stats.find(query, {"_id": 0}) \
@@ -196,6 +241,7 @@ async def export_customers(
     format: str = "csv",
     sort_by: str = "last_seen_at",
     sort_dir: int = -1,
+    filters: Optional[str] = None,
     current_user: dict = Depends(require_workspace_admin)
 ):
     """Export the full Customer Base (not just the current page) to CSV/XLSX.
@@ -205,7 +251,9 @@ async def export_customers(
     if sort_by not in ALLOWED_SORTS:
         sort_by = "last_seen_at"
 
-    cursor = db.customer_stats.find({"workspace_id": ws_id}, {"_id": 0}).sort(sort_by, sort_dir)
+    query = {"workspace_id": ws_id}
+    _apply_filters(query, _parse_filters(filters))
+    cursor = db.customer_stats.find(query, {"_id": 0}).sort(sort_by, sort_dir)
     customers = await cursor.to_list(length=10000)
 
     headers = ["Nombre", "Teléfono", "Cliente desde", "Total Visitas", "Facturación Total", "Última Visita"]

@@ -524,8 +524,11 @@ const WorkspaceAdminPage = () => {
         {/* Overview Tab */}
         {activeTab === 'overview' && (
           <div className="space-y-4">
-            {/* Stats cards — matching dashboard style */}
-            <div className="grid grid-cols-3 gap-3">
+            {/* Stats cards — matching dashboard style. API Key status
+                intentionally excluded here (client-facing summary) — key
+                management stays exclusively in the "API Key" tab below,
+                which is already super_admin-only. */}
+            <div className="grid grid-cols-2 gap-3">
               <div className="bg-white rounded-xl p-4 border border-zinc-200 text-center">
                 <Users className="h-6 w-6 mx-auto mb-2 text-[#0B0B16]" />
                 <p className="text-2xl font-bold text-[#0B0B16]">{workspace.user_count}</p>
@@ -535,11 +538,6 @@ const WorkspaceAdminPage = () => {
                 <MapPin className="h-6 w-6 mx-auto mb-2 text-[#5B7CF7]" />
                 <p className="text-2xl font-bold text-[#0B0B16]">{workspace.locations?.length || 0}</p>
                 <p className="text-xs text-zinc-500">Sucursales</p>
-              </div>
-              <div className="bg-white rounded-xl p-4 border border-zinc-200 text-center">
-                <Key className="h-6 w-6 mx-auto mb-2 text-green-600" />
-                <p className="text-2xl font-bold text-[#0B0B16]">{workspace.has_api_key ? 'OK' : 'No'}</p>
-                <p className="text-xs text-zinc-500">API Key</p>
               </div>
             </div>
 

@@ -4,14 +4,18 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { SettingsProvider } from "./context/SettingsContext";
 import { Toaster } from "sonner";
+import { AppLayout } from "./components/AppLayout";
 
 // Pages
 import LoginPage from "./pages/LoginPage";
 import ScannerPage from "./pages/ScannerPage";
 import ResultPage from "./pages/ResultPage";
 import SettingsPage from "./pages/SettingsPage";
-import SearchPage from "./pages/SearchPage";
-import OperationsPage from "./pages/OperationsPage";
+import HomePage from "./pages/HomePage";
+import HistorialPage from "./pages/HistorialPage";
+import ClientesPage from "./pages/ClientesPage";
+import TarjetasPage from "./pages/TarjetasPage";
+import UbicacionesPage from "./pages/UbicacionesPage";
 import AdminSetupPage from "./pages/AdminSetupPage";
 import WorkspaceAdminPage from "./pages/WorkspaceAdminPage";
 import SuperAdminDashboard from "./pages/SuperAdminDashboard";
@@ -38,8 +42,8 @@ const ProtectedRoute = ({ children }) => {
 };
 
 // Admin Route Component — like ProtectedRoute, but also requires
-// workspace_admin/super_admin (e.g. Customer Base/Profile, per the client
-// meeting's explicit permission requirement).
+// workspace_admin/super_admin (e.g. Customer Base/Profile, Tarjetas,
+// Mensajería, Ubicaciones).
 const AdminRoute = ({ children }) => {
   const { isAuthenticated, loading, user } = useAuth();
 
@@ -96,7 +100,7 @@ function AppRoutes() {
         path="/"
         element={
           <ProtectedRoute>
-            <OperationsPage />
+            <AppLayout><HomePage /></AppLayout>
           </ProtectedRoute>
         }
       />
@@ -104,7 +108,15 @@ function AppRoutes() {
         path="/scanner"
         element={
           <ProtectedRoute>
-            <ScannerPage />
+            <AppLayout><ScannerPage /></AppLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/historial"
+        element={
+          <ProtectedRoute>
+            <AppLayout><HistorialPage /></AppLayout>
           </ProtectedRoute>
         }
       />
@@ -124,19 +136,19 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
-      <Route
-        path="/search"
-        element={
-          <ProtectedRoute>
-            <SearchPage />
-          </ProtectedRoute>
-        }
-      />
+      {/* Buscar cliente ("/search") was folded into the Clientes page's own
+          search bar — see plan item 4 — so it no longer needs a route. */}
+      <Route path="/search" element={<Navigate to="/clientes" replace />} />
       {/* Operations now lives at "/" (Home) — redirect the old bookmark/PWA-shortcut path */}
       <Route path="/operations" element={<Navigate to="/" replace />} />
-      {/* Customer Base lives as a tab on Home now ("/?tab=clientes"), not its
-          own route — only the profile drill-down is a separate page. */}
-      <Route path="/clientes" element={<Navigate to="/?tab=clientes" replace />} />
+      <Route
+        path="/clientes"
+        element={
+          <AdminRoute>
+            <AppLayout><ClientesPage /></AppLayout>
+          </AdminRoute>
+        }
+      />
       <Route
         path="/clientes/:phone"
         element={
@@ -146,10 +158,26 @@ function AppRoutes() {
         }
       />
       <Route
+        path="/tarjetas"
+        element={
+          <AdminRoute>
+            <AppLayout><TarjetasPage /></AppLayout>
+          </AdminRoute>
+        }
+      />
+      <Route
+        path="/ubicaciones"
+        element={
+          <AdminRoute>
+            <AppLayout><UbicacionesPage /></AppLayout>
+          </AdminRoute>
+        }
+      />
+      <Route
         path="/notifications"
         element={
           <AdminRoute>
-            <NotificationsPage />
+            <AppLayout><NotificationsPage /></AppLayout>
           </AdminRoute>
         }
       />
@@ -179,7 +207,7 @@ function App() {
         <AuthProvider>
           <SettingsProvider>
             <AppRoutes />
-            <Toaster 
+            <Toaster
               position="top-center"
               toastOptions={{
                 style: {

@@ -9,20 +9,13 @@ import axios from 'axios';
 import { Html5Qrcode, Html5QrcodeScannerState } from 'html5-qrcode';
 import {
   Scan,
-  Menu,
   X,
-  Home,
-  Settings,
-  LogOut,
   Loader2,
   Camera,
   CameraOff,
-  Building2,
-  Bell,
   ChevronDown
 } from 'lucide-react';
 
-import { AppMenu } from '../components/AppMenu';
 import { API_BASE_URL as API } from '../config/api';
 
 const CAMERA_ID_STORAGE_KEY = 'devotio_camera_id';
@@ -76,7 +69,6 @@ const ScannerPage = () => {
   const [scanning, setScanning] = useState(false);
   const [manualInput, setManualInput] = useState('');
   const [loading, setLoading] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
   const [cameraError, setCameraError] = useState(null);
   const [availableCameras, setAvailableCameras] = useState([]);
   const [selectedCameraId, setSelectedCameraId] = useState(() => localStorage.getItem(CAMERA_ID_STORAGE_KEY) || null);
@@ -85,7 +77,7 @@ const ScannerPage = () => {
   const scannerRef = useRef(null);
   const html5QrCodeRef = useRef(null);
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const { triggerVibration, triggerBeep, copyToClipboard, settings } = useSettings();
 
   useEffect(() => {
@@ -252,48 +244,8 @@ const ScannerPage = () => {
     }
   };
 
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
-
-  // "Operaciones" no longer needs its own entry — its dashboard view IS Home now.
-  const menuItems = [
-    { icon: Home, label: 'Inicio', action: () => navigate('/'), testId: 'menu-home' },
-    { icon: Settings, label: 'Configuración', action: () => navigate('/settings'), testId: 'menu-settings' },
-    ...(['workspace_admin', 'super_admin'].includes(user?.role) ? [
-      { icon: Bell, label: 'Notificaciones', action: () => navigate('/notifications'), testId: 'menu-notifications' }
-    ] : []),
-    ...(user?.role === 'workspace_admin' ? [
-      { icon: Building2, label: 'Admin Workspace', action: () => navigate('/admin/workspace'), testId: 'menu-admin' }
-    ] : []),
-    ...(user?.role === 'super_admin' ? [
-      { icon: Building2, label: 'Panel Super Admin', action: () => navigate('/admin/dashboard'), testId: 'menu-admin' }
-    ] : []),
-    { icon: LogOut, label: 'Cerrar Sesión', action: handleLogout, testId: 'menu-logout' }
-  ];
-
   return (
     <div className="min-h-screen bg-white flex flex-col" data-testid="scanner-page">
-      {/* Header */}
-      <header className="nav-header">
-        <div className="w-10" />
-        <img
-          src="/fonts/logo.png"
-          alt="Devotio Rewards"
-          className="h-8 sm:h-10"
-          data-testid="header-logo"
-        />
-        <button
-          onClick={() => setMenuOpen(true)}
-          className="p-2 hover:bg-[#5B7CF7] hover:text-white rounded-lg transition-colors"
-          data-testid="menu-button"
-          aria-label="Abrir menú"
-        >
-          <Menu className="h-6 w-6 text-[#0B0B16]" strokeWidth={2} />
-        </button>
-      </header>
-
       {/* Main Content */}
       <main className="flex-1 flex flex-col items-center justify-center p-4 sm:p-6">
         {/* User Info */}
@@ -406,7 +358,7 @@ const ScannerPage = () => {
                   type="text"
                   value={manualInput}
                   onChange={(e) => setManualInput(e.target.value)}
-                  placeholder="ID, teléfono o email"
+                  placeholder="Teléfono, correo o ID de tarjeta"
                   className="input-brutalist text-sm sm:text-base pr-16"
                   data-testid="manual-input"
                 />
@@ -422,14 +374,12 @@ const ScannerPage = () => {
                 )}
               </div>
               <p className="text-xs text-zinc-400 text-center">
-                Buscar por ID de tarjeta, número de teléfono o email del cliente
+                Ideal por teléfono o correo — también funciona con el ID de la tarjeta
               </p>
             </form>
           )}
         </div>
       </main>
-
-      <AppMenu open={menuOpen} onClose={() => setMenuOpen(false)} items={menuItems} />
     </div>
   );
 };

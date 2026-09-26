@@ -400,7 +400,7 @@ const HomePage = () => {
               <div className="space-y-4">
                 <ClientMetricsCards tiles={[
                   { icon: Users, label: 'Total Visitas', value: dashboardData.customer_insights?.total_visitas ?? 0 },
-                  { icon: UserPlus, label: 'Nuevos Miembros', value: dashboardData.customer_insights?.nuevos_miembros ?? 0 },
+                  { icon: UserPlus, label: 'Nuevos Clientes', value: dashboardData.customer_insights?.nuevos_miembros ?? 0 },
                   { icon: Repeat, label: 'Clientes Habituales', value: dashboardData.customer_insights?.clientes_habituales ?? 0 }
                 ]} />
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

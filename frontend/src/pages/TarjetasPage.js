@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { Loader2, CreditCard, ArrowLeft, Users, Bell, DollarSign, Receipt, UserPlus, Repeat } from 'lucide-react';
+import { toast } from 'sonner';
+import { Loader2, CreditCard, ArrowLeft, Users, Bell, DollarSign, Receipt, UserPlus, Repeat, Copy, Check } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
 import { Button } from '../components/ui/button';
@@ -29,6 +30,13 @@ const TarjetasPage = () => {
   const [recentOps, setRecentOps] = useState([]);
   const [opsLoading, setOpsLoading] = useState(false);
 
+  // Generic self-enrollment QR/link for this card design (template-level,
+  // distinct from any one customer's card QR) — comes from the same
+  // Boomerangme template object, just not surfaced until now.
+  const [templateDetail, setTemplateDetail] = useState(null);
+  const [templateDetailLoading, setTemplateDetailLoading] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
+
   useEffect(() => {
     axios.get(`${API}/templates`, { headers: { Authorization: `Bearer ${token}` } })
       .then((res) => setTemplates(res.data?.templates || []))
@@ -39,6 +47,15 @@ const TarjetasPage = () => {
   const fetchDetail = useCallback(async (templateId) => {
     setSummaryLoading(true);
     setOpsLoading(true);
+    setTemplateDetailLoading(true);
+    try {
+      const response = await axios.get(`${API}/templates/${templateId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setTemplateDetail(response.data?.template || null);
+    } catch { setTemplateDetail(null); }
+    finally { setTemplateDetailLoading(false); }
+
     try {
       const response = await axios.get(`${API}/operations/summary`, {
         params: { template_id: templateId },
@@ -61,6 +78,14 @@ const TarjetasPage = () => {
   const openTemplate = (t) => {
     setSelected(t);
     fetchDetail(t.id);
+  };
+
+  const handleCopyLink = async () => {
+    if (!templateDetail?.installLink) return;
+    await navigator.clipboard.writeText(templateDetail.installLink);
+    setLinkCopied(true);
+    toast.success('Enlace copiado');
+    setTimeout(() => setLinkCopied(false), 2000);
   };
 
   if (selected) {
@@ -103,6 +128,41 @@ const TarjetasPage = () => {
           </Button>
         </div>
 
+        {/* Generic install QR — a new customer scans this to get their own
+            card, independent of any specific customer's card. */}
+        {templateDetailLoading ? (
+          <div className="flex justify-center py-6">
+            <Loader2 className="h-5 w-5 animate-spin text-zinc-400" />
+          </div>
+        ) : templateDetail?.qrLink ? (
+          <div className="card-brutalist mb-6 flex flex-col sm:flex-row items-center gap-4">
+            <img
+              src={templateDetail.qrLink}
+              alt={`Código QR para instalar ${selected.name}`}
+              className="w-32 h-32 shrink-0 border border-zinc-200 rounded-lg"
+              data-testid="tarjeta-install-qr"
+            />
+            <div className="flex-1 min-w-0 text-center sm:text-left">
+              <h3 className="text-sm font-semibold text-[#0B0B16] mb-1">Instalar tarjeta</h3>
+              <p className="text-xs text-zinc-500 mb-3">
+                Cualquier cliente puede escanear este código o abrir el enlace para instalar esta tarjeta en su Apple Wallet o Google Wallet.
+              </p>
+              <div className="flex items-center gap-2">
+                <code className="flex-1 text-xs bg-zinc-50 rounded-lg px-3 py-2 truncate">{templateDetail.installLink}</code>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleCopyLink}
+                  className="border-2 border-zinc-200 shrink-0"
+                  data-testid="copy-install-link"
+                >
+                  {linkCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                </Button>
+              </div>
+            </div>
+          </div>
+        ) : null}
+
         {summaryLoading ? (
           <div className="flex justify-center py-8">
             <Loader2 className="h-6 w-6 animate-spin text-zinc-400" />
@@ -113,7 +173,7 @@ const TarjetasPage = () => {
               { icon: Users, label: 'Total Visitas', value: summary.customer_insights?.total_visitas ?? 0 },
               { icon: DollarSign, label: 'Facturación Total', value: formatCurrency(summary.customer_insights?.total_facturacion || 0) },
               { icon: Receipt, label: 'Venta Promedio', value: formatCurrency(summary.customer_insights?.avg_purchase || 0) },
-              { icon: UserPlus, label: 'Nuevos Miembros', value: summary.customer_insights?.nuevos_miembros ?? 0 },
+              { icon: UserPlus, label: 'Nuevos Clientes', value: summary.customer_insights?.nuevos_miembros ?? 0 },
               { icon: Repeat, label: 'Clientes Habituales', value: summary.customer_insights?.clientes_habituales ?? 0 }
             ]} />
           </div>

@@ -140,6 +140,14 @@ async def get_template(template_id: str, current_user: dict = Depends(get_curren
                     # "Clases", "Lavados") — read live instead of hardcoding
                     # "Visitas" in the UI regardless of what the business named it.
                     "balanceUnitName": mechanics.get('balanceUnitName') or None,
+                    # Generic self-enrollment link/QR for this card design —
+                    # distinct from a specific customer's card QR (that one's
+                    # per-card, from GET /cards/{id}); this is the one a
+                    # business can print/display so any new customer can
+                    # install their own card from it. qrLink resolves to a
+                    # direct image/svg+xml, safe to use as an <img src>.
+                    "installLink": template_data.get('installLink'),
+                    "qrLink": template_data.get('qrLink'),
                     # Include raw data for debugging
                     "rawKeys": list(template_data.keys())
                 }

@@ -52,7 +52,14 @@ export const PushHistoryList = ({ token, templatesList, refreshKey }) => {
     );
   }
 
-  if (pushes.length === 0) {
+  // Per the client's explicit request: a push that already went out but
+  // reached zero devices shouldn't clutter the history at all — not just
+  // hide the "0/0 entregados" text. Scheduled/pending ones are unaffected
+  // (sent_amount is still null for those, so they don't match this filter —
+  // they simply haven't concluded delivery yet).
+  const visiblePushes = pushes.filter((p) => !(p.sent_amount != null && !(p.delivered_amount > 0)));
+
+  if (visiblePushes.length === 0) {
     return (
       <div className="text-center py-8">
         <Bell className="h-10 w-10 mx-auto text-zinc-300 mb-2" />
@@ -64,7 +71,7 @@ export const PushHistoryList = ({ token, templatesList, refreshKey }) => {
   return (
     <div className="space-y-3">
       <div className="divide-y divide-zinc-100">
-        {pushes.map((p) => (
+        {visiblePushes.map((p) => (
           <div key={p.id} className="py-3" data-testid="push-history-row">
             <div className="flex items-start justify-between gap-3">
               <p className="text-sm text-[#0B0B16] break-words">{p.message}</p>
@@ -75,7 +82,7 @@ export const PushHistoryList = ({ token, templatesList, refreshKey }) => {
             <div className="flex items-center justify-between mt-1 text-xs text-zinc-400">
               <span>{templateName(p.template_id)}</span>
               <span>
-                {p.sent_amount != null && `${p.delivered_amount ?? 0}/${p.sent_amount} entregados · `}
+                {p.delivered_amount > 0 && `${p.delivered_amount}/${p.sent_amount} entregados · `}
                 {formatDate(p.scheduled_at || p.created_at)}
               </span>
             </div>

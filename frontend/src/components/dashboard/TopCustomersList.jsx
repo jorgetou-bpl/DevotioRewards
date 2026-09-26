@@ -19,7 +19,10 @@ export const TopCustomersList = ({ title, icon: Icon, data = [], nameKey = 'cust
       </div>
 
       {data.length > 0 ? (
-        <div className="space-y-3">
+        // Capped + scrollable so a full top-10 doesn't grow taller than the
+        // fixed-height chart cards it sits next to in the grid (was fine at
+        // ~5 rows, but a real top-10 list would stretch the whole grid row).
+        <div className="space-y-3 max-h-[260px] overflow-y-auto pr-1">
           {data.map((customer, index) => {
             const value = customer[valueKey] || 0;
             const percentage = (value / maxValue) * 100;

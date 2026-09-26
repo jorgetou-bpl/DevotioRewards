@@ -25,10 +25,10 @@ import { API_BASE_URL as API } from '../../config/api';
 // (see project plan), so no segment selector ships yet. GeoPush ("Ubicaciones")
 // used to be a third sub-tab here — it's now its own top-level page
 // (`/ubicaciones`) since Mensajería is meant to stay scoped to messaging.
-export const PushNotificationsPanel = ({ token, templatesList }) => {
+export const PushNotificationsPanel = ({ token, templatesList, initialTemplateId }) => {
   const [view, setView] = useState('compose'); // 'compose' | 'history'
   const [message, setMessage] = useState('');
-  const [selectedTemplateId, setSelectedTemplateId] = useState('');
+  const [selectedTemplateId, setSelectedTemplateId] = useState(initialTemplateId ? String(initialTemplateId) : '');
   const [scheduled, setScheduled] = useState(false);
   const [scheduledAt, setScheduledAt] = useState('');
   const [sending, setSending] = useState(false);

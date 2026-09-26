@@ -15,10 +15,11 @@ const COLUMNS = [
   { key: 'last_seen_at', label: 'Última Visita', sortable: true }
 ];
 
-// Customer Base — a tab within Home (alongside Dashboard/Historial), not a
-// separate destination, so a business owner sees it as part of the same
-// place they already check daily rather than a hidden admin-only page.
-export const CustomerBaseTab = ({ token }) => {
+// Customer Base — its own route (/clientes). `templateId`, when passed by
+// the Tarjetas detail page, scopes the list to customers who have at least
+// one operation against that card (see customer_insights.py's
+// _phones_for_template) — customer_stats itself has no per-template field.
+export const CustomerBaseTab = ({ token, templateId }) => {
   const navigate = useNavigate();
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -30,8 +31,10 @@ export const CustomerBaseTab = ({ token }) => {
   const fetchCustomers = useCallback(async (page = 1) => {
     setLoading(true);
     try {
+      const params = { page, items_per_page: 25, sort_by: sortBy, sort_dir: sortDir };
+      if (templateId) params.template_id = templateId;
       const response = await axios.get(`${API}/customer-insights/customers`, {
-        params: { page, items_per_page: 25, sort_by: sortBy, sort_dir: sortDir },
+        params,
         headers: { Authorization: `Bearer ${token}` }
       });
       if (response.data.success) {
@@ -43,7 +46,7 @@ export const CustomerBaseTab = ({ token }) => {
     } finally {
       setLoading(false);
     }
-  }, [token, sortBy, sortDir]);
+  }, [token, sortBy, sortDir, templateId]);
 
   useEffect(() => { fetchCustomers(1); }, [fetchCustomers]);
 

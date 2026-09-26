@@ -9,6 +9,7 @@
 from fastapi import APIRouter, HTTPException, Depends
 from fastapi.responses import StreamingResponse
 from datetime import datetime, timezone
+from typing import Optional
 import io
 import csv
 import logging
@@ -143,12 +144,24 @@ async def new_customers_by_month(months: int = 6, current_user: dict = Depends(g
 ALLOWED_SORTS = {"last_seen_at", "total_visits", "first_seen_at", "customer_name", "total_purchase_sum"}
 
 
+async def _phones_for_template(ws_id: str, template_id: str) -> list:
+    """customer_stats has no template_id field (a customer's card_id is
+    overwritten on every scan, not tracked per-template), so "customers of
+    this card" is resolved from the operations they've actually logged
+    against that template — same source Historial/Dashboard already filter
+    by template_id."""
+    return await db.operations.distinct(
+        "customer_phone", {"workspace_id": ws_id, "template_id": str(template_id)}
+    )
+
+
 @router.get("/customers")
 async def list_customers(
     page: int = 1,
     items_per_page: int = 25,
     sort_by: str = "last_seen_at",
     sort_dir: int = -1,
+    template_id: Optional[str] = None,
     current_user: dict = Depends(require_workspace_admin)
 ):
     """Customer Base — the local customer_stats cache, not a live Boomerangme
@@ -158,6 +171,8 @@ async def list_customers(
         sort_by = "last_seen_at"
     skip = (page - 1) * items_per_page
     query = {"workspace_id": ws_id}
+    if template_id:
+        query["customer_phone"] = {"$in": await _phones_for_template(ws_id, template_id)}
 
     total = await db.customer_stats.count_documents(query)
     cursor = db.customer_stats.find(query, {"_id": 0}) \

@@ -78,6 +78,11 @@ const HomePage = () => {
   const [ageDistribution, setAgeDistribution] = useState(null);
   const [ageDistributionLoading, setAgeDistributionLoading] = useState(false);
 
+  // Toggle for the Top 10 list — both rankings already come in the same
+  // /operations/summary payload (top_customers_by_visits/by_purchase), so
+  // this is purely a client-side switch, no extra fetch.
+  const [topRankingMetric, setTopRankingMetric] = useState('visits'); // 'visits' | 'purchase'
+
   const [templatesList, setTemplatesList] = useState([]);
 
   useEffect(() => {
@@ -418,10 +423,35 @@ const HomePage = () => {
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <TopCustomersList
-                    title="Top 10 por Visitas"
+                    title="Top 10 Clientes"
                     icon={Users}
-                    data={dashboardData.customer_insights?.top_customers_by_visits}
-                    valueKey="visit_count"
+                    data={topRankingMetric === 'visits'
+                      ? dashboardData.customer_insights?.top_customers_by_visits
+                      : dashboardData.customer_insights?.top_customers_by_purchase}
+                    valueKey={topRankingMetric === 'visits' ? 'visit_count' : 'total_purchase'}
+                    valueFormatter={topRankingMetric === 'purchase' ? formatCurrency : undefined}
+                    headerRight={
+                      <div className="flex items-center gap-1 bg-zinc-100 p-1 rounded-lg">
+                        <button
+                          onClick={() => setTopRankingMetric('visits')}
+                          className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+                            topRankingMetric === 'visits' ? 'bg-white text-[#0B0B16] shadow-sm' : 'text-zinc-500 hover:text-[#0B0B16]'
+                          }`}
+                          data-testid="top-ranking-by-visits"
+                        >
+                          Visitas
+                        </button>
+                        <button
+                          onClick={() => setTopRankingMetric('purchase')}
+                          className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+                            topRankingMetric === 'purchase' ? 'bg-white text-[#0B0B16] shadow-sm' : 'text-zinc-500 hover:text-[#0B0B16]'
+                          }`}
+                          data-testid="top-ranking-by-purchase"
+                        >
+                          Compras
+                        </button>
+                      </div>
+                    }
                   />
                   {['workspace_admin', 'super_admin'].includes(user?.role) && (
                     <AgeDistributionChart data={ageDistribution?.buckets} loading={ageDistributionLoading} />

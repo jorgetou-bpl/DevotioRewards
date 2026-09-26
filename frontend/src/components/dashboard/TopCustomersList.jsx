@@ -5,16 +5,17 @@ import { Users } from 'lucide-react';
 // bar, optional secondary line under the name. Used for Top 10 by visits and
 // the Gerente Leaderboard (same shape: a name, one ranking number, one
 // secondary figure).
-export const TopCustomersList = ({ title, icon: Icon, data = [], nameKey = 'customer_name', valueKey, valueFormatter, renderSubtitle }) => {
+export const TopCustomersList = ({ title, icon: Icon, data = [], nameKey = 'customer_name', valueKey, valueFormatter, renderSubtitle, headerRight }) => {
   const maxValue = data[0]?.[valueKey] || 1;
 
   return (
     <div className="card-brutalist">
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between flex-wrap gap-2 mb-4">
         <h3 className="text-lg font-semibold text-[#0B0B16] flex items-center gap-2">
           <Icon className="h-5 w-5 text-[#8CA4FE]" />
           {title}
         </h3>
+        {headerRight}
       </div>
 
       {data.length > 0 ? (

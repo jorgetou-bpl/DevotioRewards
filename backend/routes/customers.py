@@ -2,9 +2,12 @@
 
 from fastapi import APIRouter, HTTPException, Depends
 from typing import Optional
+import re
 import logging
 from utils.auth import get_current_user
 from utils.boomerang import call_boomerang_api, mask_pii, get_user_friendly_error, get_workspace_api_key
+from utils.config import db
+from routes.cards import is_email
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/customers", tags=["customers"])
@@ -59,6 +62,66 @@ async def search_customers(
         "customers": masked_customers,
         "meta": response.get('meta', {})
     }
+
+@router.get("/search")
+async def search_customer_base(
+    q: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Unified search over the local Customer Base (customer_stats), for the
+    Clientes page's single search field — phone, email, cédula, or name.
+    Registered before /{customer_id} so "search" isn't matched as that path
+    param (same pitfall customer_insights.py's /customers/export already
+    hit).
+
+    A waterfall rather than a strict format branch: a 9-digit Costa Rican
+    cédula and an 8-11 digit phone number are both "just digits" in the same
+    length range, so there's no reliable way to tell them apart from the
+    string alone — try phone first (cheap, local), then email (only format
+    Boomerangme's own search can resolve, since there's no local email
+    index), then the cédula mapping learned from Contífico reconciliation,
+    then finally a name match against the local cache (best-effort, not
+    authoritative)."""
+    ws_id = current_user.get("workspace_id")
+    query = (q or "").strip()
+    if not query:
+        return {"success": True, "customers": [], "match_type": None}
+
+    projection = {"_id": 0}
+    cleaned_digits = re.sub(r'[\s\-\(\)\+]', '', query)
+
+    if cleaned_digits.isdigit() and 7 <= len(cleaned_digits) <= 15:
+        matches = await db.customer_stats.find(
+            {"workspace_id": ws_id, "customer_phone": {"$regex": re.escape(cleaned_digits)}}, projection
+        ).limit(10).to_list(length=10)
+        if matches:
+            return {"success": True, "customers": matches, "match_type": "phone"}
+
+    if is_email(query):
+        api_key = await get_workspace_api_key(current_user)
+        response = await call_boomerang_api('GET', '/customers', {"email": query}, raise_on_error=False, api_key=api_key)
+        phones = [c.get('phone') for c in (response.get('data') or []) if c.get('phone')]
+        matches = []
+        if phones:
+            matches = await db.customer_stats.find(
+                {"workspace_id": ws_id, "customer_phone": {"$in": phones}}, projection
+            ).to_list(length=10)
+        return {"success": True, "customers": matches, "match_type": "email"}
+
+    if cleaned_digits.isdigit():
+        mapping = await db.customer_identifiers.find_one({"workspace_id": ws_id, "cedula": cleaned_digits})
+        if mapping and mapping.get("card_id"):
+            match = await db.customer_stats.find_one(
+                {"workspace_id": ws_id, "card_id": mapping["card_id"]}, projection
+            )
+            if match:
+                return {"success": True, "customers": [match], "match_type": "cedula"}
+
+    matches = await db.customer_stats.find(
+        {"workspace_id": ws_id, "customer_name": {"$regex": re.escape(query), "$options": "i"}}, projection
+    ).limit(10).to_list(length=10)
+    return {"success": True, "customers": matches, "match_type": "name" if matches else None}
+
 
 @router.get("/{customer_id}")
 async def get_customer(customer_id: str, current_user: dict = Depends(get_current_user), api_key: str = Depends(get_api_key)):

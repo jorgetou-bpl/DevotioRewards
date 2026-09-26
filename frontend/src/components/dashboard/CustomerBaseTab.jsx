@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'sonner';
 import { Button } from '../ui/button';
-import { Loader2, Users, ChevronUp, ChevronDown, FileText, FileSpreadsheet } from 'lucide-react';
+import { Input } from '../ui/input';
+import { Loader2, Users, ChevronUp, ChevronDown, FileText, FileSpreadsheet, Search, X } from 'lucide-react';
 import { API_BASE_URL as API } from '../../config/api';
 import { formatDate } from '../../utils/format';
 
@@ -27,6 +28,15 @@ export const CustomerBaseTab = ({ token, templateId }) => {
   const [meta, setMeta] = useState({ total: 0, page: 1, total_pages: 1 });
   const [sortBy, setSortBy] = useState('last_seen_at');
   const [sortDir, setSortDir] = useState(-1);
+
+  // A search in progress replaces the paginated list below with its own
+  // flat result set (phone/email/cédula/name — see GET /customers/search)
+  // instead of filtering the current page client-side.
+  const [searchInput, setSearchInput] = useState('');
+  const [activeSearch, setActiveSearch] = useState('');
+  const [searching, setSearching] = useState(false);
+  const [searchResults, setSearchResults] = useState(null);
+  const [searchMatchType, setSearchMatchType] = useState(null);
 
   const fetchCustomers = useCallback(async (page = 1) => {
     setLoading(true);
@@ -59,6 +69,35 @@ export const CustomerBaseTab = ({ token, templateId }) => {
     }
   };
 
+  const handleSearchSubmit = async (e) => {
+    e.preventDefault();
+    const q = searchInput.trim();
+    if (!q) return;
+    setSearching(true);
+    setActiveSearch(q);
+    try {
+      const response = await axios.get(`${API}/customers/search`, {
+        params: { q },
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setSearchResults(response.data?.customers || []);
+      setSearchMatchType(response.data?.match_type || null);
+    } catch {
+      setSearchResults([]);
+      setSearchMatchType(null);
+      toast.error('Error al buscar clientes');
+    } finally {
+      setSearching(false);
+    }
+  };
+
+  const clearSearch = () => {
+    setSearchInput('');
+    setActiveSearch('');
+    setSearchResults(null);
+    setSearchMatchType(null);
+  };
+
   const handleExport = async (format) => {
     try {
       setExporting(true);
@@ -84,39 +123,94 @@ export const CustomerBaseTab = ({ token, templateId }) => {
     }
   };
 
+  const isSearchActive = activeSearch.length > 0;
+  const displayedCustomers = isSearchActive ? (searchResults || []) : customers;
+
+  const renderRow = (c) => (
+    <tr key={c.customer_phone} className="border-b border-zinc-100 hover:bg-zinc-50">
+      <td className="p-3">
+        <button
+          onClick={() => navigate(`/clientes/${encodeURIComponent(c.customer_phone)}`, { state: { customer: c } })}
+          className="font-medium text-[#5B7CF7] hover:underline"
+          data-testid="customer-row-name"
+        >
+          {c.customer_name || 'Sin nombre'}
+        </button>
+      </td>
+      <td className="p-3 text-zinc-600 font-mono">{c.customer_phone}</td>
+      <td className="p-3 text-zinc-600">{formatDate(c.first_seen_at)}</td>
+      <td className="p-3 text-zinc-600">{c.total_visits ?? 0}</td>
+      <td className="p-3 text-zinc-600">{formatDate(c.last_seen_at)}</td>
+    </tr>
+  );
+
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between flex-wrap gap-2">
-        <p className="text-zinc-500 text-sm">Todos los clientes con actividad registrada en este negocio</p>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            onClick={() => handleExport('csv')}
-            disabled={exporting || customers.length === 0}
-            className="border-2 border-zinc-200"
-            data-testid="export-customers-csv-btn"
-          >
-            {exporting ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <FileText className="h-4 w-4 mr-2" />}
-            CSV
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => handleExport('xlsx')}
-            disabled={exporting || customers.length === 0}
-            className="border-2 border-zinc-200"
-            data-testid="export-customers-xlsx-btn"
-          >
-            {exporting ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <FileSpreadsheet className="h-4 w-4 mr-2" />}
-            Excel
+      <form onSubmit={handleSearchSubmit} className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
+        <Input
+          type="text"
+          value={searchInput}
+          onChange={(e) => setSearchInput(e.target.value)}
+          placeholder="Buscar por nombre, teléfono, correo o cédula"
+          className="pl-9 pr-20"
+          data-testid="customer-search-input"
+        />
+        <div className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center gap-1">
+          {isSearchActive && (
+            <button
+              type="button"
+              onClick={clearSearch}
+              className="p-2 text-zinc-400 hover:text-[#0B0B16] transition-colors"
+              aria-label="Limpiar búsqueda"
+              data-testid="clear-customer-search"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
+          <Button type="submit" size="sm" className="bg-[#5B7CF7] hover:bg-[#4A6AE0]" disabled={searching || !searchInput.trim()} data-testid="customer-search-submit">
+            {searching ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Buscar'}
           </Button>
         </div>
+      </form>
+
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <p className="text-zinc-500 text-sm">
+          {isSearchActive
+            ? `${displayedCustomers.length} resultado(s) para "${activeSearch}"`
+            : 'Todos los clientes con actividad registrada en este negocio'}
+        </p>
+        {!isSearchActive && (
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              onClick={() => handleExport('csv')}
+              disabled={exporting || customers.length === 0}
+              className="border-2 border-zinc-200"
+              data-testid="export-customers-csv-btn"
+            >
+              {exporting ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <FileText className="h-4 w-4 mr-2" />}
+              CSV
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => handleExport('xlsx')}
+              disabled={exporting || customers.length === 0}
+              className="border-2 border-zinc-200"
+              data-testid="export-customers-xlsx-btn"
+            >
+              {exporting ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <FileSpreadsheet className="h-4 w-4 mr-2" />}
+              Excel
+            </Button>
+          </div>
+        )}
       </div>
 
-      {loading ? (
+      {loading && !isSearchActive ? (
         <div className="flex justify-center py-12">
           <Loader2 className="h-8 w-8 animate-spin text-[#0B0B16]" />
         </div>
-      ) : customers.length > 0 ? (
+      ) : displayedCustomers.length > 0 ? (
         <>
           <div className="card-brutalist overflow-x-auto">
             <table className="w-full text-sm">
@@ -124,7 +218,7 @@ export const CustomerBaseTab = ({ token, templateId }) => {
                 <tr className="border-b border-zinc-200">
                   {COLUMNS.map((col) => (
                     <th key={col.key} className="p-3 text-left text-xs font-semibold uppercase">
-                      {col.sortable ? (
+                      {col.sortable && !isSearchActive ? (
                         <button onClick={() => toggleSort(col.key)} className="flex items-center gap-1 hover:text-[#5B7CF7] transition-colors">
                           {col.label}
                           {sortBy === col.key && (sortDir === -1 ? <ChevronDown className="h-3 w-3" /> : <ChevronUp className="h-3 w-3" />)}
@@ -135,28 +229,12 @@ export const CustomerBaseTab = ({ token, templateId }) => {
                 </tr>
               </thead>
               <tbody>
-                {customers.map((c) => (
-                  <tr key={c.customer_phone} className="border-b border-zinc-100 hover:bg-zinc-50">
-                    <td className="p-3">
-                      <button
-                        onClick={() => navigate(`/clientes/${encodeURIComponent(c.customer_phone)}`, { state: { customer: c } })}
-                        className="font-medium text-[#5B7CF7] hover:underline"
-                        data-testid="customer-row-name"
-                      >
-                        {c.customer_name || 'Sin nombre'}
-                      </button>
-                    </td>
-                    <td className="p-3 text-zinc-600 font-mono">{c.customer_phone}</td>
-                    <td className="p-3 text-zinc-600">{formatDate(c.first_seen_at)}</td>
-                    <td className="p-3 text-zinc-600">{c.total_visits ?? 0}</td>
-                    <td className="p-3 text-zinc-600">{formatDate(c.last_seen_at)}</td>
-                  </tr>
-                ))}
+                {displayedCustomers.map(renderRow)}
               </tbody>
             </table>
           </div>
 
-          {meta.total_pages > 1 && (
+          {!isSearchActive && meta.total_pages > 1 && (
             <div className="flex items-center justify-center gap-2">
               <Button variant="outline" onClick={() => fetchCustomers(meta.page - 1)} disabled={meta.page <= 1} className="border-2 border-zinc-200">
                 Anterior
@@ -168,6 +246,14 @@ export const CustomerBaseTab = ({ token, templateId }) => {
             </div>
           )}
         </>
+      ) : isSearchActive ? (
+        <div className="text-center py-12">
+          <Search className="h-12 w-12 mx-auto text-zinc-300 mb-3" />
+          <p className="text-zinc-500">Sin resultados para "{activeSearch}"</p>
+          <p className="text-zinc-400 text-xs mt-1">
+            La cédula solo resuelve si el cliente ya se concilió por Contífico; el nombre es una búsqueda local, no exacta.
+          </p>
+        </div>
       ) : (
         <div className="text-center py-12">
           <Users className="h-12 w-12 mx-auto text-zinc-300 mb-3" />
